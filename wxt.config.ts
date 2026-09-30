@@ -14,5 +14,9 @@ export default defineConfig({
       'https://completion.amazon.com/*',
       'https://api.anthropic.com/*',
     ],
+    options_ui: {
+      page: 'options.html',
+      open_in_tab: true,
+    },
   },
 });

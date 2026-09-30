@@ -28,6 +28,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Activity,
+  Settings as SettingsIcon,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -390,6 +391,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="p-1 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
               {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+            </button>
+
+            <button
+              onClick={() => {
+                if (typeof chrome !== 'undefined' && chrome.runtime?.openOptionsPage) {
+                  chrome.runtime.openOptionsPage();
+                } else if (typeof chrome !== 'undefined' && chrome.runtime?.getURL) {
+                  window.open(chrome.runtime.getURL('options.html'), '_blank');
+                }
+              }}
+              title="Open Extension Settings"
+              className="p-1 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              <SettingsIcon className="w-4 h-4" />
             </button>
 
             <button
