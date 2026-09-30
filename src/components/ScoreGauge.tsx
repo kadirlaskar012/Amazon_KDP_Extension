@@ -109,10 +109,10 @@ export const ScoreGauge: React.FC<ScoreGaugeProps> = ({ score, query, date }) =>
       </div>
 
       {/* Query, Books Count, Date subtitle line */}
-      <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 leading-normal max-w-xs truncate">
+      <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 leading-normal max-w-xs break-words">
         Based on <strong className="text-slate-700 dark:text-slate-200">{booksAnalyzed} books</strong>
         {' · '}
-        search: <span className="font-medium text-slate-700 dark:text-slate-200 truncate">"{query || 'Books'}"</span>
+        search: <span className="font-medium text-slate-700 dark:text-slate-200">"{query || 'Books'}"</span>
         {' · '}
         <span>{formattedDate}</span>
       </div>

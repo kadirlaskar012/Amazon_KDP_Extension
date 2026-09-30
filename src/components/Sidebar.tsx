@@ -154,7 +154,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div className={isDarkMode ? 'dark' : ''}>
-      <aside className="fixed top-0 right-0 bottom-0 w-[380px] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col z-[999999] font-sans antialiased text-xs transition-colors select-text">
+      <aside className="fixed top-0 right-0 bottom-0 w-[380px] max-w-[100vw] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col z-[999999] font-sans antialiased text-xs transition-colors select-text">
         {/* Header */}
         <header className="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shrink-0">
           <div className="flex items-center gap-2">

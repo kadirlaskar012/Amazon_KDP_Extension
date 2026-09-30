@@ -428,8 +428,11 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                   </td>
 
                   {/* Est. Royalty/mo */}
-                  <td className="py-2 px-2 text-right align-top whitespace-nowrap font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                    {book.royaltyEst !== null ? `~$${book.royaltyEst.toLocaleString()}` : 'N/A'}
+                  <td
+                    className="py-2 px-2 text-right align-top whitespace-nowrap font-mono text-emerald-600 dark:text-emerald-400 font-bold"
+                    title={book.royaltyEst !== null ? `$${book.royaltyEst.toFixed(2)}/mo net royalty` : undefined}
+                  >
+                    {book.royaltyEst !== null ? `~$${Math.round(book.royaltyEst).toLocaleString()}` : 'N/A'}
                   </td>
 
                   {/* Opportunity Flag */}

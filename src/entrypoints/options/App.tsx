@@ -183,12 +183,17 @@ export const App: React.FC = () => {
             ].map(({ key, label, desc }) => (
               <div key={key} className="space-y-1">
                 <div className="flex items-center justify-between text-xs font-medium">
-                  <span className="text-slate-800 dark:text-slate-200">{label}</span>
+                  <label htmlFor={`weight-${key}`} className="text-slate-800 dark:text-slate-200 cursor-pointer">
+                    {label}
+                  </label>
                   <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
                     {settings.weights[key]} pts
                   </span>
                 </div>
                 <input
+                  id={`weight-${key}`}
+                  name={`weight-${key}`}
+                  aria-label={label}
                   type="range"
                   min="0"
                   max="50"
@@ -214,10 +219,13 @@ export const App: React.FC = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3.5">
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="threshold-demandBsr" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Demand Max BSR
               </label>
               <input
+                id="threshold-demandBsr"
+                name="demandBsr"
+                aria-label="Demand Max BSR"
                 type="number"
                 value={settings.thresholds.demandBsr}
                 onChange={(e) =>
@@ -234,10 +242,13 @@ export const App: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="threshold-lowReviewCount" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Low Review Count
               </label>
               <input
+                id="threshold-lowReviewCount"
+                name="lowReviewCount"
+                aria-label="Low Review Count"
                 type="number"
                 value={settings.thresholds.lowReviewCount}
                 onChange={(e) =>
@@ -254,10 +265,13 @@ export const App: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="threshold-weakReviewCount" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Weak Review Count
               </label>
               <input
+                id="threshold-weakReviewCount"
+                name="weakReviewCount"
+                aria-label="Weak Review Count"
                 type="number"
                 value={settings.thresholds.weakReviewCount}
                 onChange={(e) =>
@@ -274,10 +288,13 @@ export const App: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="threshold-weakRating" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Weak Rating Max
               </label>
               <input
+                id="threshold-weakRating"
+                name="weakRating"
+                aria-label="Weak Rating Max"
                 type="number"
                 step="0.1"
                 value={settings.thresholds.weakRating}
@@ -295,10 +312,13 @@ export const App: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="threshold-newEntrantMonths" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 New Entrant (Months)
               </label>
               <input
+                id="threshold-newEntrantMonths"
+                name="newEntrantMonths"
+                aria-label="New Entrant Months"
                 type="number"
                 value={settings.thresholds.newEntrantMonths}
                 onChange={(e) =>
@@ -315,10 +335,13 @@ export const App: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="threshold-greenMin" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Green Min Score
               </label>
               <input
+                id="threshold-greenMin"
+                name="greenMin"
+                aria-label="Green Minimum Score"
                 type="number"
                 value={settings.thresholds.greenMin}
                 onChange={(e) =>
@@ -368,6 +391,9 @@ export const App: React.FC = () => {
               <div key={idx} className="grid grid-cols-12 gap-2 items-center">
                 <div className="col-span-4">
                   <input
+                    id={`bsr-min-${idx}`}
+                    name={`bsrMin_${idx}`}
+                    aria-label={`Tier ${idx + 1} Minimum BSR`}
                     type="number"
                     value={tier.minBsr}
                     onChange={(e) =>
@@ -378,6 +404,9 @@ export const App: React.FC = () => {
                 </div>
                 <div className="col-span-4">
                   <input
+                    id={`bsr-max-${idx}`}
+                    name={`bsrMax_${idx}`}
+                    aria-label={`Tier ${idx + 1} Maximum BSR`}
                     type="number"
                     value={tier.maxBsr}
                     onChange={(e) =>
@@ -388,6 +417,9 @@ export const App: React.FC = () => {
                 </div>
                 <div className="col-span-3">
                   <input
+                    id={`bsr-sales-${idx}`}
+                    name={`bsrSales_${idx}`}
+                    aria-label={`Tier ${idx + 1} Monthly Sales`}
                     type="number"
                     value={tier.monthlySales}
                     onChange={(e) =>
@@ -400,7 +432,8 @@ export const App: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleRemoveBsrTier(idx)}
-                    className="p-1 text-slate-400 hover:text-rose-500 transition"
+                    aria-label={`Remove Tier ${idx + 1}`}
+                    className="p-1 text-slate-400 hover:text-rose-500 transition cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -422,13 +455,16 @@ export const App: React.FC = () => {
 
           <div className="grid grid-cols-3 gap-3.5">
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="printing-fixedCost" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Fixed Cost ($)
               </label>
               <input
+                id="printing-fixedCost"
+                name="fixedCost"
+                aria-label="Fixed Printing Cost in USD"
                 type="number"
                 step="0.05"
-                value={settings.printingCost.fixedCost}
+                value={Number(settings.printingCost.fixedCost.toFixed(2))}
                 onChange={(e) =>
                   setSettings({
                     ...settings,
@@ -443,13 +479,16 @@ export const App: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="printing-perPageCost" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Per Page Cost ($)
               </label>
               <input
+                id="printing-perPageCost"
+                name="perPageCost"
+                aria-label="Per Page Printing Cost in USD"
                 type="number"
                 step="0.001"
-                value={settings.printingCost.perPageCost}
+                value={Number(settings.printingCost.perPageCost.toFixed(3))}
                 onChange={(e) =>
                   setSettings({
                     ...settings,
@@ -464,15 +503,18 @@ export const App: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="royalty-rate" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 KDP Royalty Rate
               </label>
               <input
+                id="royalty-rate"
+                name="royaltyRate"
+                aria-label="KDP Royalty Rate"
                 type="number"
                 step="0.05"
                 min="0"
                 max="1"
-                value={settings.royaltyRate}
+                value={Number(settings.royaltyRate.toFixed(2))}
                 onChange={(e) =>
                   setSettings({
                     ...settings,
@@ -497,10 +539,23 @@ export const App: React.FC = () => {
 
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <input
+                type="text"
+                name="username"
+                autoComplete="username"
+                style={{ display: 'none' }}
+                aria-hidden="true"
+                readOnly
+                value="kdp-user"
+              />
+              <label htmlFor="claudeApiKey" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 API Key
               </label>
               <input
+                id="claudeApiKey"
+                name="claudeApiKey"
+                aria-label="Anthropic Claude API Key"
+                autoComplete="current-password"
                 type="password"
                 placeholder="sk-ant-api03-..."
                 value={settings.claudeApiKey}
@@ -510,10 +565,14 @@ export const App: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="claudeModel" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Claude Model
               </label>
               <input
+                id="claudeModel"
+                name="claudeModel"
+                aria-label="Claude Model Name"
+                autoComplete="off"
                 type="text"
                 placeholder="claude-sonnet-5-5"
                 value={settings.claudeModel}
@@ -536,10 +595,13 @@ export const App: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="fetchDelay-min" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Min Fetch Delay (ms)
               </label>
               <input
+                id="fetchDelay-min"
+                name="fetchDelayMin"
+                aria-label="Minimum fetch delay in milliseconds"
                 type="number"
                 min="1000"
                 max="10000"
@@ -555,10 +617,13 @@ export const App: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="fetchDelay-max" className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Max Fetch Delay (ms)
               </label>
               <input
+                id="fetchDelay-max"
+                name="fetchDelayMax"
+                aria-label="Maximum fetch delay in milliseconds"
                 type="number"
                 min="1000"
                 max="10000"
