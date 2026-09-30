@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>KDP Niche Finder - Extension Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #0f172a; color: #f8fafc; display: flex; height: 100vh; overflow: hidden; }
+    
+    /* Left simulated Amazon content */
+    .amazon-sim { flex: 1; padding: 24px; overflow-y: auto; background: #f3f4f6; color: #111827; }
+    .amazon-header { background: #131921; color: white; padding: 12px 20px; display: flex; align-items: center; gap: 16px; border-radius: 8px; margin-bottom: 20px; }
+    .amazon-search { flex: 1; background: white; color: #111; padding: 8px 14px; border-radius: 4px; font-weight: 500; border: 2px solid #febd69; }
+    .amazon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .book-card { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .book-thumb { height: 180px; background: linear-gradient(135deg, #cbd5e1, #94a3b8); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #334155; font-weight: 600; text-align: center; padding: 8px; margin-bottom: 12px; }
+    .book-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; color: #007185; }
+    .book-price { font-size: 16px; font-weight: 700; color: #b12704; }
+
+    /* Right Extension Sidebar (Exact 380px) */
+    .sidebar { width: 380px; background: #0f172a; border-left: 1px solid #334155; display: flex; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,0.5); }
+    .sidebar-header { padding: 14px 16px; background: #1e293b; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
+    .sidebar-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; color: #38bdf8; }
+    .tabs-nav { display: flex; background: #1e293b; border-bottom: 1px solid #334155; }
+    .tab-btn { flex: 1; padding: 10px; background: none; border: none; color: #94a3b8; font-weight: 600; font-size: 13px; cursor: pointer; text-align: center; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .tab-btn.active { color: #38bdf8; border-bottom-color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
+
+    .tab-content { flex: 1; overflow-y: auto; padding: 16px; }
+    .hidden { display: none !important; }
+
+    /* Score Gauge Component */
+    .gauge-card { background: #1e293b; border-radius: 12px; padding: 18px; text-align: center; border: 1px solid #334155; margin-bottom: 16px; position: relative; }
+    .gauge-circle { width: 140px; height: 140px; border-radius: 50%; border: 8px solid #22c55e; margin: 0 auto 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 25px rgba(34, 197, 94, 0.25); }
+    .gauge-score { font-size: 42px; font-weight: 800; color: #22c55e; }
+    .gauge-label { font-size: 14px; font-weight: 700; text-transform: uppercase; color: #22c55e; letter-spacing: 0.5px; }
+    .gauge-sub { font-size: 11px; color: #94a3b8; margin-top: 6px; }
+
+    /* Stat Cards */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px; }
+    .stat-title { font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
+    .stat-val { font-size: 18px; font-weight: 700; color: #f8fafc; margin-top: 2px; }
+    .stat-badge { font-size: 9px; background: rgba(56, 189, 248, 0.2); color: #38bdf8; padding: 1px 5px; border-radius: 4px; margin-left: 4px; }
+
+    /* Factor Bars */
+    .factor-item { margin-bottom: 12px; }
+    .factor-header { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+    .factor-bar { height: 7px; background: #334155; border-radius: 4px; overflow: hidden; }
+    .factor-fill { height: 100%; background: #22c55e; border-radius: 4px; width: 0; transition: width 1s ease-in-out; }
+    .factor-exp { font-size: 10px; color: #94a3b8; margin-top: 3px; }
+
+    /* Books Table */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
+    .filter-input { flex: 1; background: #1e293b; border: 1px solid #334155; color: white; padding: 6px 10px; border-radius: 4px; font-size: 12px; }
+    .table-container { overflow-x: auto; background: #1e293b; border: 1px solid #334155; border-radius: 8px; max-height: 480px; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; }
+    th { background: #0f172a; padding: 8px 10px; font-weight: 600; color: #94a3b8; border-bottom: 1px solid #334155; position: sticky; top: 0; }
+    td { padding: 8px 10px; border-bottom: 1px solid #334155; white-space: nowrap; }
+    tr.opportunity { background: rgba(34, 197, 94, 0.08); }
+    .badge-opp { background: #15803d; color: #dcfce7; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+  </style>
+</head>
+<body>
+
+  <!-- Left: Amazon Search Mockup -->
+  <div class="amazon-sim">
+    <div class="amazon-header">
+      <span style="font-size: 20px; font-weight: bold; color: #febd69;">amazon</span>
+      <div class="amazon-search">Books: toddler coloring book</div>
+      <span style="font-size: 12px; color: #ddd;">Deliver to New York 10001</span>
+    </div>
+
+    <div class="amazon-grid">
+      <div class="book-card">
+        <div class="book-thumb">Toddler Coloring Book: 100 Simple Animals</div>
+        <div class="book-title">Toddler Coloring Book: Big & Easy Lines for Kids</div>
+        <div class="book-price">$6.99</div>
+        <div style="font-size: 11px; color: #666; margin-top: 4px;">BSR: 8,420 | 18 Reviews</div>
+      </div>
+      <div class="book-card">
+        <div class="book-thumb">First Fun Coloring for Ages 1-3</div>
+        <div class="book-title">My First Big Book of Coloring Things That Go</div>
+        <div class="book-price">$7.49</div>
+        <div style="font-size: 11px; color: #666; margin-top: 4px;">BSR: 14,200 | 25 Reviews</div>
+      </div>
+      <div class="book-card">
+        <div class="book-thumb">Preschool Scissor & Color</div>
+        <div class="book-title">Fun Animals Coloring for Preschoolers</div>
+        <div class="book-price">$8.99</div>
+        <div style="font-size: 11px; color: #666; margin-top: 4px;">BSR: 22,500 | 14 Reviews</div>
+      </div>
+      <div class="book-card">
+        <div class="book-thumb">ABC Letters & Animals</div>
+        <div class="book-title">Alphabet Coloring Book for Toddlers</div>
+        <div class="book-price">$6.99</div>
+        <div style="font-size: 11px; color: #666; margin-top: 4px;">BSR: 19,100 | 48 Reviews</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: KDP Niche Finder Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <span style="color: #22c55e;">✦</span> KDP Niche Finder
+      </div>
+      <div style="font-size: 11px; background: #334155; padding: 2px 8px; border-radius: 4px; color: #38bdf8;">v1.0.0</div>
+    </div>
+
+    <div class="tabs-nav">
+      <button class="tab-btn active" id="btn-overview" onclick="switchTab('overview')">Overview</button>
+      <button class="tab-btn" id="btn-books" onclick="switchTab('books')">Books (10)</button>
+    </div>
+
+    <!-- OVERVIEW TAB -->
+    <div class="tab-content" id="tab-overview">
+      <div class="gauge-card">
+        <div class="gauge-circle">
+          <div class="gauge-score">86</div>
+          <div class="gauge-label">Good Opportunity</div>
+        </div>
+        <div class="gauge-sub">Based on 10 books | search: toddler coloring book</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-title">Avg BSR (Top 10)</div>
+          <div class="stat-val">16,055</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Opportunity Books</div>
+          <div class="stat-val" style="color: #22c55e;">4 of 10</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Median Reviews</div>
+          <div class="stat-val">22</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Est. Monthly Royalty <span class="stat-badge">rough</span></div>
+          <div class="stat-val" style="color: #38bdf8;">$4,120</div>
+        </div>
+      </div>
+
+      <!-- Factor progress bars -->
+      <div style="margin-top: 8px;">
+        <div class="factor-item">
+          <div class="factor-header"><span>Demand</span><span>35 / 35 pts</span></div>
+          <div class="factor-bar"><div class="factor-fill" style="width: 100%;"></div></div>
+          <div class="factor-exp">10 of 10 books have BSR under 100,000</div>
+        </div>
+        <div class="factor-item">
+          <div class="factor-header"><span>Competition Gap</span><span>24 / 30 pts</span></div>
+          <div class="factor-bar"><div class="factor-fill" style="width: 80%;"></div></div>
+          <div class="factor-exp">8 of 10 books have under 50 reviews</div>
+        </div>
+        <div class="factor-item">
+          <div class="factor-header"><span>Weak Competitors</span><span>15 / 15 pts</span></div>
+          <div class="factor-bar"><div class="factor-fill" style="width: 100%;"></div></div>
+          <div class="factor-exp">4 weak competitors identified in top 10</div>
+        </div>
+        <div class="factor-item">
+          <div class="factor-header"><span>Profit Potential</span><span>9 / 10 pts</span></div>
+          <div class="factor-bar"><div class="factor-fill" style="width: 90%;"></div></div>
+          <div class="factor-exp">Median royalty per sale is $2.85</div>
+        </div>
+        <div class="factor-item">
+          <div class="factor-header"><span>New Entrant Friendly</span><span>8 / 10 pts</span></div>
+          <div class="factor-bar"><div class="factor-fill" style="width: 80%;"></div></div>
+          <div class="factor-exp">25% published in last 12 months</div>
+        </div>
+      </div>
+
+      <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; border-radius: 8px; padding: 12px; margin-top: 14px; font-size: 11px; line-height: 1.5; color: #86efac;">
+        <strong>Verdict:</strong> Demand is strong and competition is weak. High potential for quick ranking!
+      </div>
+    </div>
+
+    <!-- BOOKS TAB -->
+    <div class="tab-content hidden" id="tab-books">
+      <div class="filter-bar">
+        <input type="text" class="filter-input" placeholder="Filter title..." id="title-filter" oninput="filterBooks()">
+        <button style="background: #334155; border: 1px solid #475569; color: white; padding: 5px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Copy TSV</button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Title</th>
+              <th>Price</th>
+              <th>BSR</th>
+              <th>Reviews</th>
+              <th>Sales/mo</th>
+              <th>Royalty/mo</th>
+              <th>Flag</th>
+            </tr>
+          </thead>
+          <tbody id="books-tbody">
+            <tr class="opportunity">
+              <td>1</td>
+              <td>Toddler Coloring Book: Big Lines</td>
+              <td>$6.99</td>
+              <td>8,420</td>
+              <td>18</td>
+              <td>350</td>
+              <td>$997</td>
+              <td><span class="badge-opp">★ Opportunity</span></td>
+            </tr>
+            <tr class="opportunity">
+              <td>2</td>
+              <td>My First Big Book of Animals</td>
+              <td>$7.49</td>
+              <td>14,200</td>
+              <td>25</td>
+              <td>350</td>
+              <td>$1,120</td>
+              <td><span class="badge-opp">★ Opportunity</span></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>Fun Animals Preschool Coloring</td>
+              <td>$8.99</td>
+              <td>22,500</td>
+              <td>142</td>
+              <td>80</td>
+              <td>$328</td>
+              <td>—</td>
+            </tr>
+            <tr class="opportunity">
+              <td>4</td>
+              <td>Alphabet Toddler Color & Trace</td>
+              <td>$6.99</td>
+              <td>19,100</td>
+              <td>14</td>
+              <td>350</td>
+              <td>$997</td>
+              <td><span class="badge-opp">★ Opportunity</span></td>
+            </tr>
+            <tr class="opportunity">
+              <td>5</td>
+              <td>Things That Go Coloring Book</td>
+              <td>$7.99</td>
+              <td>31,400</td>
+              <td>22</td>
+              <td>80</td>
+              <td>$272</td>
+              <td><span class="badge-opp">★ Opportunity</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="font-size: 10px; color: #64748b; margin-top: 10px; text-align: center;">
+        Estimates are rough. BSR to sales mapping is configurable in Settings.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      document.getElementById('btn-overview').classList.toggle('active', tab === 'overview');
+      document.getElementById('btn-books').classList.toggle('active', tab === 'books');
+      document.getElementById('tab-overview').classList.toggle('hidden', tab !== 'overview');
+      document.getElementById('tab-books').classList.toggle('hidden', tab !== 'books');
+    }
+
+    function filterBooks() {
+      const q = document.getElementById('title-filter').value.toLowerCase();
+      const rows = document.querySelectorAll('#books-tbody tr');
+      rows.forEach(r => {
+        r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+      });
+    }
+
+    // Auto-switch tabs to demo both views
+    setTimeout(() => { switchTab('books'); }, 3000);
+    setTimeout(() => { switchTab('overview'); }, 7000);
+  </script>
+</body>
+</html>

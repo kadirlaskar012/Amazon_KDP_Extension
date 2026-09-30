@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>KDP Niche Finder - Video Demo & Showcase</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #0b0f19; color: #f1f5f9; min-height: 100vh; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
+    .container { max-width: 960px; width: 100%; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .badge { display: inline-block; background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 9999px; padding: 4px 14px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+    h1 { font-size: 32px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; }
+    p.sub { font-size: 15px; color: #94a3b8; margin-top: 8px; }
+    .video-wrapper { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.6); position: relative; margin-bottom: 24px; text-align: center; }
+    .video-wrapper img { width: 100%; max-height: 600px; object-fit: contain; display: block; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 20px; }
+    .info-card { background: #111827; border: 1px solid #1f2937; border-radius: 8px; padding: 18px; }
+    .info-card h3 { font-size: 15px; color: #38bdf8; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .info-card p { font-size: 13px; color: #9ca3af; line-height: 1.5; }
+    .links-bar { margin-top: 24px; display: flex; gap: 12px; justify-content: center; }
+    .btn { background: #22c55e; color: #022c22; font-weight: 700; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; transition: 0.2s; }
+    .btn:hover { background: #16a34a; }
+    .btn-secondary { background: #1f2937; color: #e5e7eb; border: 1px solid #374151; }
+    .btn-secondary:hover { background: #374151; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="badge">Official Promotional & Review Video</div>
+      <h1>KDP Niche Finder — Live Walkthrough</h1>
+      <p class="sub">Complete walkthrough demonstrating Amazon Books search parsing, 0-100 Niche Scoring, and Weak Competitor detection.</p>
+    </div>
+
+    <div class="video-wrapper">
+      <img src="kdp_niche_finder_demo.webp" alt="KDP Niche Finder Walkthrough Animation">
+    </div>
+
+    <div class="links-bar">
+      <a href="demo_preview.html" target="_blank" class="btn">Launch Interactive Live Demo</a>
+      <a href="../images/promo_marquee_banner.jpg" target="_blank" class="btn btn-secondary">View Promo Banner</a>
+      <a href="../../01_extension_package/kdp-niche-finder-v1.0.0.zip" download class="btn btn-secondary">Download Extension ZIP</a>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <h3>✦ Phase 1: Real-time Amazon Parsing</h3>
+        <p>Reads live Amazon Books search results directly in your browser. Extracts title, price, reviews, ratings, BSR, and page counts with 2-3s polite background queue.</p>
+      </div>
+      <div class="info-card">
+        <h3>✦ Phase 2: Instant Niche Scoring</h3>
+        <p>Computes 0-100 score across 5 weighted factors: Demand (35%), Competition Gap (30%), Weak Competitors (15%), Profit (10%), and New Entrant Friendliness (10%).</p>
+      </div>
+      <div class="info-card">
+        <h3>✦ Weak Competitor Detection</h3>
+        <p>Flags low-hanging opportunities where books have high demand (BSR &lt; 100k) but under 30 reviews or under 4.0 star ratings.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
