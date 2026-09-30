@@ -54,39 +54,8 @@ export async function removeStorageItem(key: string): Promise<void> {
 }
 
 // Settings
-export async function getSettings(): Promise<Settings> {
-  const saved = await getStorageItem<Partial<Settings>>(STORAGE_KEYS.SETTINGS, {});
-  return {
-    ...DEFAULT_SETTINGS,
-    ...saved,
-    weights: {
-      ...DEFAULT_SETTINGS.weights,
-      ...(saved.weights || {}),
-    },
-    fetchDelayMs: {
-      ...DEFAULT_SETTINGS.fetchDelayMs,
-      ...(saved.fetchDelayMs || {}),
-    },
-  };
-}
-
-export async function saveSettings(settings: Partial<Settings>): Promise<Settings> {
-  const current = await getSettings();
-  const updated: Settings = {
-    ...current,
-    ...settings,
-    weights: {
-      ...current.weights,
-      ...(settings.weights || {}),
-    },
-    fetchDelayMs: {
-      ...current.fetchDelayMs,
-      ...(settings.fetchDelayMs || {}),
-    },
-  };
-  await setStorageItem(STORAGE_KEYS.SETTINGS, updated);
-  return updated;
-}
+import { getSettings, saveSettings } from './settings';
+export { getSettings, saveSettings };
 
 // 24-Hour Product Cache
 export async function getCachedBook(asin: string): Promise<Book | null> {

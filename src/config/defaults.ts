@@ -1,4 +1,21 @@
-import type { Settings, ScoreWeights, BsrSalesTier, PrintingCostTier } from '../types';
+import type {
+  Settings,
+  ScoreWeights,
+  BsrSalesTier,
+  PrintingCostTier,
+  PrintingCostConfig,
+  Thresholds,
+} from '../types';
+
+export const DEFAULT_THRESHOLDS: Thresholds = {
+  demandBsr: 100000,
+  lowReviewCount: 50,
+  weakReviewCount: 30,
+  weakRating: 4.0,
+  newEntrantMonths: 12,
+  greenMin: 80,
+  yellowMin: 60,
+};
 
 export const DEFAULT_SCORE_WEIGHTS: ScoreWeights = {
   demand: 35,
@@ -16,18 +33,27 @@ export const DEFAULT_BSR_SALES_TABLE: BsrSalesTier[] = [
   { minBsr: 100001, maxBsr: 10000000, monthlySales: 20 },
 ];
 
+export const DEFAULT_PRINTING_COST: PrintingCostConfig = {
+  fixedCost: 1.00,
+  perPageCost: 0.012,
+};
+
 export const DEFAULT_PRINTING_COST_TABLE: PrintingCostTier[] = [
-  // Standard KDP Black & White Paperback on White Paper (US)
   { minPages: 24, maxPages: 108, fixedCost: 2.30, perPageCost: 0 },
   { minPages: 109, maxPages: 828, fixedCost: 1.00, perPageCost: 0.012 },
 ];
+
+export const DEFAULT_ROYALTY_RATE = 0.6;
 
 export const DEFAULT_SETTINGS: Settings = {
   claudeApiKey: '',
   claudeModel: 'claude-sonnet-5-5',
   weights: DEFAULT_SCORE_WEIGHTS,
+  thresholds: DEFAULT_THRESHOLDS,
   bsrSalesTable: DEFAULT_BSR_SALES_TABLE,
+  printingCost: DEFAULT_PRINTING_COST,
   printingCostTable: DEFAULT_PRINTING_COST_TABLE,
+  royaltyRate: DEFAULT_ROYALTY_RATE,
   fetchDelayMs: {
     min: 2000,
     max: 3000,

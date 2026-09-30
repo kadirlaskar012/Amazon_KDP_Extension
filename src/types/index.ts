@@ -4,6 +4,19 @@ export interface CategoryRank {
   url?: string;
 }
 
+export interface EstimateResult<T = number> {
+  value: T;
+  isEstimate: true;
+}
+
+export interface BookMetrics {
+  monthlySales: EstimateResult<number | null>;
+  royaltyPerSale: EstimateResult<number | null>;
+  monthlyRoyalty: EstimateResult<number | null>;
+  isOpportunity: boolean;
+  opportunityReasons: string[];
+}
+
 export interface Book {
   asin: string;
   title: string;
@@ -22,9 +35,27 @@ export interface Book {
   fetchedAt?: number;
   productUrl?: string;
   isOpportunity?: boolean;
+  opportunityReasons?: string[];
   monthlySalesEstimate?: number;
   monthlyRoyaltyEstimate?: number;
+  metrics?: BookMetrics;
   topReviewsText?: string[];
+}
+
+export interface FactorBreakdown {
+  name: string;
+  points: number;
+  maxPoints: number;
+  ratio: number;
+  explanation: string;
+}
+
+export interface ScoreBreakdown {
+  demand: FactorBreakdown;
+  competitionGap: FactorBreakdown;
+  weakCompetitors: FactorBreakdown;
+  profit: FactorBreakdown;
+  newEntrant: FactorBreakdown;
 }
 
 export interface NicheScore {
@@ -34,7 +65,11 @@ export interface NicheScore {
   weakCompetitors: number;
   profit: number;
   newEntrant: number;
-  label: 'green' | 'yellow' | 'red';
+  label: 'green' | 'yellow' | 'red' | 'insufficient';
+  breakdown: ScoreBreakdown;
+  booksAnalyzed: number;
+  warnings: string[];
+  verdict: string;
 }
 
 export interface SearchSnapshot {
@@ -75,6 +110,11 @@ export interface BsrSalesTier {
   monthlySales: number;
 }
 
+export interface PrintingCostConfig {
+  fixedCost: number;
+  perPageCost: number;
+}
+
 export interface PrintingCostTier {
   minPages: number;
   maxPages: number;
@@ -90,12 +130,32 @@ export interface ScoreWeights {
   newEntrant: number;
 }
 
+export interface Thresholds {
+  demandBsr: number;
+  lowReviewCount: number;
+  weakReviewCount: number;
+  weakRating: number;
+  newEntrantMonths: number;
+  greenMin: number;
+  yellowMin: number;
+}
+
+export interface NicheRevenueEstimate {
+  totalMonthlyRoyalty: EstimateResult<number>;
+  avgMonthlyRoyalty: EstimateResult<number>;
+  medianMonthlyRoyalty: EstimateResult<number>;
+  booksWithEstimates: number;
+}
+
 export interface Settings {
   claudeApiKey: string;
   claudeModel: string;
   weights: ScoreWeights;
+  thresholds: Thresholds;
   bsrSalesTable: BsrSalesTier[];
+  printingCost: PrintingCostConfig;
   printingCostTable: PrintingCostTier[];
+  royaltyRate: number;
   fetchDelayMs: {
     min: number;
     max: number;

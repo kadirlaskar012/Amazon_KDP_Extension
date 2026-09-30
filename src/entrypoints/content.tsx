@@ -6,6 +6,8 @@ import { Sidebar } from '../components/Sidebar';
 import { parseSearchResults, getSearchQuery, isAmazonBookSearchPage } from '../parsers/searchPage';
 import type { Book, QueueProgressState, ExtensionMessage } from '../types';
 import { saveSnapshot } from '../storage';
+import { calculateNicheScore } from '../services/scoring';
+import { getSettings } from '../storage/settings';
 import '../styles/globals.css';
 
 interface ContentAppProps {
@@ -77,11 +79,14 @@ const ContentApp: React.FC<ContentAppProps> = ({ initialBooks, initialQuery }) =
             return b;
           });
 
-          // Save active snapshot update
-          saveSnapshot({
-            query,
-            date: Date.now(),
-            books: updated,
+          // Save active snapshot update with score
+          getSettings().then((currentSettings) => {
+            saveSnapshot({
+              query,
+              date: Date.now(),
+              books: updated,
+              scores: calculateNicheScore(updated, currentSettings),
+            });
           });
 
           return updated;
