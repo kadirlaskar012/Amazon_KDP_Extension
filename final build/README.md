@@ -28,6 +28,7 @@ final build/
 │   ├── PERMISSIONS_JUSTIFICATION.md                  # Reviewer justifications for permissions
 │   └── PRIVACY_POLICY.md                             # Privacy policy required by Web Store
 └── 04_documentation_and_guides/
+    ├── KDP_NICHE_RESEARCH_MASTERCLASS_AND_LOGIC_DEEP_DIVE.md  # Deep Logic & Research Masterclass
     ├── USER_GUIDE_EN.md                              # Complete Step-by-Step User Guide (English)
     ├── USER_GUIDE_HI.md                              # संपूर्ण स्टेप-बाय-स्टेप यूज़र गाइड (हिंदी / Hindi)
     ├── USER_GUIDE_BN.md                              # সম্পূর্ণ ধাপে ধাপে ব্যবহার নির্দেশিকা (বাংলা / Bengali)
