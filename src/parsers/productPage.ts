@@ -103,9 +103,46 @@ export function parsePublishDate(text?: string | null): string | undefined {
  */
 export function parseCategoryRanks(doc: Document | Element): CategoryRank[] {
   const categoryRanks: CategoryRank[] = [];
+  const seen = new Set<string>();
 
-  // Look for standard Amazon sub-category lists (.zg_hrsr or similar)
-  const items = doc.querySelectorAll('.zg_hrsr li, .zg_hrsr_item, #detailBullets_feature_div ul.zg_hrsr li');
+  const addCategory = (rank: number, name: string, url?: string) => {
+    let clean = name.replace(/^in\s+/i, '').replace(/\(see top 100.*\)/i, '').replace(/[\n\r\t]+/g, ' ').trim();
+    clean = clean.replace(/\s*in\s+books\s*$/i, '').trim();
+    if (!clean || isNaN(rank) || rank <= 0) return;
+    const lower = clean.toLowerCase();
+    if (lower === 'books' || lower === 'kindle store' || lower === 'paid in kindle store') return;
+    if (seen.has(lower)) return;
+    seen.add(lower);
+
+    let fullUrl = url;
+    if (fullUrl && !fullUrl.startsWith('http')) {
+      fullUrl = `https://www.amazon.com${fullUrl.startsWith('/') ? '' : '/'}${fullUrl}`;
+    }
+
+    categoryRanks.push({
+      rank,
+      name: clean,
+      url: fullUrl,
+    });
+  };
+
+  // 1. Direct Category/BestSeller links (most accurate on modern Amazon)
+  const catLinks = doc.querySelectorAll('a[href*="/bestsellers/"], a[href*="/Best-Sellers-"], a[href*="/zgbs/"]');
+  for (const link of Array.from(catLinks)) {
+    const linkText = link.textContent?.trim() || '';
+    if (!linkText || /see top 100/i.test(linkText) || (linkText.toLowerCase() === 'books')) continue;
+    const parentText = link.parentElement?.textContent || '';
+    const match = parentText.match(/#\s*([0-9,]+)\s*(?:in|\s)/i);
+    if (match && match[1]) {
+      const rank = parseInt(match[1].replace(/,/g, ''), 10);
+      addCategory(rank, linkText, link.getAttribute('href') || undefined);
+    }
+  }
+
+  // 2. Standard Amazon sub-category lists (.zg_hrsr or detail bullets)
+  const items = doc.querySelectorAll(
+    '.zg_hrsr li, .zg_hrsr_item, #detailBulletsWrapper_feature_div ul.zg_hrsr li, #detailBullets_feature_div ul.zg_hrsr li'
+  );
   for (const item of Array.from(items)) {
     const text = item.textContent?.trim() || '';
     const match = text.match(/#([0-9,]+)\s+in\s+([^(\n]+)/i);
@@ -113,19 +150,15 @@ export function parseCategoryRanks(doc: Document | Element): CategoryRank[] {
       const rank = parseInt(match[1].replace(/,/g, ''), 10);
       const name = match[2].trim();
       const link = item.querySelector('a')?.getAttribute('href') || undefined;
-      if (!isNaN(rank) && name) {
-        categoryRanks.push({
-          rank,
-          name,
-          url: link ? (link.startsWith('http') ? link : `https://www.amazon.com${link}`) : undefined,
-        });
-      }
+      addCategory(rank, name, link);
     }
   }
 
-  // Fallback: If no .zg_hrsr list, search detail bullets for sub-rank lines
+  // 3. Fallback: Search all bullet items and table rows
   if (categoryRanks.length === 0) {
-    const bulletItems = doc.querySelectorAll('#detailBullets_feature_div li, #productDetails_db_sections tr');
+    const bulletItems = doc.querySelectorAll(
+      '#detailBulletsWrapper_feature_div li, #detailBullets_feature_div li, #productDetails_db_sections tr, #prodDetails tr, #SalesRank tr, #SalesRank td'
+    );
     for (const b of Array.from(bulletItems)) {
       const text = b.textContent || '';
       if (text.includes('in ') && text.includes('#')) {
@@ -134,9 +167,8 @@ export function parseCategoryRanks(doc: Document | Element): CategoryRank[] {
           if (m && m[1] && m[2]) {
             const rank = parseInt(m[1].replace(/,/g, ''), 10);
             const name = m[2].trim();
-            if (!isNaN(rank) && name && !name.toLowerCase().includes('books') && !name.toLowerCase().includes('kindle store')) {
-              categoryRanks.push({ rank, name });
-            }
+            const link = b.querySelector('a')?.getAttribute('href') || undefined;
+            addCategory(rank, name, link);
           }
         }
       }

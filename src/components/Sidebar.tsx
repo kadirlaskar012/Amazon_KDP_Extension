@@ -60,6 +60,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [watchlistSuccess, setWatchlistSuccess] = useState<string | null>(null);
   const [healthReport, setHealthReport] = useState<string | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('kdp_sidebar_width');
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 380 && parsed <= 900) return parsed;
+      }
+    }
+    return 480;
+  });
+  const [isResizing, setIsResizing] = useState(false);
+
+  // Resize drag listener
+  useEffect(() => {
+    if (!isResizing) return;
+    const isLeft = settings.sidebarPosition === 'left';
+    const handleMouseMove = (e: MouseEvent) => {
+      const newWidth = isLeft ? e.clientX : window.innerWidth - e.clientX;
+      const clamped = Math.max(380, Math.min(newWidth, Math.min(950, window.innerWidth - 40)));
+      setSidebarWidth(clamped);
+    };
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      try {
+        localStorage.setItem('kdp_sidebar_width', String(sidebarWidth));
+      } catch {}
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, settings.sidebarPosition, sidebarWidth]);
 
   // Load settings, active snapshot, recent snapshots, and watchlist
   useEffect(() => {
@@ -280,10 +314,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className={isDarkMode ? 'dark' : ''}>
       <aside
-        className={`fixed top-0 bottom-0 w-[380px] max-w-[100vw] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-2xl flex flex-col z-[999999] font-sans antialiased text-xs transition-colors select-text ${
+        style={{ width: `${sidebarWidth}px` }}
+        className={`fixed top-0 bottom-0 max-w-[100vw] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-2xl flex flex-col z-[999999] font-sans antialiased text-xs transition-colors select-text no-horizontal-scroll ${
           isLeft ? 'left-0 border-r border-slate-200 dark:border-slate-800' : 'right-0 border-l border-slate-200 dark:border-slate-800'
         }`}
       >
+        {/* Resize border drag handle */}
+        <div
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setIsResizing(true);
+          }}
+          title="Drag border to resize sidebar"
+          className={`absolute top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-500/50 active:bg-blue-600 transition-colors z-[1000] flex items-center justify-center group ${
+            isLeft ? 'right-0' : 'left-0'
+          }`}
+        >
+          <div className="w-0.5 h-8 bg-slate-300 dark:bg-slate-700 rounded-full group-hover:bg-blue-500 transition-colors" />
+        </div>
+
         {/* Header */}
         <header className="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shrink-0">
           <div className="flex items-center gap-2">
@@ -338,7 +387,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={toggleTheme}
               title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="p-1 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              className="p-1 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
               {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
             </button>
@@ -346,7 +395,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={() => setIsOpen(false)}
               title="Collapse Sidebar"
-              className="p-1 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              className="p-1 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
               {isLeft ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </button>
@@ -373,16 +422,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* Tab Navigation */}
+        {/* Tab Navigation (Responsive 4x2 Grid with zero horizontal scrollbar) */}
         <Tabs
           activeTab={activeTab}
           onTabChange={setActiveTab}
           booksCount={books.length}
         />
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto">
-          {activeTab === 'overview' && (
+        {/* Content Area - All tabs stay mounted so background tasks/scans continue uninterrupted */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className={activeTab === 'overview' ? 'block' : 'hidden'}>
             <ErrorBoundary name="Overview Tab">
               <OverviewTab
                 query={query}
@@ -392,9 +441,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onGoToBooks={() => setActiveTab('books')}
               />
             </ErrorBoundary>
-          )}
+          </div>
 
-          {activeTab === 'books' && (
+          <div className={activeTab === 'books' ? 'block h-full' : 'hidden'}>
             <ErrorBoundary name="Books Tab">
               <BooksTab
                 books={books}
@@ -402,77 +451,65 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onAddToWatchlist={handleAddToWatchlist}
               />
             </ErrorBoundary>
-          )}
+          </div>
 
-          {activeTab === 'keywords' && (
-            <div className="p-3">
-              <ErrorBoundary name="Keywords Tab">
-                <KeywordsTab
-                  snapshot={currentSnapshot}
-                  settings={settings}
-                  onUpdateSnapshotKeywords={handleUpdateSnapshotKeywords}
-                  onCaptchaEncountered={() => onPauseQueue()}
-                />
-              </ErrorBoundary>
-            </div>
-          )}
+          <div className={activeTab === 'keywords' ? 'block p-3' : 'hidden'}>
+            <ErrorBoundary name="Keywords Tab">
+              <KeywordsTab
+                snapshot={currentSnapshot}
+                settings={settings}
+                onUpdateSnapshotKeywords={handleUpdateSnapshotKeywords}
+                onCaptchaEncountered={() => onPauseQueue()}
+              />
+            </ErrorBoundary>
+          </div>
 
-          {activeTab === 'categories' && (
-            <div className="p-3">
-              <ErrorBoundary name="Categories Tab">
-                <CategoriesTab
-                  snapshot={currentSnapshot}
-                  settings={settings}
-                  onUpdateSnapshotCategories={handleUpdateSnapshotCategories}
-                  onCaptchaEncountered={() => onPauseQueue()}
-                />
-              </ErrorBoundary>
-            </div>
-          )}
+          <div className={activeTab === 'categories' ? 'block p-3' : 'hidden'}>
+            <ErrorBoundary name="Categories Tab">
+              <CategoriesTab
+                snapshot={currentSnapshot}
+                settings={settings}
+                onUpdateSnapshotCategories={handleUpdateSnapshotCategories}
+                onCaptchaEncountered={() => onPauseQueue()}
+              />
+            </ErrorBoundary>
+          </div>
 
-          {activeTab === 'specs' && (
-            <div className="p-3">
-              <ErrorBoundary name="Specs Tab">
-                <SpecsTab
-                  snapshot={currentSnapshot}
-                  onUpdateSnapshotSpecs={handleUpdateSnapshotSpecs}
-                />
-              </ErrorBoundary>
-            </div>
-          )}
+          <div className={activeTab === 'specs' ? 'block p-3' : 'hidden'}>
+            <ErrorBoundary name="Specs Tab">
+              <SpecsTab
+                snapshot={currentSnapshot}
+                onUpdateSnapshotSpecs={handleUpdateSnapshotSpecs}
+              />
+            </ErrorBoundary>
+          </div>
 
-          {activeTab === 'reviews' && (
-            <div className="p-3">
-              <ErrorBoundary name="Reviews Tab">
-                <ReviewsTab
-                  snapshot={currentSnapshot}
-                  onUpdateSnapshotReviewGap={handleUpdateSnapshotReviewGap}
-                  onCaptchaEncountered={() => onPauseQueue()}
-                />
-              </ErrorBoundary>
-            </div>
-          )}
+          <div className={activeTab === 'reviews' ? 'block p-3' : 'hidden'}>
+            <ErrorBoundary name="Reviews Tab">
+              <ReviewsTab
+                snapshot={currentSnapshot}
+                onUpdateSnapshotReviewGap={handleUpdateSnapshotReviewGap}
+                onCaptchaEncountered={() => onPauseQueue()}
+              />
+            </ErrorBoundary>
+          </div>
 
-          {activeTab === 'watchlist' && (
-            <div className="p-3">
-              <ErrorBoundary name="Watchlist Tab">
-                <WatchlistTab
-                  onCaptchaEncountered={() => onPauseQueue()}
-                />
-              </ErrorBoundary>
-            </div>
-          )}
+          <div className={activeTab === 'watchlist' ? 'block p-3' : 'hidden'}>
+            <ErrorBoundary name="Watchlist Tab">
+              <WatchlistTab
+                onCaptchaEncountered={() => onPauseQueue()}
+              />
+            </ErrorBoundary>
+          </div>
 
-          {activeTab === 'ideas' && (
-            <div className="p-3">
-              <ErrorBoundary name="AI Ideas Tab">
-                <IdeasTab
-                  snapshot={currentSnapshot}
-                  onUpdateSnapshotIdeas={handleUpdateSnapshotIdeas}
-                />
-              </ErrorBoundary>
-            </div>
-          )}
+          <div className={activeTab === 'ideas' ? 'block p-3' : 'hidden'}>
+            <ErrorBoundary name="AI Ideas Tab">
+              <IdeasTab
+                snapshot={currentSnapshot}
+                onUpdateSnapshotIdeas={handleUpdateSnapshotIdeas}
+              />
+            </ErrorBoundary>
+          </div>
         </div>
 
         {/* Health Check diagnostic banner */}

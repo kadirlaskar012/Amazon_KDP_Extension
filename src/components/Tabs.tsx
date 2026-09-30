@@ -51,23 +51,30 @@ export const Tabs: React.FC<TabsProps> = ({ activeTab, onTabChange, booksCount }
   ];
 
   return (
-    <div className="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-x-auto no-scrollbar">
+    <div className="grid grid-cols-4 gap-1 p-1.5 bg-slate-100/90 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 overflow-hidden">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className={`flex items-center gap-1.5 py-2 px-3 text-xs font-medium whitespace-nowrap border-b-2 transition-colors ${
+            className={`flex items-center justify-center gap-1.5 py-1.5 px-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer select-none truncate ${
               isActive
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-950/20'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm ring-1 ring-blue-500/50'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200/70 dark:border-slate-700/60'
             }`}
+            title={tab.label}
           >
-            {tab.icon}
-            <span>{tab.label}</span>
+            <span className="shrink-0">{tab.icon}</span>
+            <span className="truncate">{tab.label}</span>
             {tab.badge !== undefined && (
-              <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-600 dark:text-slate-400 font-semibold">
+              <span
+                className={`ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-bold shrink-0 ${
+                  isActive
+                    ? 'bg-white/25 text-white'
+                    : 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
+                }`}
+              >
                 {tab.badge}
               </span>
             )}

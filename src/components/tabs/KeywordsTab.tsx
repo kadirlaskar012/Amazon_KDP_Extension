@@ -188,7 +188,7 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
   };
 
   return (
-    <div className="space-y-4 text-xs text-slate-300">
+    <div className="space-y-4 text-xs font-sans text-slate-700 dark:text-slate-200 no-horizontal-scroll">
       {/* Toast Notification */}
       {copyFeedback && (
         <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-xl animate-fade-in">
@@ -197,8 +197,8 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
       )}
 
       {/* Top Search Controls */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-3 shadow-lg">
-        <label className="block mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 shadow-xs">
+        <label className="block mb-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
           Seed Keyword
         </label>
         <div className="flex gap-2">
@@ -207,13 +207,13 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
             value={seedInput}
             onChange={(e) => setSeedInput(e.target.value)}
             placeholder="e.g. toddler coloring book"
-            className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             onKeyDown={(e) => e.key === 'Enter' && handleFindKeywords()}
           />
           <button
             onClick={handleFindKeywords}
             disabled={isLoading || !seedInput.trim()}
-            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 font-medium text-white shadow hover:bg-indigo-500 disabled:opacity-50 transition"
+            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition cursor-pointer"
           >
             {isLoading ? (
               <>
@@ -221,7 +221,7 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
-                <span>Searching</span>
+                <span>Searching...</span>
               </>
             ) : (
               <span>Find Keywords</span>
@@ -229,29 +229,29 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
           </button>
         </div>
 
-        <div className="mt-2 flex items-center justify-between text-[11px] text-slate-400">
-          <label className="flex items-center gap-1.5 cursor-pointer">
+        <div className="mt-2.5 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <label className="flex items-center gap-1.5 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={includeDigits}
               onChange={(e) => setIncludeDigits(e.target.checked)}
-              className="rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-0"
+              className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-0"
             />
-            <span>Include 0-9 suffixes (37 total requests)</span>
+            <span>Include 0-9 suffixes (37 total queries)</span>
           </label>
-          <span className="text-slate-500">{keywords.length} suggestions cached</span>
+          <span className="font-medium text-slate-600 dark:text-slate-400">{keywords.length} suggestions cached</span>
         </div>
 
         {/* Progress Bar */}
         {isLoading && progress && (
           <div className="mt-3 space-y-1.5">
-            <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+            <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 font-mono">
               <span className="truncate max-w-[240px]">{progress.message}</span>
               <span>{Math.round((progress.current / progress.total) * 100)}%</span>
             </div>
-            <div className="h-1.5 w-full rounded-full bg-slate-950 overflow-hidden">
+            <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 transition-all duration-300"
+                className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 transition-all duration-300"
                 style={{ width: `${Math.min(100, Math.round((progress.current / progress.total) * 100))}%` }}
               />
             </div>
@@ -264,14 +264,14 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={handleCopy7BackendSlots}
-            className="rounded-lg bg-emerald-600/20 border border-emerald-500/40 px-2.5 py-1 text-[11px] font-medium text-emerald-300 hover:bg-emerald-600/30 transition flex items-center gap-1"
+            className="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700/60 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition flex items-center gap-1 cursor-pointer"
             title="Group into 7 lines ≤ 50 chars, no duplicate words"
           >
             📋 Copy 7 KDP Slots
           </button>
           <button
             onClick={handleCopyTop20}
-            className="rounded-lg bg-indigo-600/20 border border-indigo-500/40 px-2 py-1 text-[11px] font-medium text-indigo-300 hover:bg-indigo-600/30 transition"
+            className="rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-300 dark:border-indigo-700/60 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition cursor-pointer"
           >
             Copy Top 20
           </button>
@@ -283,22 +283,22 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
                 window.open(compareUrl, '_blank', 'noopener,noreferrer');
               }
             }}
-            className="rounded-lg bg-purple-600/20 border border-purple-500/40 px-2 py-1 text-[11px] font-medium text-purple-300 hover:bg-purple-600/30 transition flex items-center gap-1"
+            className="rounded-lg bg-purple-50 dark:bg-purple-950/40 border border-purple-300 dark:border-purple-700/60 px-2.5 py-1.5 text-xs font-semibold text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 transition flex items-center gap-1 cursor-pointer"
             title="Compare search volume on Google Trends for top 5 keywords"
           >
-            📈 Compare Top 5 (Trends)
+            📈 Compare Top 5
           </button>
           <button
             onClick={handleCopyAll}
-            className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-700 transition"
+            className="rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
           >
             Copy All ({filteredKeywords.length})
           </button>
           <button
             onClick={handleCopyTsv}
-            className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-700 transition"
+            className="rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
           >
-            Copy as TSV
+            Copy TSV
           </button>
         </div>
       )}
@@ -311,14 +311,14 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
             placeholder="Filter keywords..."
-            className="flex-1 rounded-lg border border-slate-800 bg-slate-900/60 px-2.5 py-1 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+            className="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:border-indigo-500 focus:outline-none"
           />
-          <label className="flex items-center gap-1.5 text-[11px] text-slate-300 whitespace-nowrap cursor-pointer">
+          <label className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap cursor-pointer select-none">
             <input
               type="checkbox"
               checked={highOnly}
               onChange={(e) => setHighOnly(e.target.checked)}
-              className="rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-0"
+              className="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-0"
             />
             <span>High only</span>
           </label>
@@ -327,27 +327,27 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
 
       {/* Keywords Table */}
       {keywords.length > 0 ? (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/80 overflow-hidden shadow-lg">
-          <div className="max-h-[360px] overflow-y-auto overflow-x-auto">
-            <table className="w-full text-left text-[11px]">
-              <thead className="sticky top-0 bg-slate-950 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider text-[10px]">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
+          <div className="max-h-[380px] overflow-y-auto no-horizontal-scroll">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700 uppercase tracking-wider text-[10px] select-none">
                 <tr>
-                  <th className="py-2 px-2.5">Keyword</th>
-                  <th className="py-2 px-1 text-center" title="Lowest position in autocomplete suggestions">Pos</th>
-                  <th className="py-2 px-1 text-center" title="Present in X of top 10 titles">Titles</th>
-                  <th className="py-2 px-1.5 text-center" title="Average BSR of top 5 results">BSR</th>
-                  <th className="py-2 px-2 text-right">Score</th>
-                  <th className="py-2 px-1 text-center">Action</th>
+                  <th className="py-2.5 px-3">Keyword</th>
+                  <th className="py-2.5 px-1.5 text-center" title="Lowest position in autocomplete suggestions">Pos</th>
+                  <th className="py-2.5 px-1.5 text-center" title="Present in X of top 10 titles">Titles</th>
+                  <th className="py-2.5 px-2 text-center" title="Average BSR of top 5 results">BSR</th>
+                  <th className="py-2.5 px-2 text-right">Score</th>
+                  <th className="py-2.5 px-1.5 text-center">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredKeywords.map((k) => {
                   const isCheckingThis = checkingKeyword === k.keyword;
 
                   return (
-                    <tr key={k.keyword} className="hover:bg-slate-800/30 transition-colors">
+                    <tr key={k.keyword} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                       {/* Keyword + Trends link */}
-                      <td className="py-2 px-2.5 font-medium text-white max-w-[150px] truncate">
+                      <td className="py-2 px-3 font-semibold text-slate-900 dark:text-slate-100 max-w-[160px] truncate">
                         <div className="flex items-center gap-1.5">
                           <span className="truncate" title={k.keyword}>
                             {k.keyword}
@@ -357,19 +357,19 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
                       </td>
 
                       {/* Best Position */}
-                      <td className="py-2 px-1 text-center text-slate-400 font-mono">
+                      <td className="py-2 px-1.5 text-center text-slate-500 dark:text-slate-400 font-mono">
                         #{k.bestPosition}
                       </td>
 
                       {/* In Top Titles */}
-                      <td className="py-2 px-1 text-center text-slate-300 font-mono">
+                      <td className="py-2 px-1.5 text-center text-slate-700 dark:text-slate-300 font-mono font-medium">
                         {k.inTitlesCount}/10
                       </td>
 
                       {/* BSR Check or Value */}
-                      <td className="py-2 px-1.5 text-center">
+                      <td className="py-2 px-2 text-center">
                         {isCheckingThis ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-indigo-400">
+                          <span className="inline-flex items-center gap-1 text-[11px] text-indigo-500 font-medium">
                             <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
@@ -377,14 +377,14 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
                             Wait
                           </span>
                         ) : k.avgBsr ? (
-                          <span className="font-mono text-emerald-400" title={`Score: ${k.bsrScore}`}>
+                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs" title={`Score: ${k.bsrScore}`}>
                             #{k.avgBsr.toLocaleString()}
                           </span>
                         ) : (
                           <button
                             onClick={() => handleCheckBsr(k)}
                             disabled={Boolean(checkingKeyword)}
-                            className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-300 hover:bg-indigo-600 hover:text-white transition disabled:opacity-40"
+                            className="rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-indigo-600 hover:text-white transition disabled:opacity-40 cursor-pointer"
                           >
                             Check
                           </button>
@@ -393,28 +393,26 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
 
                       {/* Total Score + Badge */}
                       <td className="py-2 px-2 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <span
-                            className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
-                              k.scoreLabel === 'high'
-                                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                                : k.scoreLabel === 'medium'
-                                ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-                                : 'bg-slate-800 text-slate-400 border border-slate-700'
-                            }`}
-                            title={k.isPartial ? 'Partial score (BSR not checked)' : 'Full score'}
-                          >
-                            {k.totalScore}
-                            {k.isPartial && '*'}
-                          </span>
-                        </div>
+                        <span
+                          className={`inline-block rounded-md px-2 py-0.5 text-xs font-bold ${
+                            k.scoreLabel === 'high'
+                              ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60'
+                              : k.scoreLabel === 'medium'
+                              ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60'
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+                          }`}
+                          title={k.isPartial ? 'Partial score (BSR not checked)' : 'Full score'}
+                        >
+                          {k.totalScore}
+                          {k.isPartial && '*'}
+                        </span>
                       </td>
 
                       {/* Copy single keyword */}
-                      <td className="py-2 px-1 text-center">
+                      <td className="py-2 px-1.5 text-center">
                         <button
                           onClick={() => copyToClipboard(k.keyword, `Copied "${k.keyword}"`)}
-                          className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition"
+                          className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                           title="Copy keyword"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -428,86 +426,86 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
               </tbody>
             </table>
           </div>
-          <div className="p-2 border-t border-slate-800 bg-slate-950/80 text-[10px] text-slate-500 flex justify-between items-center">
-            <span>* Partial score: Click "Check" to fetch top 5 BSR for accurate ranking.</span>
-            <span>{filteredKeywords.length} of {keywords.length} items</span>
+          <div className="p-2.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-xs text-slate-500 dark:text-slate-400 flex justify-between items-center">
+            <span>* Click "Check" to fetch top 5 BSR for full score.</span>
+            <span className="font-mono">{filteredKeywords.length} of {keywords.length} items</span>
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-slate-800 p-6 text-center text-slate-500">
-          <p className="font-medium text-slate-400">No keywords found yet</p>
-          <p className="text-[11px] mt-1">
+        <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-800 p-6 text-center text-slate-500 bg-slate-50/50 dark:bg-slate-900/50">
+          <p className="font-semibold text-slate-700 dark:text-slate-300 text-sm">No keywords found yet</p>
+          <p className="text-xs mt-1 text-slate-500 dark:text-slate-400">
             Click "Find Keywords" above to scan Amazon suggestions across A-Z suffixes.
           </p>
         </div>
       )}
 
       {/* Second Panel: Title Word & Bigram Frequency */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-3 shadow-lg space-y-3">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 shadow-xs space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="font-semibold text-white text-xs">Top 10 Title Word Frequency</h4>
-            <p className="text-[10px] text-slate-400">
+            <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">Top 10 Title Word Frequency</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               High-frequency words stripped of stopwords across {titleAnalysis.totalTitlesAnalyzed} titles
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2.5">
           {/* Unigrams */}
-          <div className="rounded-lg border border-slate-800 bg-slate-950 p-2">
-            <div className="flex items-center justify-between mb-1.5 pb-1 border-b border-slate-800">
-              <span className="font-semibold text-[10px] uppercase text-indigo-400">Top Words</span>
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-2.5">
+            <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-200 dark:border-slate-700">
+              <span className="font-bold text-xs uppercase text-indigo-600 dark:text-indigo-400">Top Words</span>
               <button
                 onClick={() => handleCopyTitleWords(titleAnalysis.unigrams, 'unigram words')}
-                className="text-[10px] text-slate-400 hover:text-white"
+                className="text-xs font-medium text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-300 cursor-pointer"
               >
                 Copy
               </button>
             </div>
-            <div className="max-h-[140px] overflow-y-auto space-y-1">
+            <div className="max-h-[160px] overflow-y-auto space-y-1.5">
               {titleAnalysis.unigrams.length > 0 ? (
                 titleAnalysis.unigrams.slice(0, 15).map((u) => (
-                  <div key={u.word} className="flex justify-between items-center text-[10px]">
-                    <span className="text-slate-300 truncate max-w-[100px]" title={u.word}>
+                  <div key={u.word} className="flex justify-between items-center text-xs">
+                    <span className="text-slate-800 dark:text-slate-200 font-medium truncate max-w-[120px]" title={u.word}>
                       {u.word}
                     </span>
-                    <span className="font-mono text-slate-500">
+                    <span className="font-mono text-slate-500 dark:text-slate-400 font-semibold">
                       {u.inTitlesCount}/10
                     </span>
                   </div>
                 ))
               ) : (
-                <div className="text-[10px] text-slate-600">No title words found</div>
+                <div className="text-xs text-slate-400">No title words found</div>
               )}
             </div>
           </div>
 
           {/* Bigrams */}
-          <div className="rounded-lg border border-slate-800 bg-slate-950 p-2">
-            <div className="flex items-center justify-between mb-1.5 pb-1 border-b border-slate-800">
-              <span className="font-semibold text-[10px] uppercase text-indigo-400">2-Word Phrases</span>
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-2.5">
+            <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-200 dark:border-slate-700">
+              <span className="font-bold text-xs uppercase text-indigo-600 dark:text-indigo-400">2-Word Phrases</span>
               <button
                 onClick={() => handleCopyTitleWords(titleAnalysis.bigrams, 'bigram phrases')}
-                className="text-[10px] text-slate-400 hover:text-white"
+                className="text-xs font-medium text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-300 cursor-pointer"
               >
                 Copy
               </button>
             </div>
-            <div className="max-h-[140px] overflow-y-auto space-y-1">
+            <div className="max-h-[160px] overflow-y-auto space-y-1.5">
               {titleAnalysis.bigrams.length > 0 ? (
                 titleAnalysis.bigrams.slice(0, 15).map((b) => (
-                  <div key={b.word} className="flex justify-between items-center text-[10px]">
-                    <span className="text-slate-300 truncate max-w-[100px]" title={b.word}>
+                  <div key={b.word} className="flex justify-between items-center text-xs">
+                    <span className="text-slate-800 dark:text-slate-200 font-medium truncate max-w-[120px]" title={b.word}>
                       {b.word}
                     </span>
-                    <span className="font-mono text-slate-500">
+                    <span className="font-mono text-slate-500 dark:text-slate-400 font-semibold">
                       {b.inTitlesCount}/10
                     </span>
                   </div>
                 ))
               ) : (
-                <div className="text-[10px] text-slate-600">No phrases found</div>
+                <div className="text-xs text-slate-400">No phrases found</div>
               )}
             </div>
           </div>

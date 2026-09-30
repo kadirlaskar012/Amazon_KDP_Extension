@@ -122,7 +122,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
   const hasCaptcha = watchlist.some((w) => w.lastStatus === 'captcha');
 
   return (
-    <div className="space-y-4 text-xs text-slate-300">
+    <div className="space-y-4 text-xs font-sans text-slate-700 dark:text-slate-200 no-horizontal-scroll">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-xl animate-fade-in">
@@ -131,10 +131,10 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
       )}
 
       {/* Header and Global Controls */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-3 shadow-lg flex items-center justify-between">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 shadow-xs flex items-center justify-between">
         <div>
-          <h4 className="font-semibold text-white text-xs">Tracked Books ({watchlist.length}/50)</h4>
-          <p className="text-[10px] text-slate-400">
+          <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">Tracked Books ({watchlist.length}/50)</h4>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Daily automated BSR, pricing, and review velocity tracking
           </p>
         </div>
@@ -143,7 +143,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
           {watchlist.length > 0 && (
             <button
               onClick={handleExportCsv}
-              className="rounded-lg bg-slate-800 border border-slate-700 p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 transition"
+              className="rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
               title="Export Watchlist CSV"
             >
               <Download className="w-3.5 h-3.5" />
@@ -153,7 +153,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
           <button
             onClick={handleRefreshNow}
             disabled={isRefreshing || watchlist.length === 0}
-            className="flex items-center gap-1 rounded-lg bg-indigo-600 px-2.5 py-1.5 font-medium text-white shadow hover:bg-indigo-500 disabled:opacity-50 transition cursor-pointer"
+            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition cursor-pointer"
             title="Refresh all tracked books now"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -164,9 +164,9 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
 
       {/* CAPTCHA Warning Banner */}
       {hasCaptcha && (
-        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 flex items-start gap-2.5 text-amber-300 animate-pulse">
-          <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
-          <div className="text-[11px] leading-relaxed">
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 flex items-start gap-2.5 text-amber-700 dark:text-amber-300 animate-pulse">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
+          <div className="text-xs leading-relaxed">
             <strong>Verification Required:</strong> Amazon asked for verification during tracking. Open an Amazon tab to solve the CAPTCHA, then click <strong>Refresh Now</strong>.
           </div>
         </div>
@@ -174,7 +174,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
 
       {/* Progress status */}
       {isRefreshing && refreshProgress && (
-        <div className="rounded-lg bg-indigo-950/40 border border-indigo-500/30 p-2 text-[11px] text-indigo-300 font-mono">
+        <div className="rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-500/30 p-2 text-xs text-indigo-700 dark:text-indigo-300 font-mono">
           ⏳ Checking item {refreshProgress.current} of {refreshProgress.total}...
         </div>
       )}
@@ -194,27 +194,27 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
                 key={item.asin}
                 className={`rounded-xl border transition-all ${
                   isExpanded
-                    ? 'border-indigo-500/50 bg-slate-900 shadow-xl'
-                    : 'border-slate-800 bg-slate-900/70 hover:border-slate-700'
+                    ? 'border-indigo-300 dark:border-indigo-500/50 bg-white dark:bg-slate-900 shadow-md ring-1 ring-indigo-200 dark:ring-indigo-900/50'
+                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs'
                 }`}
               >
                 {/* Item Row Header */}
                 <div
                   onClick={() => setExpandedAsin(isExpanded ? null : item.asin)}
-                  className="p-3 cursor-pointer flex items-center justify-between gap-2"
+                  className="p-3 cursor-pointer flex items-center justify-between gap-2 select-none"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-white text-xs truncate" title={item.title}>
+                      <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm truncate" title={item.title}>
                         {item.title}
                       </span>
                     </div>
 
-                    <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400">
+                    <div className="mt-1 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                       <span className="font-mono text-slate-500">{item.asin}</span>
                       <span>•</span>
                       {currentBsr ? (
-                        <span className="font-mono font-bold text-indigo-400">
+                        <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
                           BSR #{currentBsr.toLocaleString()}
                         </span>
                       ) : (
@@ -238,7 +238,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                      className="p-1 rounded text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                       title="Open listing on Amazon"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -246,7 +246,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
 
                     <button
                       onClick={(e) => handleRemove(e, item.asin)}
-                      className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-slate-800 transition"
+                      className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                       title="Remove from Watchlist"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -256,24 +256,24 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
 
                 {/* Expanded Chart and Stats */}
                 {isExpanded && (
-                  <div className="px-3 pb-3 pt-1 border-t border-slate-800/80 space-y-3">
+                  <div className="px-3.5 pb-3.5 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
                     {/* Performance Stat Pills */}
-                    <div className="grid grid-cols-3 gap-1.5 text-center text-[10px]">
-                      <div className="rounded-lg bg-slate-950 p-1.5 border border-slate-800">
-                        <span className="text-slate-500 block">Best BSR</span>
-                        <span className="font-bold text-emerald-400 font-mono">
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                      <div className="rounded-lg bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 text-[11px] block">Best BSR</span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono text-xs">
                           {trend.bestBsr ? `#${trend.bestBsr.toLocaleString()}` : 'N/A'}
                         </span>
                       </div>
-                      <div className="rounded-lg bg-slate-950 p-1.5 border border-slate-800">
-                        <span className="text-slate-500 block">Worst BSR</span>
-                        <span className="font-bold text-rose-400 font-mono">
+                      <div className="rounded-lg bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 text-[11px] block">Worst BSR</span>
+                        <span className="font-bold text-rose-600 dark:text-rose-400 font-mono text-xs">
                           {trend.worstBsr ? `#${trend.worstBsr.toLocaleString()}` : 'N/A'}
                         </span>
                       </div>
-                      <div className="rounded-lg bg-slate-950 p-1.5 border border-slate-800">
-                        <span className="text-slate-500 block">Tracked Days</span>
-                        <span className="font-bold text-indigo-400 font-mono">
+                      <div className="rounded-lg bg-slate-50 dark:bg-slate-950 p-2 border border-slate-200 dark:border-slate-800">
+                        <span className="text-slate-500 text-[11px] block">Tracked Days</span>
+                        <span className="font-bold text-indigo-600 dark:text-indigo-400 font-mono text-xs">
                           {trend.daysTracked} days
                         </span>
                       </div>
@@ -288,9 +288,9 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
           })}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-slate-800 p-8 text-center text-slate-500">
-          <p className="font-medium text-slate-400">Your Watchlist is empty</p>
-          <p className="text-[11px] mt-1 max-w-[260px] mx-auto">
+        <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-800 p-8 text-center text-slate-500 bg-slate-50/50 dark:bg-slate-900/50">
+          <p className="font-semibold text-slate-700 dark:text-slate-300 text-sm">Your Watchlist is empty</p>
+          <p className="text-xs mt-1 max-w-[260px] mx-auto text-slate-500 dark:text-slate-400">
             Click the "Watch" button on any book in the Books tab or on Amazon product pages to start tracking daily BSR velocity.
           </p>
         </div>

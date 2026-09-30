@@ -34,7 +34,8 @@ export function analyzeCategories(
   books: Book[],
   customGenericList?: Set<string>
 ): CategoryStat[] {
-  const topBooks = books.slice(0, 10);
+  const booksWithCategories = books.filter((b) => b.categoryRanks && b.categoryRanks.length > 0);
+  const topBooks = booksWithCategories.length > 0 ? booksWithCategories.slice(0, 20) : books.slice(0, 10);
   const categoryMap = new Map<
     string,
     {
