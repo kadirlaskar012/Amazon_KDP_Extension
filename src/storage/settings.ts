@@ -21,6 +21,14 @@ export async function getSettings(): Promise<Settings> {
       ...DEFAULT_SETTINGS.thresholds,
       ...(saved.thresholds || {}),
     },
+    keywordWeights: {
+      ...DEFAULT_SETTINGS.keywordWeights,
+      ...(saved.keywordWeights || {}),
+    },
+    categoryDifficulty: {
+      ...DEFAULT_SETTINGS.categoryDifficulty,
+      ...(saved.categoryDifficulty || {}),
+    },
     printingCost: {
       ...DEFAULT_SETTINGS.printingCost,
       ...(saved.printingCost || {}),
@@ -52,6 +60,14 @@ export async function saveSettings(settings: Partial<Settings>): Promise<Setting
     thresholds: {
       ...current.thresholds,
       ...(settings.thresholds || {}),
+    },
+    keywordWeights: {
+      ...current.keywordWeights,
+      ...(settings.keywordWeights || {}),
+    },
+    categoryDifficulty: {
+      ...current.categoryDifficulty,
+      ...(settings.categoryDifficulty || {}),
     },
     printingCost: {
       ...current.printingCost,

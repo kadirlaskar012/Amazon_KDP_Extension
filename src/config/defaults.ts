@@ -5,6 +5,8 @@ import type {
   PrintingCostTier,
   PrintingCostConfig,
   Thresholds,
+  KeywordWeights,
+  CategoryDifficultyThresholds,
 } from '../types';
 
 export const DEFAULT_THRESHOLDS: Thresholds = {
@@ -16,6 +18,22 @@ export const DEFAULT_THRESHOLDS: Thresholds = {
   greenMin: 80,
   yellowMin: 60,
 };
+
+export const DEFAULT_KEYWORD_WEIGHTS: KeywordWeights = {
+  autocompletePosition: 40,
+  titleFrequency: 30,
+  topResultBsr: 30,
+};
+
+export const DEFAULT_CATEGORY_DIFFICULTY: CategoryDifficultyThresholds = {
+  easyMinBsrAtTop20: 50000,
+  mediumMinBsrAtTop20: 15000,
+};
+
+export const MIN_KEYWORD_LENGTH = 3;
+export const TOP_N_TITLE_WORDS = 25;
+export const AUTOCOMPLETE_ALPHA_SUFFIXES = 'abcdefghijklmnopqrstuvwxyz'.split('');
+export const AUTOCOMPLETE_DIGIT_SUFFIXES = '0123456789'.split('');
 
 export const DEFAULT_SCORE_WEIGHTS: ScoreWeights = {
   demand: 35,
@@ -50,6 +68,8 @@ export const DEFAULT_SETTINGS: Settings = {
   claudeModel: 'claude-sonnet-5-5',
   weights: DEFAULT_SCORE_WEIGHTS,
   thresholds: DEFAULT_THRESHOLDS,
+  keywordWeights: DEFAULT_KEYWORD_WEIGHTS,
+  categoryDifficulty: DEFAULT_CATEGORY_DIFFICULTY,
   bsrSalesTable: DEFAULT_BSR_SALES_TABLE,
   printingCost: DEFAULT_PRINTING_COST,
   printingCostTable: DEFAULT_PRINTING_COST_TABLE,

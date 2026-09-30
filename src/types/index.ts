@@ -2,6 +2,7 @@ export interface CategoryRank {
   name: string;
   rank: number;
   url?: string;
+  category?: string;
 }
 
 export interface EstimateResult<T = number> {
@@ -28,7 +29,9 @@ export interface Book {
   bsrOverall?: number;
   categoryRanks: CategoryRank[];
   pageCount?: number;
+  pages?: number;
   trimSize?: string;
+  dimensions?: string;
   publishDate?: string;
   readingAge?: string;
   isLowContent?: boolean;
@@ -78,14 +81,135 @@ export interface SearchSnapshot {
   books: Book[];
   scores?: NicheScore;
   category?: string;
+  keywords?: KeywordItem[];
+  categories?: CategoryStat[];
+  specs?: SpecsSummary;
+}
+
+export interface KeywordWeights {
+  autocompletePosition: number;
+  titleFrequency: number;
+  topResultBsr: number;
 }
 
 export interface KeywordItem {
   keyword: string;
-  autocompletePosition: number;
-  topResultBsr?: number;
-  titleFrequency: number;
-  score: number;
+  bestPosition: number;
+  inTitlesCount: number;
+  bsrScore?: number | null;
+  avgBsr?: number | null;
+  totalScore: number;
+  scoreLabel: 'high' | 'medium' | 'low';
+  isPartial: boolean;
+  isChecking?: boolean;
+  // Backward compatibility alias
+  autocompletePosition?: number;
+}
+
+export type CategoryDifficulty = 'easy' | 'medium' | 'hard';
+
+export interface CategoryDifficultyThresholds {
+  easyMinBsrAtTop20: number;
+  mediumMinBsrAtTop20: number;
+}
+
+export interface CategoryStat {
+  name: string;
+  url: string;
+  bookCount: number;
+  bestRankAmongTopBooks: number;
+  avgRank: number;
+  isGeneric: boolean;
+  difficulty?: CategoryDifficulty;
+  bsrAtTop1?: number | null;
+  bsrAtTop10?: number | null;
+  bsrAtTop20?: number | null;
+  difficultyText?: string;
+  isChecking?: boolean;
+}
+
+export interface BestSellerItem {
+  rank: number;
+  asin: string;
+  title: string;
+  price?: number;
+  rating?: number;
+  reviewCount?: number;
+  productUrl?: string;
+}
+
+export interface BestSellerCategoryData {
+  categoryName: string;
+  items: BestSellerItem[];
+  bsrAtTop1?: number | null;
+  bsrAtTop10?: number | null;
+  bsrAtTop20?: number | null;
+  difficulty?: CategoryDifficulty;
+  difficultyText?: string;
+}
+
+export interface WordFrequencyItem {
+  word: string;
+  count: number;
+  inTitlesCount: number; // In X of 10 titles
+  percentage: number;
+}
+
+export interface TitleAnalysisResult {
+  unigrams: WordFrequencyItem[];
+  bigrams: WordFrequencyItem[];
+  totalTitlesAnalyzed: number;
+}
+
+export interface PageCountDistribution {
+  range: string;
+  count: number;
+}
+
+export interface PriceDistribution {
+  range: string;
+  count: number;
+}
+
+export interface SpecsSummary {
+  pageCount: {
+    median: number;
+    min: number;
+    max: number;
+    mostCommonRange: string;
+    distribution: PageCountDistribution[];
+  };
+  trimSize: {
+    mostCommon: string;
+    count: number;
+    percentage: number;
+  };
+  price: {
+    median: number;
+    min: number;
+    max: number;
+    mostCommonPoint: number;
+    distribution: PriceDistribution[];
+  };
+  readingAge: {
+    mostCommon: string;
+    count: number;
+  };
+  formatShare: {
+    lowContentCount: number;
+    total: number;
+    percentage: number;
+  };
+  recommended: {
+    pageCount: number;
+    pageCountReason: string;
+    trimSize: string;
+    trimSizeReason: string;
+    priceRange: string;
+    priceReason: string;
+    readingAge?: string;
+    readingAgeReason?: string;
+  };
 }
 
 export interface WatchlistHistoryEntry {
@@ -152,6 +276,8 @@ export interface Settings {
   claudeModel: string;
   weights: ScoreWeights;
   thresholds: Thresholds;
+  keywordWeights: KeywordWeights;
+  categoryDifficulty: CategoryDifficultyThresholds;
   bsrSalesTable: BsrSalesTier[];
   printingCost: PrintingCostConfig;
   printingCostTable: PrintingCostTier[];

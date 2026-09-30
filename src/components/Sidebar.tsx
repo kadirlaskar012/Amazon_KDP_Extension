@@ -4,12 +4,16 @@ import { Tabs } from './Tabs';
 import type { TabId } from './Tabs';
 import { OverviewTab } from './tabs/OverviewTab';
 import { BooksTab } from './tabs/BooksTab';
+import { KeywordsTab } from './tabs/KeywordsTab';
+import { CategoriesTab } from './tabs/CategoriesTab';
+import { SpecsTab } from './tabs/SpecsTab';
 import { SearchProgress } from './SearchProgress';
 import { CaptchaAlert } from './CaptchaAlert';
 import { calculateNicheScore } from '../services/scoring';
 import { getSettings } from '../storage/settings';
-import { getSnapshots, saveWatchlistItem } from '../storage';
+import { getSnapshots, saveSnapshot, getActiveSnapshot, saveWatchlistItem } from '../storage';
 import { DEFAULT_SETTINGS } from '../config/defaults';
+import type { KeywordItem, CategoryStat, SpecsSummary } from '../types';
 import {
   BookMarked,
   Moon,
@@ -46,19 +50,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [query, setQuery] = useState<string>(initialQuery);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [snapshots, setSnapshots] = useState<SearchSnapshot[]>([]);
+  const [currentSnapshot, setCurrentSnapshot] = useState<SearchSnapshot | null>(null);
   const [watchlistSuccess, setWatchlistSuccess] = useState<string | null>(null);
 
-  // Load settings and recent snapshots
+  // Load settings, active snapshot, and recent snapshots
   useEffect(() => {
     async function init() {
       const s = await getSettings();
       setSettings(s);
       const snaps = await getSnapshots();
       setSnapshots(snaps);
+      const active = await getActiveSnapshot();
+      if (active) {
+        setCurrentSnapshot(active);
+      }
     }
     init();
 
-    // Listen for storage changes (e.g. from Options page)
+    // Listen for storage changes (e.g. from Options page or other tabs)
     const handleStorageChange = (
       changes: { [key: string]: chrome.storage.StorageChange },
       areaName: string
@@ -93,6 +102,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return calculateNicheScore(books, settings);
   }, [books, settings]);
 
+  // Maintain active search snapshot structure
+  useEffect(() => {
+    if (books.length > 0 || query) {
+      setCurrentSnapshot((prev) => ({
+        query: query || prev?.query || '',
+        date: prev?.date || Date.now(),
+        books,
+        nicheScore: currentScore,
+        keywords: prev?.keywords || [],
+        categories: prev?.categories || [],
+        specs: prev?.specs,
+      }));
+    }
+  }, [books, query, currentScore]);
+
   const toggleTheme = () => {
     setIsDarkMode((prev) => !prev);
   };
@@ -102,8 +126,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (!isNaN(selectedIdx) && snapshots[selectedIdx]) {
       const selected = snapshots[selectedIdx]!;
       setQuery(selected.query);
-      setBooks(selected.books);
+      setBooks(selected.books || []);
+      setCurrentSnapshot({
+        ...selected,
+        keywords: selected.keywords || [],
+        categories: selected.categories || [],
+        specs: selected.specs,
+      });
     }
+  };
+
+  const handleUpdateSnapshotKeywords = async (keywords: KeywordItem[]) => {
+    if (!currentSnapshot) return;
+    const updated: SearchSnapshot = {
+      ...currentSnapshot,
+      keywords,
+    };
+    setCurrentSnapshot(updated);
+    await saveSnapshot(updated);
+  };
+
+  const handleUpdateSnapshotCategories = async (categories: CategoryStat[]) => {
+    if (!currentSnapshot) return;
+    const updated: SearchSnapshot = {
+      ...currentSnapshot,
+      categories,
+    };
+    setCurrentSnapshot(updated);
+    await saveSnapshot(updated);
+  };
+
+  const handleUpdateSnapshotSpecs = async (specs: SpecsSummary) => {
+    if (!currentSnapshot) return;
+    const updated: SearchSnapshot = {
+      ...currentSnapshot,
+      specs,
+    };
+    setCurrentSnapshot(updated);
+    await saveSnapshot(updated);
   };
 
   const handleAddToWatchlist = async (book: Book) => {
@@ -164,8 +224,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div>
               <div className="font-bold text-slate-900 dark:text-white text-sm leading-tight flex items-center gap-1">
                 KDP Niche Finder
-                <span className="text-[9px] font-semibold px-1 py-0.2 rounded bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300">
-                  Phase 2
+                <span className="text-[9px] font-semibold px-1 py-0.2 rounded bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300">
+                  Phase 3
                 </span>
               </div>
               <div className="text-[10px] text-slate-400">Personal KDP Intelligence</div>
@@ -259,22 +319,57 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
           )}
 
-          {activeTab !== 'overview' && activeTab !== 'books' && (
-            <div className="p-8 text-center text-slate-400 space-y-2">
-              <Sparkles className="w-8 h-8 text-blue-500 mx-auto opacity-70" />
-              <div className="font-semibold text-slate-700 dark:text-slate-300 text-sm capitalize">
-                {activeTab} Module
-              </div>
-              <p className="text-xs text-slate-400 max-w-[240px] mx-auto">
-                Scheduled for upcoming phases (Keywords, Categories, Specs, Reviews, Ideas, Watchlist).
-              </p>
+          {activeTab === 'keywords' && (
+            <div className="p-3">
+              <KeywordsTab
+                snapshot={currentSnapshot}
+                settings={settings}
+                onUpdateSnapshotKeywords={handleUpdateSnapshotKeywords}
+                onCaptchaEncountered={() => onPauseQueue()}
+              />
             </div>
           )}
+
+          {activeTab === 'categories' && (
+            <div className="p-3">
+              <CategoriesTab
+                snapshot={currentSnapshot}
+                settings={settings}
+                onUpdateSnapshotCategories={handleUpdateSnapshotCategories}
+                onCaptchaEncountered={() => onPauseQueue()}
+              />
+            </div>
+          )}
+
+          {activeTab === 'specs' && (
+            <div className="p-3">
+              <SpecsTab
+                snapshot={currentSnapshot}
+                onUpdateSnapshotSpecs={handleUpdateSnapshotSpecs}
+              />
+            </div>
+          )}
+
+          {activeTab !== 'overview' &&
+            activeTab !== 'books' &&
+            activeTab !== 'keywords' &&
+            activeTab !== 'categories' &&
+            activeTab !== 'specs' && (
+              <div className="p-8 text-center text-slate-400 space-y-2">
+                <Sparkles className="w-8 h-8 text-indigo-500 mx-auto opacity-70" />
+                <div className="font-semibold text-slate-700 dark:text-slate-300 text-sm capitalize">
+                  {activeTab} Module
+                </div>
+                <p className="text-xs text-slate-400 max-w-[240px] mx-auto">
+                  Scheduled for upcoming phases (Reviews, Ideas, Watchlist).
+                </p>
+              </div>
+            )}
         </div>
 
         {/* Footer */}
         <footer className="px-3 py-1.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/90 text-[10px] text-slate-400 flex items-center justify-between shrink-0">
-          <span>KDP Niche Finder · Phase 2</span>
+          <span>KDP Niche Finder · Phase 3</span>
           <span>
             Score:{' '}
             <strong className="text-slate-700 dark:text-slate-200 font-mono">
