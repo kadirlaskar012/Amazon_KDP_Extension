@@ -9,14 +9,16 @@ import { CategoriesTab } from './tabs/CategoriesTab';
 import { SpecsTab } from './tabs/SpecsTab';
 import { ReviewsTab } from './tabs/ReviewsTab';
 import { WatchlistTab } from './tabs/WatchlistTab';
+import { IdeasTab } from './tabs/IdeasTab';
+import { ExportMenu } from './ExportMenu';
 import { SearchProgress } from './SearchProgress';
 import { CaptchaAlert } from './CaptchaAlert';
 import { calculateNicheScore } from '../services/scoring';
 import { getSettings } from '../storage/settings';
 import { getSnapshots, saveSnapshot, getActiveSnapshot } from '../storage';
-import { addToWatchlist } from '../services/watchlist';
+import { addToWatchlist, getWatchlist } from '../services/watchlist';
 import { DEFAULT_SETTINGS } from '../config/defaults';
-import type { KeywordItem, CategoryStat, SpecsSummary, ReviewGapAnalysis } from '../types';
+import type { KeywordItem, CategoryStat, SpecsSummary, ReviewGapAnalysis, BookIdea, WatchlistItem } from '../types';
 import {
   BookMarked,
   Moon,
@@ -25,6 +27,9 @@ import {
   Sparkles,
   ChevronLeft,
   History,
+  Activity,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -54,9 +59,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [snapshots, setSnapshots] = useState<SearchSnapshot[]>([]);
   const [currentSnapshot, setCurrentSnapshot] = useState<SearchSnapshot | null>(null);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [watchlistSuccess, setWatchlistSuccess] = useState<string | null>(null);
+  const [healthReport, setHealthReport] = useState<string | null>(null);
 
-  // Load settings, active snapshot, and recent snapshots
+  // Load settings, active snapshot, recent snapshots, and watchlist
   useEffect(() => {
     async function init() {
       const s = await getSettings();
@@ -67,6 +74,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       if (active) {
         setCurrentSnapshot(active);
       }
+      const wl = await getWatchlist();
+      setWatchlist(wl);
     }
     init();
 
@@ -81,6 +90,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       if (areaName === 'local' && changes['kdp_snapshots']) {
         getSnapshots().then(setSnapshots);
       }
+      if (areaName === 'local' && changes['kdp_watchlist']) {
+        getWatchlist().then(setWatchlist);
+      }
     };
 
     if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
@@ -89,6 +101,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         chrome.storage.onChanged.removeListener(handleStorageChange);
       };
     }
+  }, []);
+
+  // Keyboard shortcut: Esc closes the sidebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   // Synchronize initial books if updated from props
@@ -186,6 +209,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     await saveSnapshot(updated);
   };
 
+  const handleUpdateSnapshotIdeas = async (ideas: BookIdea[]) => {
+    if (!currentSnapshot) return;
+    const updated: SearchSnapshot = {
+      ...currentSnapshot,
+      ideas,
+    };
+    setCurrentSnapshot(updated);
+    await saveSnapshot(updated);
+  };
+
   const handleAddToWatchlist = async (book: Book) => {
     try {
       const res = await addToWatchlist(book);
@@ -235,7 +268,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="font-bold text-slate-900 dark:text-white text-sm leading-tight flex items-center gap-1">
                 KDP Niche Finder
                 <span className="text-[9px] font-semibold px-1 py-0.2 rounded bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300">
-                  Phase 4
+                  Phase 5
                 </span>
               </div>
               <div className="text-[10px] text-slate-400">Personal KDP Intelligence</div>
@@ -243,6 +276,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5">
+            {/* Export Menu Dropdown */}
+            <ExportMenu
+              snapshot={currentSnapshot}
+              watchlist={watchlist}
+              ideas={currentSnapshot?.ideas || []}
+              onImportSnapshot={(imported) => {
+                setCurrentSnapshot(imported);
+                setBooks(imported.books || []);
+                setQuery(imported.query || '');
+              }}
+            />
             {/* History Dropdown */}
             {snapshots.length > 0 && (
               <div className="relative flex items-center">
@@ -378,28 +422,57 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
-          {activeTab !== 'overview' &&
-            activeTab !== 'books' &&
-            activeTab !== 'keywords' &&
-            activeTab !== 'categories' &&
-            activeTab !== 'specs' &&
-            activeTab !== 'reviews' &&
-            activeTab !== 'watchlist' && (
-              <div className="p-8 text-center text-slate-400 space-y-2">
-                <Sparkles className="w-8 h-8 text-indigo-500 mx-auto opacity-70" />
-                <div className="font-semibold text-slate-700 dark:text-slate-300 text-sm capitalize">
-                  {activeTab} Module
-                </div>
-                <p className="text-xs text-slate-400 max-w-[240px] mx-auto">
-                  Scheduled for upcoming phase (Ideas).
-                </p>
-              </div>
-            )}
+          {activeTab === 'ideas' && (
+            <div className="p-3">
+              <IdeasTab
+                snapshot={currentSnapshot}
+                onUpdateSnapshotIdeas={handleUpdateSnapshotIdeas}
+              />
+            </div>
+          )}
         </div>
+
+        {/* Health Check diagnostic banner */}
+        {healthReport && (
+          <div className="px-3 py-1.5 bg-slate-800 border-t border-slate-700 text-[10px] flex items-center justify-between text-slate-300">
+            <span>{healthReport}</span>
+            <button
+              onClick={() => setHealthReport(null)}
+              className="text-slate-400 hover:text-white ml-2 text-xs"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* Footer */}
         <footer className="px-3 py-1.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/90 text-[10px] text-slate-400 flex items-center justify-between shrink-0">
-          <span>KDP Niche Finder · Phase 4</span>
+          <div className="flex items-center gap-2">
+            <span>KDP Niche Finder · Phase 5</span>
+            <button
+              onClick={() => {
+                // Selector health check on current page
+                const searchCards = document.querySelectorAll('div[data-component-type="s-search-result"]').length;
+                const bsrEl = document.querySelector('#detailBullets_feature_div, #productDetails_db_sections');
+                const reviewsEl = document.querySelector('#cm-cr-dp-review-list, div[data-hook="review"]');
+                const isSearch = searchCards > 0;
+                const isProduct = Boolean(bsrEl || reviewsEl);
+
+                if (isSearch) {
+                  setHealthReport(`✅ Health Check: Search parser OK (${searchCards} cards found)`);
+                } else if (isProduct) {
+                  setHealthReport(`✅ Health Check: Product details parser OK (${bsrEl ? 'BSR table found' : 'Reviews found'})`);
+                } else {
+                  setHealthReport('ℹ️ Health Check: Currently on non-search page. Selectors ready.');
+                }
+              }}
+              title="Test if Amazon selectors match current page"
+              className="inline-flex items-center gap-0.5 text-indigo-400 hover:text-indigo-300 transition"
+            >
+              <Activity className="w-3 h-3" />
+              <span>Health</span>
+            </button>
+          </div>
           <span>
             Score:{' '}
             <strong className="text-slate-700 dark:text-slate-200 font-mono">

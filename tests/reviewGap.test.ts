@@ -7,6 +7,8 @@ describe('reviewGap service', () => {
     {
       asin: 'B01TEST001',
       title: 'Toddler Coloring Book Vol 1',
+      author: 'Author 1',
+      categoryRanks: [],
       reviews: [
         {
           rating: 1,
@@ -28,6 +30,8 @@ describe('reviewGap service', () => {
     {
       asin: 'B02TEST002',
       title: 'Toddler Coloring Book Vol 2',
+      author: 'Author 2',
+      categoryRanks: [],
       reviews: [
         {
           rating: 2,
@@ -49,6 +53,8 @@ describe('reviewGap service', () => {
     {
       asin: 'B03TEST003',
       title: 'Toddler Activity Book',
+      author: 'Author 3',
+      categoryRanks: [],
       reviews: [
         {
           rating: 3,

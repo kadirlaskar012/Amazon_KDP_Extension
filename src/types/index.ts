@@ -86,6 +86,7 @@ export interface SearchSnapshot {
   categories?: CategoryStat[];
   specs?: SpecsSummary;
   reviewGap?: ReviewGapAnalysis;
+  ideas?: BookIdea[];
 }
 
 export interface KeywordWeights {
@@ -345,6 +346,95 @@ export interface Settings {
     max: number;
   };
   marketplace: string;
+  theme?: 'light' | 'dark' | 'system';
+  sidebarPosition?: 'right' | 'left';
+  sidebarDefaultOpen?: boolean;
+  pauseAllFetching?: boolean;
+  maxFetchesPerSearch?: number;
+  cacheDurationHours?: number;
+  ai?: {
+    model: string;
+    maxTokens: number;
+    temperature: number;
+    ideasCount: number;
+    timeoutMs: number;
+    maxSavedIdeas: number;
+    forbiddenWords: string[];
+    systemPrompt: string;
+  };
+  exportSettings?: {
+    csvDelimiter: string;
+    includeBom: boolean;
+  };
+  trends?: {
+    geo: string;
+    baseUrl: string;
+  };
+  stopWords?: string[];
+  genericCategories?: string[];
+}
+
+export interface BookIdea {
+  id?: string;
+  createdAt?: number;
+  query?: string;
+  title: string;
+  subtitle: string;
+  subNiche: string;
+  targetAudience: string;
+  sevenBackendKeywords: string[];
+  threeCategories: string[];
+  shortDescription: string;
+  pageCount: number;
+  trimSize: string;
+  priceSuggestion: number;
+  differentiationAngle: string;
+  contentPlan: string;
+  estimatedDifficulty: number;
+  whyItCouldWork: string;
+  risks: string;
+  warnings?: string[];
+}
+
+export interface AiSettings {
+  model: string;
+  maxTokens: number;
+  temperature: number;
+  ideasCount: number;
+  timeoutMs: number;
+  maxSavedIdeas: number;
+  forbiddenWords: string[];
+  systemPrompt: string;
+}
+
+export type ExportKind =
+  | 'search_results'
+  | 'keywords'
+  | 'categories'
+  | 'specs'
+  | 'reviews'
+  | 'watchlist'
+  | 'ai_ideas'
+  | 'full_pack';
+
+export interface AiIdeasResponse {
+  notes?: string;
+  ideas: BookIdea[];
+  rawText?: string;
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+  };
+}
+
+export interface TrendsConfig {
+  geo: string;
+  baseUrl: string;
+}
+
+export interface ExportSettings {
+  csvDelimiter: string;
+  includeBom: boolean;
 }
 
 export interface QueueProgressState {
@@ -373,4 +463,7 @@ export type ExtensionMessage =
   | { type: 'WATCHLIST_REFRESH_COMPLETE'; updatedCount: number }
   | { type: 'WATCHLIST_CAPTCHA'; url?: string }
   | { type: 'DOM_PARSE_PRODUCT'; html: string }
-  | { type: 'DOM_PARSE_PRODUCT_RESULT'; parsed: unknown };
+  | { type: 'DOM_PARSE_PRODUCT_RESULT'; parsed: unknown }
+  | { type: 'GENERATE_AI_IDEAS'; payloadText: string; systemPrompt?: string }
+  | { type: 'TEST_CLAUDE_KEY'; apiKey?: string; model?: string }
+  | { type: 'GET_STORAGE_USAGE' };

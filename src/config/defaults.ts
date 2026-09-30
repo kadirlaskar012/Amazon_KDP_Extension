@@ -7,7 +7,11 @@ import type {
   Thresholds,
   KeywordWeights,
   CategoryDifficultyThresholds,
+  AiSettings,
+  ExportSettings,
+  TrendsConfig,
 } from '../types';
+import { DEFAULT_FORBIDDEN_WORDS } from './forbiddenWords';
 
 export const DEFAULT_THRESHOLDS: Thresholds = {
   demandBsr: 100000,
@@ -79,6 +83,31 @@ export const DEFAULT_SETTINGS: Settings = {
     max: 3000,
   },
   marketplace: 'amazon.com',
+  theme: 'system',
+  sidebarPosition: 'right',
+  sidebarDefaultOpen: true,
+  pauseAllFetching: false,
+  maxFetchesPerSearch: 20,
+  cacheDurationHours: 24,
+  ai: {
+    model: 'claude-sonnet-5-5',
+    maxTokens: 4000,
+    temperature: 0.7,
+    ideasCount: 10,
+    timeoutMs: 60000,
+    maxSavedIdeas: 100,
+    forbiddenWords: DEFAULT_FORBIDDEN_WORDS,
+    systemPrompt:
+      'You are a KDP (Amazon Kindle Direct Publishing) niche research assistant. Use ONLY the data provided plus general publishing knowledge. Do not invent sales numbers or BSR values. Return ONLY valid JSON, no markdown, no commentary. Follow Amazon KDP content guidelines: no brand names, trademarks, character names, celebrity names, or terms like "best seller", "free", "new", "top rated" in titles or subtitles. No keyword stuffing. Titles up to 200 characters including subtitle. Each idea must clearly differ from the others and must address at least one weakness found in the data (complaints, weak competitors, missing sub-niche, spec gap). If the data is too thin to support ideas, return an empty array and a "notes" field explaining what data is missing.',
+  },
+  exportSettings: {
+    csvDelimiter: ',',
+    includeBom: true,
+  },
+  trends: {
+    geo: 'US',
+    baseUrl: 'https://trends.google.com/trends/explore',
+  },
 };
 
 export const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -104,4 +133,26 @@ export const DEFAULT_TRACKER_CONFIG = {
 export const DEFAULT_TREND_CONFIG = {
   windowDays: 7,
   stableChangePercent: 5,
+};
+
+export const DEFAULT_AI_SETTINGS: AiSettings = {
+  model: 'claude-sonnet-5-5',
+  maxTokens: 4000,
+  temperature: 0.7,
+  ideasCount: 10,
+  timeoutMs: 60000,
+  maxSavedIdeas: 100,
+  forbiddenWords: DEFAULT_FORBIDDEN_WORDS,
+  systemPrompt:
+    'You are a KDP (Amazon Kindle Direct Publishing) niche research assistant. Use ONLY the data provided plus general publishing knowledge. Do not invent sales numbers or BSR values. Return ONLY valid JSON, no markdown, no commentary. Follow Amazon KDP content guidelines: no brand names, trademarks, character names, celebrity names, or terms like "best seller", "free", "new", "top rated" in titles or subtitles. No keyword stuffing. Titles up to 200 characters including subtitle. Each idea must clearly differ from the others and must address at least one weakness found in the data (complaints, weak competitors, missing sub-niche, spec gap). If the data is too thin to support ideas, return an empty array and a "notes" field explaining what data is missing.',
+};
+
+export const DEFAULT_EXPORT_SETTINGS: ExportSettings = {
+  csvDelimiter: ',',
+  includeBom: true,
+};
+
+export const DEFAULT_TRENDS_CONFIG: TrendsConfig = {
+  geo: 'US',
+  baseUrl: 'https://trends.google.com/trends/explore',
 };

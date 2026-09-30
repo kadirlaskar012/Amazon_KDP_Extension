@@ -4,6 +4,7 @@
 import { defineBackground } from 'wxt/utils/define-background';
 import { FetchQueueService } from '../services/fetchQueue';
 import { refreshWatchlist } from '../services/tracker';
+import { generateBookIdeas, testClaudeApiKey } from '../services/aiIdeas';
 import { DEFAULT_TRACKER_CONFIG } from '../config/defaults';
 import type { ExtensionMessage } from '../types';
 
@@ -147,6 +148,28 @@ export default defineBackground(() => {
           runTrackerRefresh(true).then((res) => {
             sendResponse({ success: true, result: res });
           });
+          return true;
+
+        case 'GENERATE_AI_IDEAS':
+          generateBookIdeas(message.payloadText, message.systemPrompt)
+            .then((result) => sendResponse({ success: true, result }))
+            .catch((err) => sendResponse({ success: false, error: err?.message || 'AI request failed' }));
+          return true;
+
+        case 'TEST_CLAUDE_KEY':
+          testClaudeApiKey(message.apiKey, message.model)
+            .then((result) => sendResponse(result))
+            .catch((err) => sendResponse({ success: false, message: err?.message || 'Test failed' }));
+          return true;
+
+        case 'GET_STORAGE_USAGE':
+          if (chrome.storage?.local?.getBytesInUse) {
+            chrome.storage.local.getBytesInUse(null, (bytesInUse) => {
+              sendResponse({ success: true, bytesInUse });
+            });
+          } else {
+            sendResponse({ success: true, bytesInUse: 0 });
+          }
           return true;
 
         default:

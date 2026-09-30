@@ -6,6 +6,8 @@ import type { SearchSnapshot, KeywordItem, Settings } from '../../types';
 import { fetchAutocompleteKeywords, checkKeywordBsr, type AutocompleteProgress } from '../../services/autocomplete';
 import { generate7BackendKeywordSlots } from '../../services/keywordScore';
 import { analyzeTitles } from '../../services/titleAnalysis';
+import { TrendsLink } from '../TrendsLink';
+import { buildCompareUrl } from '../../services/trends';
 
 interface KeywordsTabProps {
   snapshot?: SearchSnapshot | null;
@@ -274,6 +276,19 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
             Copy Top 20
           </button>
           <button
+            onClick={() => {
+              const top5 = keywords.slice(0, 5).map((k) => k.keyword);
+              if (top5.length > 0) {
+                const compareUrl = buildCompareUrl(top5, settings?.trends?.geo || 'US');
+                window.open(compareUrl, '_blank', 'noopener,noreferrer');
+              }
+            }}
+            className="rounded-lg bg-purple-600/20 border border-purple-500/40 px-2 py-1 text-[11px] font-medium text-purple-300 hover:bg-purple-600/30 transition flex items-center gap-1"
+            title="Compare search volume on Google Trends for top 5 keywords"
+          >
+            📈 Compare Top 5 (Trends)
+          </button>
+          <button
             onClick={handleCopyAll}
             className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-700 transition"
           >
@@ -338,17 +353,7 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
                           <span className="truncate" title={k.keyword}>
                             {k.keyword}
                           </span>
-                          <a
-                            href={trendsUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-slate-500 hover:text-indigo-400 transition"
-                            title="Open Google Trends"
-                          >
-                            <svg className="w-3 h-3 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                            </svg>
-                          </a>
+                          <TrendsLink keyword={k.keyword} geo={settings?.trends?.geo || 'US'} />
                         </div>
                       </td>
 
