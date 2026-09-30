@@ -12,7 +12,7 @@ export default defineConfig({
     host_permissions: [
       'https://www.amazon.com/*',
       'https://completion.amazon.com/*',
-      'https://api.anthropic.com/*',
+      'https://generativelanguage.googleapis.com/*',
     ],
     options_ui: {
       page: 'options.html',

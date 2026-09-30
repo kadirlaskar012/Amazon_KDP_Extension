@@ -1,5 +1,5 @@
 // src/components/tabs/IdeasTab.tsx
-// AI Book Idea Generator tab: builds prompt payloads, calls Claude via background,
+// AI Book Idea Generator tab: builds prompt payloads, calls Google Gemini via background,
 // displays structured idea cards, supports iterative refinement, and manages saved ideas.
 
 import React, { useState, useEffect } from 'react';
@@ -195,10 +195,10 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
               <div className="flex items-center justify-between mb-1">
                 <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  KDP Book Idea Generator (Claude AI)
+                  KDP Book Idea Generator (Google Gemini AI)
                 </h4>
                 <span className="text-xs text-slate-500 font-mono">
-                  Model: {settings?.claudeModel || 'claude-sonnet-5-5'}
+                  Model: {settings?.geminiModel || 'gemini-2.5-flash'}
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -259,9 +259,9 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
             {/* Action Row */}
             <div className="flex items-center justify-between pt-1 gap-2">
               <span className="text-xs text-slate-500">
-                {!settings?.claudeApiKey && (
+                {!settings?.geminiApiKey && (
                   <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
-                    <Key className="w-3.5 h-3.5" /> Add Claude API key in Options to generate
+                    <Key className="w-3.5 h-3.5" /> Add Gemini API key in Options to generate
                   </span>
                 )}
               </span>
@@ -320,7 +320,7 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
             </div>
           )}
 
-          {/* Market Overview Notes from Claude */}
+          {/* Market Overview Notes from Gemini */}
           {marketNotes && (
             <div className="rounded-xl border border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/60 dark:bg-indigo-950/20 p-3.5 flex items-start gap-2.5 text-indigo-900 dark:text-indigo-300">
               <Lightbulb className="w-4 h-4 shrink-0 text-indigo-600 dark:text-indigo-400 mt-0.5" />

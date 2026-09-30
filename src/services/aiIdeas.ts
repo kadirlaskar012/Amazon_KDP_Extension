@@ -1,14 +1,13 @@
 // src/services/aiIdeas.ts
-// Service for communicating with the Anthropic Claude API, parsing structured JSON responses,
-// and validating generated KDP book ideas.
+// Service for communicating with the Google Gemini API (latest models: gemini-2.5-flash, gemini-2.5-pro),
+// parsing structured JSON responses, and validating generated KDP book ideas.
 
 import type { BookIdea, AiIdeasResponse, Settings } from '../types';
 import { getSettings } from '../storage/settings';
 import { DEFAULT_KDP_SYSTEM_PROMPT } from './aiPrompt';
 import { validateBatchIdeas } from './ideaScoring';
 
-const ANTHROPIC_ENDPOINT = 'https://api.anthropic.com/v1/messages';
-const ANTHROPIC_VERSION = '2023-06-01';
+const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 /**
  * Extracts and parses JSON from raw LLM output, stripping markdown code fences if present
@@ -95,41 +94,47 @@ export function validateIdeaResponseShape(data: any): { notes?: string; ideas: B
 }
 
 /**
- * Tests an Anthropic Claude API Key with a minimal request
+ * Tests a Google Gemini API Key with a minimal request
  */
-export async function testClaudeApiKey(
+export async function testGeminiApiKey(
   apiKey?: string,
-  model: string = 'claude-sonnet-5-5'
+  model: string = 'gemini-2.5-flash'
 ): Promise<{ success: boolean; message: string }> {
   let keyToUse = apiKey;
   if (!keyToUse) {
     const s = await getSettings();
-    keyToUse = s.claudeApiKey;
+    keyToUse = s.geminiApiKey;
   }
 
   if (!keyToUse || !keyToUse.trim()) {
     return {
       success: false,
-      message: 'No API key provided. Please enter your Anthropic API key.',
+      message: 'No API key provided. Please enter your Google Gemini API key.',
     };
   }
+
+  const cleanModel = model.replace(/^models\//, '') || 'gemini-2.5-flash';
+  const url = `${GEMINI_BASE_URL}/${cleanModel}:generateContent?key=${encodeURIComponent(keyToUse.trim())}`;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000);
 
   try {
-    const res = await fetch(ANTHROPIC_ENDPOINT, {
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
-        'x-api-key': keyToUse.trim(),
-        'anthropic-version': ANTHROPIC_VERSION,
-        'anthropic-dangerous-direct-browser-access': 'true',
-        'content-type': 'application/json',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: model || 'claude-sonnet-5-5',
-        max_tokens: 10,
-        messages: [{ role: 'user', content: 'Say "OK"' }],
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: 'Hello' }],
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens: 5,
+        },
       }),
       signal: controller.signal,
     });
@@ -137,27 +142,27 @@ export async function testClaudeApiKey(
     clearTimeout(timeoutId);
 
     if (res.ok) {
-      return { success: true, message: 'API key is valid and connected to Claude!' };
+      return { success: true, message: 'API key is valid and connected to Google Gemini!' };
     }
 
-    if (res.status === 401) {
+    if (res.status === 400 || res.status === 403) {
       return {
         success: false,
-        message: 'Invalid API key (401 Unauthorized). Please check your key in Options.',
+        message: 'Invalid Gemini API Key (400/403). Please verify your key at Google AI Studio.',
       };
     }
 
     if (res.status === 429) {
       return {
         success: false,
-        message: 'Anthropic rate limit reached (429). Your key is valid, but please wait before querying.',
+        message: 'Gemini rate limit reached (429). Your key is valid, but please wait a moment before querying.',
       };
     }
 
     const errText = await res.text();
     return {
       success: false,
-      message: `Anthropic API error (${res.status}): ${errText.slice(0, 100)}`,
+      message: `Gemini API error (${res.status}): ${errText.slice(0, 100)}`,
     };
   } catch (err: any) {
     clearTimeout(timeoutId);
@@ -169,8 +174,8 @@ export async function testClaudeApiKey(
 }
 
 /**
- * Generates KDP book ideas by calling the Anthropic Claude Messages API
- * Can be executed in background service worker or directly.
+ * Generates KDP book ideas by calling the Google Gemini generateContent API.
+ * Uses structured JSON mode (responseMimeType: "application/json") and system instructions.
  */
 export async function generateBookIdeas(
   payloadText: string,
@@ -178,17 +183,29 @@ export async function generateBookIdeas(
   customSettings?: Partial<Settings>
 ): Promise<AiIdeasResponse> {
   const settings = await getSettings();
-  const apiKey = (customSettings?.claudeApiKey || settings.claudeApiKey || '').trim();
+  const apiKey = (
+    customSettings?.geminiApiKey ||
+    settings.geminiApiKey ||
+    ''
+  ).trim();
 
   if (!apiKey) {
-    throw new Error('Add your Claude API key in Options to generate AI book ideas.');
+    throw new Error('Add your Google Gemini API key in Options to generate AI book ideas.');
   }
 
-  const model = customSettings?.claudeModel || settings.claudeModel || settings.ai?.model || 'claude-sonnet-5-5';
-  const maxTokens = settings.ai?.maxTokens || 4000;
+  const model = (
+    customSettings?.geminiModel ||
+    settings.geminiModel ||
+    settings.ai?.model ||
+    'gemini-2.5-flash'
+  ).replace(/^models\//, '');
+
+  const maxTokens = settings.ai?.maxTokens || 8192;
   const temperature = settings.ai?.temperature ?? 0.7;
   const timeoutMs = settings.ai?.timeoutMs || 60000;
   const systemPrompt = customSystemPrompt || settings.ai?.systemPrompt || DEFAULT_KDP_SYSTEM_PROMPT;
+
+  const url = `${GEMINI_BASE_URL}/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -197,20 +214,26 @@ export async function generateBookIdeas(
   let usage: { input_tokens?: number; output_tokens?: number } | undefined;
 
   try {
-    const res = await fetch(ANTHROPIC_ENDPOINT, {
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': ANTHROPIC_VERSION,
-        'anthropic-dangerous-direct-browser-access': 'true',
-        'content-type': 'application/json',
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model,
-        max_tokens: maxTokens,
-        temperature,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: payloadText }],
+        systemInstruction: {
+          parts: [{ text: systemPrompt }],
+        },
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: payloadText }],
+          },
+        ],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature,
+          maxOutputTokens: maxTokens,
+        },
       }),
       signal: controller.signal,
     });
@@ -218,35 +241,42 @@ export async function generateBookIdeas(
     clearTimeout(timeoutId);
 
     if (!res.ok) {
-      if (res.status === 401) {
-        throw new Error('Invalid Claude API Key (401 Unauthorized). Please check your key in Options.');
+      if (res.status === 400 || res.status === 403) {
+        throw new Error('Invalid Google Gemini API Key. Please verify your API key in Options.');
       }
       if (res.status === 429) {
-        throw new Error('Claude API rate limit reached (429). Please wait a moment and click Retry.');
+        throw new Error('Gemini API rate limit reached (429). Please wait a moment and click Retry.');
       }
       if (res.status >= 500) {
-        throw new Error(`Anthropic server error (${res.status}). Please try again in a few moments.`);
+        throw new Error(`Google Gemini server error (${res.status}). Please try again in a few moments.`);
       }
       const errBody = await res.text();
-      throw new Error(`Claude API request failed with status ${res.status}: ${errBody.slice(0, 150)}`);
+      throw new Error(`Gemini API request failed with status ${res.status}: ${errBody.slice(0, 150)}`);
     }
 
     const data = await res.json();
-    usage = data.usage;
+    if (data.usageMetadata) {
+      usage = {
+        input_tokens: data.usageMetadata.promptTokenCount,
+        output_tokens: data.usageMetadata.candidatesTokenCount,
+      };
+    }
 
-    const contentBlock = data.content && data.content[0];
-    if (contentBlock && contentBlock.text) {
-      responseText = contentBlock.text;
+    const candidate = data.candidates && data.candidates[0];
+    const candidatePart = candidate?.content?.parts && candidate.content.parts[0];
+    if (candidatePart && candidatePart.text) {
+      responseText = candidatePart.text;
     } else {
-      throw new Error('Claude response did not contain expected content blocks.');
+      throw new Error('Gemini response did not contain expected content parts.');
     }
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
       throw new Error(`Request timed out after ${Math.round(timeoutMs / 1000)} seconds. Please try again.`);
     }
-    // Re-throw handled error without exposing API key in messages
-    throw new Error(err.message || 'Network error communicating with Anthropic API.');
+    const cleanMsg = (err?.message || 'Network error communicating with Google Gemini API.')
+      .replace(new RegExp(apiKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), '[REDACTED]');
+    throw new Error(cleanMsg);
   }
 
   // Parse JSON

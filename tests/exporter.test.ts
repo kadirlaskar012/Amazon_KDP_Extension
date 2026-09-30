@@ -290,15 +290,15 @@ describe('Exporter Service (Module L)', () => {
         query: 'mandala coloring',
         date: 123456789,
         books: [{ asin: 'B123', title: 'Mandala Art', categoryRanks: [] }],
-        apiKey: 'sk-ant-sensitive-key-12345',
-        claudeApiKey: 'sk-ant-another-secret-67890',
+        apiKey: 'sensitive-key-12345',
+        geminiApiKey: 'AIzaSy-another-secret-67890',
       });
 
       const parsed = parseImportSnapshotJson(rawJson);
       expect(parsed.query).toBe('mandala coloring');
       expect(parsed.books.length).toBe(1);
       expect((parsed as any).apiKey).toBeUndefined();
-      expect((parsed as any).claudeApiKey).toBeUndefined();
+      expect((parsed as any).geminiApiKey).toBeUndefined();
     });
 
     it('throws handled error for malformed or incomplete snapshot JSON', () => {

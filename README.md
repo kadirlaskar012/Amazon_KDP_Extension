@@ -1,6 +1,6 @@
 # KDP Niche Finder - Personal Chrome Extension (Manifest V3)
 
-A full-suite, privacy-first personal Chrome Extension for Amazon KDP (Kindle Direct Publishing) niche discovery, keyword and category analysis, competitive specs benchmarking, customer review gap discovery, daily BSR tracking, and data-backed AI book idea generation powered by Anthropic's Claude API.
+A full-suite, privacy-first personal Chrome Extension for Amazon KDP (Kindle Direct Publishing) niche discovery, keyword and category analysis, competitive specs benchmarking, customer review gap discovery, daily BSR tracking, and data-backed AI book idea generation powered by Google's Gemini API (featuring Gemini 2.5 Flash & Pro).
 
 Built with **WXT**, **React**, **TypeScript**, **Tailwind CSS**, and **Vitest**.
 
@@ -96,17 +96,17 @@ Scans customer reviews to extract:
 
 ---
 
-## 🤖 Module J: AI Book Idea Generator (Claude API)
+## 🤖 Module J: AI Book Idea Generator (Google Gemini API)
 
-The extension includes a built-in KDP Book Idea Generator powered by Anthropic's Claude Messages API.
+The extension includes a built-in KDP Book Idea Generator powered by Google's Gemini GenerateContent API (latest default: `gemini-2.5-flash`).
 
-### How to Get an Anthropic API Key & Setup:
-1. Sign up or log into [Anthropic Console](https://console.anthropic.com/).
-2. Navigate to **API Keys** and generate a new key (starts with `sk-ant-...`).
+### How to Get a Free Google Gemini API Key & Setup:
+1. Visit [Google AI Studio](https://aistudio.google.com/app/apikey).
+2. Click **Create API Key** (free tier available with generous rate limits).
 3. In Chrome, right-click the extension icon and choose **Options** (or click the Settings tab in the sidebar).
 4. Navigate to the **AI Settings** section.
-5. Paste your key in the **Anthropic API Key** field and click **Test Key** to verify connectivity.
-6. Choose your preferred model (default: `claude-sonnet-5-5`).
+5. Paste your key in the **Google Gemini API Key** field and click **Test Key** to verify connectivity.
+6. Choose your preferred model (default: `gemini-2.5-flash`, with options for `gemini-2.5-pro`, `gemini-1.5-flash`, `gemini-1.5-pro`).
 
 ### How It Works:
 - Runs directly from the **background service worker** (`background.ts`) via message passing.
@@ -178,11 +178,11 @@ Amazon occasionally adjusts class names. To verify or update selectors:
 ## 🔒 Security & Privacy Guarantee
 
 - **100% Local Processing**: All search scraping, keyword scores, specs, reviews, and tracking history remain in your browser's `chrome.storage.local`.
-- **Zero API Key Leaks**: The Anthropic API key is stored exclusively in `chrome.storage.local` and accessed only at call time by `background.ts`. It never touches web page DOMs, is never exposed to Amazon content scripts, and is stripped from all exports and JSON backups.
+- **Zero API Key Leaks**: The Google Gemini API key is stored exclusively in `chrome.storage.local` and accessed only at call time by `background.ts`. It never touches web page DOMs, is never exposed to Amazon content scripts, and is stripped from all exports and JSON backups.
 - **Minimal Host Permissions**:
   - `https://*.amazon.com/*` (Amazon book searches)
   - `https://completion.amazon.com/*` (Amazon autocomplete suggestions)
-  - `https://api.anthropic.com/*` (Claude Messages API)
+  - `https://generativelanguage.googleapis.com/*` (Google Gemini API)
 - **No Remote Code Execution**: All JavaScript is strictly bundled and evaluated locally under Manifest V3 security policies.
 
 ---
@@ -191,4 +191,4 @@ Amazon occasionally adjusts class names. To verify or update selectors:
 
 1. **Non-US Marketplaces**: Optimized primarily for `amazon.com`. International domains (`amazon.co.uk`, `amazon.ca`, etc.) are supported experimentally; Amazon DOM variations in those regions may require updating selectors in `selectors.ts`.
 2. **Private Reviews Access**: Some customer reviews on Amazon are restricted to signed-in accounts; the extension gracefully handles login gates and analyzes public reviews.
-3. **Claude API Usage**: Requires an Anthropic account with prepaid API credits. The extension provides conservative token budgeting (approx. 1,000–1,500 output tokens per 10 ideas).
+3. **Google Gemini API Usage**: Requires a free or paid API key from Google AI Studio. The extension provides conservative token budgeting (approx. 1,000–1,500 output tokens per 10 ideas).

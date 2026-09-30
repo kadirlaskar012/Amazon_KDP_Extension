@@ -430,7 +430,7 @@ export function parseImportSnapshotJson(jsonText: string): SearchSnapshot {
 
   // Purge sensitive keys if present
   delete (parsed as any).apiKey;
-  delete (parsed as any).claudeApiKey;
+  delete (parsed as any).geminiApiKey;
 
   return parsed as SearchSnapshot;
 }

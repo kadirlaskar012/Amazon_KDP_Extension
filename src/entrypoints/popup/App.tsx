@@ -627,10 +627,10 @@ export const App: React.FC = () => {
               {/* AI Status */}
               <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200 block text-xs">Claude AI Service</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200 block text-xs">Google Gemini AI</span>
                   <span className="text-[10px] text-slate-500">Book idea generation module</span>
                 </div>
-                {settings?.claudeApiKey ? (
+                {settings?.geminiApiKey ? (
                   <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold text-xs">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Configured
                   </span>

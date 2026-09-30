@@ -221,7 +221,7 @@ export const App: React.FC = () => {
   const handleExportSettingsJson = () => {
     const exported = { ...settings };
     if (!includeKeyInExport) {
-      delete exported.claudeApiKey;
+      delete (exported as any).geminiApiKey;
     }
     const jsonStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exported, null, 2));
     const dlAnchor = document.createElement('a');
@@ -244,7 +244,8 @@ export const App: React.FC = () => {
         await updateSettings((prev) => ({
           ...prev,
           ...imported,
-          claudeApiKey: imported.claudeApiKey || prev.claudeApiKey,
+          geminiApiKey: imported.geminiApiKey || prev.geminiApiKey,
+          geminiModel: imported.geminiModel || prev.geminiModel || 'gemini-2.5-flash',
         }));
         alert('Settings successfully imported!');
       } catch (err: any) {
@@ -845,32 +846,36 @@ export const App: React.FC = () => {
         {activeSection === 'ai' && (
           <div className="space-y-4">
             <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Claude AI Credentials</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Google Gemini AI Credentials</h3>
               <ApiKeyField
-                apiKey={settings.claudeApiKey || ''}
-                onChange={(key) => updateSettings((s) => ({ ...s, claudeApiKey: key }))}
-                model={settings.claudeModel || 'claude-sonnet-5-5'}
+                apiKey={settings.geminiApiKey || ''}
+                onChange={(key) => updateSettings((s) => ({ ...s, geminiApiKey: key }))}
+                model={settings.geminiModel || 'gemini-2.5-flash'}
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 <div>
-                  <label className="block text-slate-700 dark:text-slate-300 font-medium mb-1">Model Name</label>
-                  <input
-                    type="text"
-                    value={settings.claudeModel || 'claude-sonnet-5-5'}
-                    onChange={(e) => updateSettings((s) => ({ ...s, claudeModel: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 font-mono text-xs sm:text-sm"
-                  />
+                  <label className="block text-slate-700 dark:text-slate-300 font-medium mb-1">Gemini Model</label>
+                  <select
+                    value={settings.geminiModel || 'gemini-2.5-flash'}
+                    onChange={(e) => updateSettings((s) => ({ ...s, geminiModel: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 font-mono text-xs sm:text-sm text-slate-900 dark:text-slate-100"
+                  >
+                    <option value="gemini-2.5-flash">gemini-2.5-flash (Recommended: Fast & Intelligent)</option>
+                    <option value="gemini-2.5-pro">gemini-2.5-pro (Deep Reasoning & Niche Strategy)</option>
+                    <option value="gemini-1.5-flash">gemini-1.5-flash (Lightweight)</option>
+                    <option value="gemini-1.5-pro">gemini-1.5-pro (Large Context)</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-slate-700 dark:text-slate-300 font-medium mb-1">Max Tokens</label>
                   <input
                     type="number"
-                    value={settings.ai?.maxTokens || 4000}
+                    value={settings.ai?.maxTokens || 8192}
                     onChange={(e) =>
                       updateSettings((s) => ({
                         ...s,
-                        ai: { ...DEFAULT_AI_SETTINGS, ...s.ai, maxTokens: parseInt(e.target.value, 10) || 4000 },
+                        ai: { ...DEFAULT_AI_SETTINGS, ...s.ai, maxTokens: parseInt(e.target.value, 10) || 8192 },
                       }))
                     }
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 font-mono text-xs sm:text-sm"
@@ -956,7 +961,7 @@ export const App: React.FC = () => {
                   onChange={(e) => setIncludeKeyInExport(e.target.checked)}
                   className="accent-indigo-600"
                 />
-                <span>Include Anthropic API key in JSON backup (Warning: contains secret credentials)</span>
+                <span>Include Google Gemini API key in JSON backup (Warning: contains secret credentials)</span>
               </label>
 
               <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex gap-3">
@@ -1007,13 +1012,13 @@ export const App: React.FC = () => {
           <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
             <h3 className="font-bold text-slate-900 dark:text-white text-base">About KDP Niche Finder</h3>
             <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-xs sm:text-sm">
-              KDP Niche Finder is a personal Amazon KDP research intelligence tool designed to run entirely locally in your browser. It extracts organic search metrics, calculates multi-factor Niche Scores, tracks daily BSR trajectories, analyzes customer review complaints, and creates data-backed book blueprints via the Anthropic Claude API.
+              KDP Niche Finder is a personal Amazon KDP research intelligence tool designed to run entirely locally in your browser. It extracts organic search metrics, calculates multi-factor Niche Scores, tracks daily BSR trajectories, analyzes customer review complaints, and creates data-backed book blueprints via the Google Gemini API.
             </p>
 
             <div className="space-y-2 text-xs text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-200 dark:border-slate-800">
               <div className="font-bold text-slate-900 dark:text-white">Key Architectural Guarantees:</div>
               <div>• <strong>Privacy:</strong> All competitor and search data remains strictly in your local browser storage.</div>
-              <div>• <strong>Security:</strong> Anthropic API requests are dispatched exclusively from background service workers; your key is never injected into web pages.</div>
+              <div>• <strong>Security:</strong> Google Gemini API requests are dispatched exclusively from background service workers; your key is never injected into web pages.</div>
               <div>• <strong>Resilience:</strong> Automated CAPTCHA detection halts queue processing to protect accounts.</div>
             </div>
           </div>

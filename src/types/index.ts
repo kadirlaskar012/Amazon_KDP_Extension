@@ -332,8 +332,8 @@ export interface NicheRevenueEstimate {
 }
 
 export interface Settings {
-  claudeApiKey: string;
-  claudeModel: string;
+  geminiApiKey: string;
+  geminiModel: string;
   weights: ScoreWeights;
   thresholds: Thresholds;
   keywordWeights: KeywordWeights;
@@ -466,5 +466,5 @@ export type ExtensionMessage =
   | { type: 'DOM_PARSE_PRODUCT'; html: string }
   | { type: 'DOM_PARSE_PRODUCT_RESULT'; parsed: unknown }
   | { type: 'GENERATE_AI_IDEAS'; payloadText: string; systemPrompt?: string }
-  | { type: 'TEST_CLAUDE_KEY'; apiKey?: string; model?: string }
+  | { type: 'TEST_GEMINI_KEY'; apiKey?: string; model?: string }
   | { type: 'GET_STORAGE_USAGE' };

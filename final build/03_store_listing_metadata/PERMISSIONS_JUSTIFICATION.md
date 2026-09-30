@@ -37,8 +37,8 @@ When submitting your extension to the Chrome Web Store Developer Dashboard, you 
 ### 2. `https://completion.amazon.com/*`
 - **Why it is needed:** Queries Amazon's public search suggestion API to provide keyword expansion and auto-suggested sub-niches to the author.
 
-### 3. `https://api.anthropic.com/*`
-- **Why it is needed:** Allows users who provide their own optional API key to generate creative book titles, subtitle ideas, and chapter outlines based on analyzed niche gaps.
+### 3. `https://generativelanguage.googleapis.com/*`
+- **Why it is needed:** Allows users who provide their own optional Google Gemini API key to generate creative book titles, subtitle ideas, backend 7-keywords, 3 categories, and chapter outlines based on analyzed niche gaps directly via Google Gemini API.
 
 ---
 

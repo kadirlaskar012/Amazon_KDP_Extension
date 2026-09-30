@@ -4,7 +4,7 @@
 import { defineBackground } from 'wxt/utils/define-background';
 import { FetchQueueService } from '../services/fetchQueue';
 import { refreshWatchlist } from '../services/tracker';
-import { generateBookIdeas, testClaudeApiKey } from '../services/aiIdeas';
+import { generateBookIdeas, testGeminiApiKey } from '../services/aiIdeas';
 import { DEFAULT_TRACKER_CONFIG } from '../config/defaults';
 import { migrateStorage } from '../storage';
 import type { ExtensionMessage } from '../types';
@@ -158,8 +158,8 @@ export default defineBackground(() => {
             .catch((err) => sendResponse({ success: false, error: err?.message || 'AI request failed' }));
           return true;
 
-        case 'TEST_CLAUDE_KEY':
-          testClaudeApiKey(message.apiKey, message.model)
+        case 'TEST_GEMINI_KEY':
+          testGeminiApiKey(message.apiKey, message.model)
             .then((result) => sendResponse(result))
             .catch((err) => sendResponse({ success: false, message: err?.message || 'Test failed' }));
           return true;

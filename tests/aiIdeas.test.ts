@@ -33,13 +33,13 @@ import {
   extractJsonFromText,
   validateIdeaResponseShape,
   generateBookIdeas,
-  testClaudeApiKey,
+  testGeminiApiKey,
 } from '../src/services/aiIdeas';
 import { buildPromptPayload } from '../src/services/aiPrompt';
 import type { SearchSnapshot } from '../src/types';
 
 describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
-  const secretApiKey = 'sk-ant-api03-SECRET_CLASSIFIED_KEY_99999';
+  const secretApiKey = 'AIzaSy_SECRET_CLASSIFIED_GEMINI_KEY_99999';
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -48,10 +48,10 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
     }
     // Set test api key in storage
     mockStorage['kdp_settings'] = {
-      claudeApiKey: secretApiKey,
-      claudeModel: 'claude-sonnet-5-5',
+      geminiApiKey: secretApiKey,
+      geminiModel: 'gemini-2.5-flash',
       ai: {
-        model: 'claude-sonnet-5-5',
+        model: 'gemini-2.5-flash',
         maxTokens: 4000,
         temperature: 0.7,
         ideasCount: 10,
@@ -155,18 +155,25 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
   });
 
   describe('API Execution & Error Handling', () => {
-    it('executes generateBookIdeas successfully with mocked Anthropic response', async () => {
+    it('executes generateBookIdeas successfully with mocked Gemini response', async () => {
       const mockApiResponse = {
-        id: 'msg_12345',
-        type: 'message',
-        role: 'assistant',
-        content: [
+        candidates: [
           {
-            type: 'text',
-            text: JSON.stringify(validSampleJson),
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify(validSampleJson),
+                },
+              ],
+            },
+            finishReason: 'STOP',
           },
         ],
-        usage: { input_tokens: 1200, output_tokens: 950 },
+        usageMetadata: {
+          promptTokenCount: 1200,
+          candidatesTokenCount: 950,
+          totalTokenCount: 2150,
+        },
       };
 
       const fetchSpy = vi.fn().mockResolvedValue({
@@ -180,24 +187,29 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
       expect(result.ideas.length).toBe(1);
       expect(result.ideas[0]!.title).toBe('Mindful Animal Tracing for Kids');
       expect(result.usage?.input_tokens).toBe(1200);
+      expect(result.usage?.output_tokens).toBe(950);
 
-      // Verify request payload and headers
+      // Verify request payload and URL
       expect(fetchSpy).toHaveBeenCalledTimes(1);
       const firstCall = fetchSpy.mock.calls[0];
       expect(firstCall).toBeDefined();
       const [url, options] = firstCall!;
-      expect(url).toBe('https://api.anthropic.com/v1/messages');
-      expect((options as any)?.headers?.['x-api-key']).toBe(secretApiKey);
-      expect((options as any)?.headers?.['anthropic-dangerous-direct-browser-access']).toBe('true');
+      expect(url).toContain('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent');
+      expect(url).toContain(`key=${secretApiKey}`);
+      expect((options as any)?.headers?.['Content-Type']).toBe('application/json');
+
+      const body = JSON.parse((options as any)?.body);
+      expect(body.generationConfig.responseMimeType).toBe('application/json');
+      expect(body.contents[0].parts[0].text).toBe('Sample payload text');
     });
 
-    it('handles 401 Unauthorized with user-friendly error without exposing the key', async () => {
+    it('handles 400 / 403 Invalid API Key with user-friendly error without exposing the key', async () => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
           ok: false,
-          status: 401,
-          text: async () => '{"error": {"message": "invalid x-api-key"}}',
+          status: 400,
+          text: async () => '{"error": {"message": "API key not valid. Please pass a valid API key."}}',
         })
       );
 
@@ -205,7 +217,7 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
         await generateBookIdeas('Payload');
         expect.unreachable('Should have thrown an error');
       } catch (err: any) {
-        expect(err.message).toContain('Invalid Claude API Key (401 Unauthorized)');
+        expect(err.message).toContain('Invalid Google Gemini API Key');
         // Ensure secret key never appears in the error
         expect(err.message).not.toContain(secretApiKey);
       }
@@ -217,12 +229,12 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
         vi.fn().mockResolvedValue({
           ok: false,
           status: 429,
-          text: async () => 'Rate limit exceeded',
+          text: async () => 'Resource exhausted: quota exceeded',
         })
       );
 
       await expect(generateBookIdeas('Payload')).rejects.toThrow(
-        'Claude API rate limit reached (429). Please wait a moment and click Retry.'
+        /Gemini API rate limit reached/i
       );
     });
 
@@ -246,10 +258,11 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
       } catch (err: any) {
         // Even if an unexpected error occurs, test that application wraps it safely
         expect(err.message).toBeDefined();
+        expect(err.message).not.toContain(secretApiKey);
       }
     });
 
-    it('tests testClaudeApiKey function with 200 OK and 401 Unauthorized', async () => {
+    it('tests testGeminiApiKey function with 200 OK and 400 Invalid Key', async () => {
       // 200 OK
       vi.stubGlobal(
         'fetch',
@@ -258,22 +271,22 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
           status: 200,
         })
       );
-      const okResult = await testClaudeApiKey(secretApiKey);
+      const okResult = await testGeminiApiKey(secretApiKey);
       expect(okResult.success).toBe(true);
       expect(okResult.message).toContain('valid and connected');
 
-      // 401 Unauthorized
+      // 400 Invalid Key
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
           ok: false,
-          status: 401,
-          text: async () => 'Invalid key',
+          status: 400,
+          text: async () => 'API key not valid',
         })
       );
-      const failResult = await testClaudeApiKey(secretApiKey);
+      const failResult = await testGeminiApiKey(secretApiKey);
       expect(failResult.success).toBe(false);
-      expect(failResult.message).toContain('401 Unauthorized');
+      expect(failResult.message).toContain('Invalid Gemini API Key');
     });
   });
 

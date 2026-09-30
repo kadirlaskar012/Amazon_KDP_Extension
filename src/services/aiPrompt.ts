@@ -1,5 +1,5 @@
 // src/services/aiPrompt.ts
-// System prompt and structured payload builder for Anthropic Claude KDP book idea generation
+// System prompt and structured payload builder for Google Gemini KDP book idea generation
 
 import type { SearchSnapshot } from '../types';
 

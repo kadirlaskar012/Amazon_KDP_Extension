@@ -12,7 +12,7 @@ This Privacy Policy explains how the **KDP Niche Finder** Chrome Extension ("we"
 ## 2. Information Handled Locally
 - **Amazon Book Metadata:** The extension parses publicly visible book data (such as title, author, price, reviews, ratings, BSR, and page counts) from Amazon search results and product pages. This data is processed purely in your local browser environment.
 - **Local Storage:** The extension uses `chrome.storage.local` solely on your device to store user preferences (custom scoring weights, thresholds) and temporary cache snapshots (held up to 24 hours to prevent redundant network requests).
-- **Optional API Keys:** If you provide an Anthropic API key for AI generation features, it is stored securely in your browser's local storage and is only transmitted directly to Anthropic's official API endpoint (`api.anthropic.com`). We never see or store your API key.
+- **Optional API Keys:** If you provide a Google Gemini API key for AI generation features, it is stored securely in your browser's local storage and is only transmitted directly to Google's official Gemini API endpoint (`generativelanguage.googleapis.com`). We never see or store your API key.
 
 ## 3. Data Sharing & Third Parties
 - We do **not** sell, rent, monetize, or transfer your personal data or search habits to any third parties, advertisers, or data brokers.

@@ -103,7 +103,7 @@ You can tailor all scoring logic to match your specific publishing strategy:
 5. **Printing Cost & Royalty Calculator:**
    - Default formula: `Printing Cost = $1.00 fixed + ($0.012 × pageCount)`.
    - Update printing fees and royalty rates (default: 60%) to match your book formats.
-6. **Claude AI Key (Optional):** Enter your Anthropic Claude API key for future AI book title and outline generation.
+6. **Google Gemini AI Key (Optional):** Enter your free Google Gemini API key from Google AI Studio to unlock AI book title, outline, and backend keyword generation.
 7. Click **Save Settings** — your new weights and costs will immediately recalculate all scores on active Amazon tabs without re-fetching!
 
 ---
