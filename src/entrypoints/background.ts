@@ -1,9 +1,56 @@
+// src/entrypoints/background.ts
+// Background service worker: Handles fetch queues, daily watchlist alarms, offscreen parsing, and messaging
+
 import { defineBackground } from 'wxt/utils/define-background';
 import { FetchQueueService } from '../services/fetchQueue';
+import { refreshWatchlist } from '../services/tracker';
+import { DEFAULT_TRACKER_CONFIG } from '../config/defaults';
 import type { ExtensionMessage } from '../types';
 
 export default defineBackground(() => {
   console.log('[KDP Niche Finder] Service worker initialized.');
+
+  // Helper to check if an offscreen document currently exists
+  const hasOffscreenDocument = async (): Promise<boolean> => {
+    try {
+      if ('getContexts' in chrome.runtime) {
+        const contexts = await (chrome.runtime as any).getContexts({
+          contextTypes: ['OFFSCREEN_DOCUMENT'],
+        });
+        return Boolean(contexts.length);
+      }
+    } catch {
+      // Fallback
+    }
+    return false;
+  };
+
+  // Helper to create the offscreen document when needed
+  const ensureOffscreenDocument = async (): Promise<void> => {
+    try {
+      if (typeof chrome.offscreen === 'undefined') return;
+      if (await hasOffscreenDocument()) return;
+      await chrome.offscreen.createDocument({
+        url: 'offscreen.html',
+        reasons: [chrome.offscreen.Reason.DOM_PARSER],
+        justification: 'Parse Amazon HTML for BSR and reviews without DOM in worker',
+      });
+    } catch (err) {
+      console.warn('[KDP Background] Offscreen creation error:', err);
+    }
+  };
+
+  // Helper to close the offscreen document when work completes
+  const closeOffscreenDocument = async (): Promise<void> => {
+    try {
+      if (typeof chrome.offscreen === 'undefined') return;
+      if (await hasOffscreenDocument()) {
+        await chrome.offscreen.closeDocument();
+      }
+    } catch (err) {
+      console.warn('[KDP Background] Offscreen close error:', err);
+    }
+  };
 
   // Helper to broadcast a message to all tabs
   const broadcastToTabs = async (message: ExtensionMessage) => {
@@ -43,6 +90,27 @@ export default defineBackground(() => {
     },
   });
 
+  // Executes a watchlist tracker refresh with offscreen lifecycle management
+  const runTrackerRefresh = async (forceAll: boolean = false) => {
+    try {
+      await ensureOffscreenDocument();
+      const result = await refreshWatchlist({ forceAll });
+      broadcastToTabs({
+        type: 'WATCHLIST_REFRESH_COMPLETE',
+        updatedCount: result.updatedCount,
+      });
+      if (result.reason === 'CAPTCHA_DETECTED') {
+        broadcastToTabs({
+          type: 'WATCHLIST_CAPTCHA',
+          url: result.captchaUrl,
+        });
+      }
+      return result;
+    } finally {
+      await closeOffscreenDocument();
+    }
+  };
+
   // Message dispatcher
   chrome.runtime.onMessage.addListener(
     (
@@ -50,46 +118,62 @@ export default defineBackground(() => {
       sender: chrome.runtime.MessageSender,
       sendResponse: (response?: unknown) => void
     ) => {
-    switch (message.type) {
-      case 'START_PRODUCT_FETCH':
-        queueService.enqueue(message.asins, sender.tab?.id);
-        sendResponse({ success: true, status: queueService.getStatus() });
-        return true;
+      switch (message.type) {
+        case 'START_PRODUCT_FETCH':
+          queueService.enqueue(message.asins, sender.tab?.id);
+          sendResponse({ success: true, status: queueService.getStatus() });
+          return true;
 
-      case 'PAUSE_QUEUE':
-        queueService.pause();
-        sendResponse({ success: true, status: queueService.getStatus() });
-        return true;
+        case 'PAUSE_QUEUE':
+          queueService.pause();
+          sendResponse({ success: true, status: queueService.getStatus() });
+          return true;
 
-      case 'RESUME_QUEUE':
-        queueService.resume();
-        sendResponse({ success: true, status: queueService.getStatus() });
-        return true;
+        case 'RESUME_QUEUE':
+          queueService.resume();
+          sendResponse({ success: true, status: queueService.getStatus() });
+          return true;
 
-      case 'CANCEL_QUEUE':
-        queueService.cancel();
-        sendResponse({ success: true, status: queueService.getStatus() });
-        return true;
+        case 'CANCEL_QUEUE':
+          queueService.cancel();
+          sendResponse({ success: true, status: queueService.getStatus() });
+          return true;
 
-      case 'GET_QUEUE_STATUS':
-        sendResponse({ success: true, status: queueService.getStatus() });
-        return true;
+        case 'GET_QUEUE_STATUS':
+          sendResponse({ success: true, status: queueService.getStatus() });
+          return true;
 
-      default:
-        break;
+        case 'REFRESH_WATCHLIST_NOW':
+          runTrackerRefresh(true).then((res) => {
+            sendResponse({ success: true, result: res });
+          });
+          return true;
+
+        default:
+          break;
+      }
+      return false;
     }
-    return false;
-  });
+  );
 
   // Daily alarm setup for watchlist monitoring
   chrome.alarms.onAlarm.addListener((alarm: chrome.alarms.Alarm) => {
-    if (alarm.name === 'kdp_daily_watchlist_sync') {
+    if (alarm.name === DEFAULT_TRACKER_CONFIG.alarmName) {
       console.log('[KDP Background] Daily watchlist sync triggered.');
+      runTrackerRefresh(false);
     }
   });
 
-  // Ensure daily alarm is registered
-  chrome.alarms.create('kdp_daily_watchlist_sync', {
-    periodInMinutes: 24 * 60, // once a day
+  // Register alarm on install / update
+  chrome.runtime.onInstalled.addListener(() => {
+    chrome.alarms.create(DEFAULT_TRACKER_CONFIG.alarmName, {
+      periodInMinutes: DEFAULT_TRACKER_CONFIG.periodMinutes,
+    });
+  });
+
+  // Check refresh on browser startup (covers closed browser days)
+  chrome.runtime.onStartup.addListener(() => {
+    console.log('[KDP Background] Startup check for pending watchlist refresh.');
+    runTrackerRefresh(false);
   });
 });

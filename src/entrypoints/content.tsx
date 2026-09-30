@@ -3,6 +3,7 @@ import { createShadowRootUi } from 'wxt/utils/content-script-ui/shadow-root';
 import React, { useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom/client';
 import { Sidebar } from '../components/Sidebar';
+import { WatchButton } from '../components/WatchButton';
 import { parseSearchResults, getSearchQuery, isAmazonBookSearchPage } from '../parsers/searchPage';
 import type { Book, QueueProgressState, ExtensionMessage } from '../types';
 import { saveSnapshot } from '../storage';
@@ -142,41 +143,108 @@ export default defineContentScript({
   async main(ctx) {
     console.log('[KDP Niche Finder] Content script active on:', window.location.href);
 
-    // Check if this is an Amazon search page or contains book search results
+    // 1. Check if this is an Amazon search page or contains book search results
     const isSearch = isAmazonBookSearchPage(document);
-    if (!isSearch) {
-      // Not a search page, do not inject sidebar automatically
+    if (isSearch) {
+      const books = parseSearchResults(document);
+      const query = getSearchQuery(document);
+
+      // Save initial snapshot
+      if (books.length > 0) {
+        await saveSnapshot({
+          query,
+          date: Date.now(),
+          books,
+        });
+      }
+
+      // Mount Sidebar Shadow DOM UI
+      const ui = await createShadowRootUi(ctx, {
+        name: 'kdp-niche-finder-container',
+        position: 'overlay',
+        anchor: 'body',
+        append: 'last',
+        onMount: (uiContainer) => {
+          const root = ReactDOM.createRoot(uiContainer);
+          root.render(<ContentApp initialBooks={books} initialQuery={query} />);
+          return root;
+        },
+        onRemove: (root) => {
+          root?.unmount();
+        },
+      });
+
+      ui.mount();
       return;
     }
 
-    const books = parseSearchResults(document);
-    const query = getSearchQuery(document);
+    // 2. Check if this is an Amazon book product page (/dp/ or /gp/product/ in Books category)
+    const pathname = window.location.pathname;
+    const asinMatch = pathname.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i);
+    if (asinMatch && asinMatch[1]) {
+      const asin = asinMatch[1].toUpperCase();
 
-    // Save initial snapshot
-    if (books.length > 0) {
-      await saveSnapshot({
-        query,
-        date: Date.now(),
-        books,
-      });
+      // Check if it's Books category
+      const breadcrumbText = (
+        document.querySelector('#wayfinding-breadcrumbs_feature_div, #nav-subnav, #nav-search-dropdown-card')?.textContent || ''
+      ).toLowerCase();
+      const bodyText = document.body?.textContent?.toLowerCase() || '';
+
+      const isBooksCategory =
+        breadcrumbText.includes('books') ||
+        breadcrumbText.includes('kindle') ||
+        document.querySelector('#detailBullets_feature_div') !== null ||
+        (bodyText.includes('best sellers rank') && (bodyText.includes('in books') || bodyText.includes('in kindle store')));
+
+      if (isBooksCategory) {
+        const title = document.querySelector('#productTitle')?.textContent?.trim() || document.title || 'Amazon Book';
+
+        const priceText = document.querySelector('.a-price .a-offscreen, #price, #priceblock_ourprice, #kindle-price')?.textContent || '';
+        const priceMatch = priceText.match(/[\d,.]+/);
+        const price = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : undefined;
+
+        const ratingText = document.querySelector('#acrPopover, i[data-hook="average-star-rating"] span.a-icon-alt')?.textContent || '';
+        const rMatch = ratingText.match(/(\d+(?:\.\d+)?)/);
+        const rating = rMatch && rMatch[1] ? parseFloat(rMatch[1]) : undefined;
+
+        const reviewText = document.querySelector('#acrCustomerReviewText')?.textContent?.replace(/,/g, '') || '';
+        const revMatch = reviewText.match(/\d+/);
+        const reviewCount = revMatch ? parseInt(revMatch[0], 10) : undefined;
+
+        const bookDetails: Partial<Book> & { asin: string; title: string } = {
+          asin,
+          title,
+          price,
+          rating,
+          reviewCount,
+        };
+
+        // Mount floating WatchButton Shadow DOM UI
+        const watchUi = await createShadowRootUi(ctx, {
+          name: 'kdp-floating-watch-container',
+          position: 'overlay',
+          anchor: 'body',
+          append: 'last',
+          onMount: (uiContainer) => {
+            const root = ReactDOM.createRoot(uiContainer);
+            root.render(
+              <div className="fixed bottom-6 right-6 z-[999999] font-sans antialiased shadow-2xl rounded-2xl border border-slate-700 bg-slate-900/95 p-2 backdrop-blur-md flex items-center gap-2.5">
+                <div className="text-[11px] font-semibold text-slate-200 pl-1 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>KDP Tracker</span>
+                </div>
+                <WatchButton book={bookDetails} size="sm" showLabel={true} />
+              </div>
+            );
+            return root;
+          },
+          onRemove: (root) => {
+            root?.unmount();
+          },
+        });
+
+        watchUi.mount();
+      }
     }
-
-    // Mount Shadow DOM UI
-    const ui = await createShadowRootUi(ctx, {
-      name: 'kdp-niche-finder-container',
-      position: 'overlay',
-      anchor: 'body',
-      append: 'last',
-      onMount: (uiContainer) => {
-        const root = ReactDOM.createRoot(uiContainer);
-        root.render(<ContentApp initialBooks={books} initialQuery={query} />);
-        return root;
-      },
-      onRemove: (root) => {
-        root?.unmount();
-      },
-    });
-
-    ui.mount();
   },
 });

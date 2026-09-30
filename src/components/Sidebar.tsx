@@ -7,13 +7,16 @@ import { BooksTab } from './tabs/BooksTab';
 import { KeywordsTab } from './tabs/KeywordsTab';
 import { CategoriesTab } from './tabs/CategoriesTab';
 import { SpecsTab } from './tabs/SpecsTab';
+import { ReviewsTab } from './tabs/ReviewsTab';
+import { WatchlistTab } from './tabs/WatchlistTab';
 import { SearchProgress } from './SearchProgress';
 import { CaptchaAlert } from './CaptchaAlert';
 import { calculateNicheScore } from '../services/scoring';
 import { getSettings } from '../storage/settings';
-import { getSnapshots, saveSnapshot, getActiveSnapshot, saveWatchlistItem } from '../storage';
+import { getSnapshots, saveSnapshot, getActiveSnapshot } from '../storage';
+import { addToWatchlist } from '../services/watchlist';
 import { DEFAULT_SETTINGS } from '../config/defaults';
-import type { KeywordItem, CategoryStat, SpecsSummary } from '../types';
+import type { KeywordItem, CategoryStat, SpecsSummary, ReviewGapAnalysis } from '../types';
 import {
   BookMarked,
   Moon,
@@ -113,6 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         keywords: prev?.keywords || [],
         categories: prev?.categories || [],
         specs: prev?.specs,
+        reviewGap: prev?.reviewGap,
       }));
     }
   }, [books, query, currentScore]);
@@ -132,6 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         keywords: selected.keywords || [],
         categories: selected.categories || [],
         specs: selected.specs,
+        reviewGap: selected.reviewGap,
       });
     }
   };
@@ -166,25 +171,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
     await saveSnapshot(updated);
   };
 
+  const handleUpdateSnapshotReviewGap = async (
+    reviewGap: ReviewGapAnalysis,
+    updatedBooks: Book[]
+  ) => {
+    if (!currentSnapshot) return;
+    const updated: SearchSnapshot = {
+      ...currentSnapshot,
+      books: updatedBooks,
+      reviewGap,
+    };
+    setCurrentSnapshot(updated);
+    setBooks(updatedBooks);
+    await saveSnapshot(updated);
+  };
+
   const handleAddToWatchlist = async (book: Book) => {
     try {
-      await saveWatchlistItem({
-        asin: book.asin,
-        title: book.title,
-        author: book.author,
-        price: book.price,
-        addedAt: Date.now(),
-        history: [
-          {
-            date: Date.now(),
-            bsr: book.bsrOverall,
-            price: book.price,
-            reviewCount: book.reviewCount,
-          },
-        ],
-      });
-      setWatchlistSuccess(`Added "${book.title.slice(0, 20)}..." to watchlist!`);
-      setTimeout(() => setWatchlistSuccess(null), 3000);
+      const res = await addToWatchlist(book);
+      if (res.success) {
+        setWatchlistSuccess(res.message || `Added "${book.title.slice(0, 20)}..." to watchlist!`);
+        setTimeout(() => setWatchlistSuccess(null), 3000);
+      } else if (res.message) {
+        alert(res.message);
+      }
     } catch (err) {
       console.warn('Failed to add to watchlist:', err);
     }
@@ -225,7 +235,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="font-bold text-slate-900 dark:text-white text-sm leading-tight flex items-center gap-1">
                 KDP Niche Finder
                 <span className="text-[9px] font-semibold px-1 py-0.2 rounded bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300">
-                  Phase 3
+                  Phase 4
                 </span>
               </div>
               <div className="text-[10px] text-slate-400">Personal KDP Intelligence</div>
@@ -350,18 +360,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
+          {activeTab === 'reviews' && (
+            <div className="p-3">
+              <ReviewsTab
+                snapshot={currentSnapshot}
+                onUpdateSnapshotReviewGap={handleUpdateSnapshotReviewGap}
+                onCaptchaEncountered={() => onPauseQueue()}
+              />
+            </div>
+          )}
+
+          {activeTab === 'watchlist' && (
+            <div className="p-3">
+              <WatchlistTab
+                onCaptchaEncountered={() => onPauseQueue()}
+              />
+            </div>
+          )}
+
           {activeTab !== 'overview' &&
             activeTab !== 'books' &&
             activeTab !== 'keywords' &&
             activeTab !== 'categories' &&
-            activeTab !== 'specs' && (
+            activeTab !== 'specs' &&
+            activeTab !== 'reviews' &&
+            activeTab !== 'watchlist' && (
               <div className="p-8 text-center text-slate-400 space-y-2">
                 <Sparkles className="w-8 h-8 text-indigo-500 mx-auto opacity-70" />
                 <div className="font-semibold text-slate-700 dark:text-slate-300 text-sm capitalize">
                   {activeTab} Module
                 </div>
                 <p className="text-xs text-slate-400 max-w-[240px] mx-auto">
-                  Scheduled for upcoming phases (Reviews, Ideas, Watchlist).
+                  Scheduled for upcoming phase (Ideas).
                 </p>
               </div>
             )}
@@ -369,7 +399,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Footer */}
         <footer className="px-3 py-1.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/90 text-[10px] text-slate-400 flex items-center justify-between shrink-0">
-          <span>KDP Niche Finder · Phase 3</span>
+          <span>KDP Niche Finder · Phase 4</span>
           <span>
             Score:{' '}
             <strong className="text-slate-700 dark:text-slate-200 font-mono">

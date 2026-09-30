@@ -84,3 +84,24 @@ export const DEFAULT_SETTINGS: Settings = {
 export const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 export const MAX_FETCHES_PER_SEARCH = 20;
 export const MAX_ORGANIC_RESULTS_TO_PARSE = 16;
+
+export const DEFAULT_REVIEW_SETTINGS = {
+  booksToAnalyze: 5,
+  maxStarsIncluded: 3,
+  topPhrasesShown: 15,
+  minPhraseLength: 2,
+};
+
+export const DEFAULT_TRACKER_CONFIG = {
+  alarmName: 'kdp-daily-refresh',
+  periodMinutes: 1440,
+  maxWatchlistSize: 50,
+  historyMaxPoints: 365,
+  fetchDelayMs: { min: 2000, max: 3000 },
+  checkThresholdHours: 20,
+};
+
+export const DEFAULT_TREND_CONFIG = {
+  windowDays: 7,
+  stableChangePercent: 5,
+};

@@ -180,8 +180,22 @@ export function parseProductPage(htmlOrDoc: Document | string): ParsedProductDet
     if (isCaptchaPage(htmlOrDoc)) {
       return { isCaptcha: true, categoryRanks: [] };
     }
-    const parser = new DOMParser();
-    doc = parser.parseFromString(htmlOrDoc, 'text/html');
+    if (typeof DOMParser !== 'undefined') {
+      const parser = new DOMParser();
+      doc = parser.parseFromString(htmlOrDoc, 'text/html');
+    } else {
+      return {
+        isCaptcha: false,
+        bsrOverall: parseBsr(htmlOrDoc),
+        categoryRanks: [],
+        pageCount: parsePageCount(htmlOrDoc),
+        trimSize: parseTrimSize(htmlOrDoc),
+        publishDate: parsePublishDate(htmlOrDoc),
+        readingAge: undefined,
+        isLowContent: /coloring book|journal|planner|log book|notebook|sketchbook|tracker/i.test(htmlOrDoc),
+        topReviewsText: [],
+      };
+    }
   } else {
     doc = htmlOrDoc;
   }

@@ -8,7 +8,7 @@ export default defineConfig({
     name: 'KDP Niche Finder',
     description: 'Personal Amazon KDP niche, keyword, and category research tool',
     version: '1.0.0',
-    permissions: ['storage', 'alarms', 'activeTab', 'scripting', 'downloads'],
+    permissions: ['storage', 'alarms', 'activeTab', 'scripting', 'downloads', 'offscreen'],
     host_permissions: [
       'https://www.amazon.com/*',
       'https://completion.amazon.com/*',

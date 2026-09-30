@@ -134,11 +134,13 @@ export const PRODUCT_PAGE_SELECTORS = {
     '#cm-cr-dp-review-list',
     '#customerReviews',
     'div[data-hook="review"]',
+    '#reviews-medley-footer',
   ],
 
   reviewItems: [
     'div[data-hook="review"]',
     'div.review',
+    'li[data-hook="review"]',
   ],
 
   reviewRating: [
@@ -147,10 +149,38 @@ export const PRODUCT_PAGE_SELECTORS = {
     'span.a-icon-alt',
   ],
 
+  reviewTitle: [
+    'a[data-hook="review-title"] span:not(.a-letter-space)',
+    'a[data-hook="review-title"]',
+    'span[data-hook="review-title"] span',
+    'span[data-hook="review-title"]',
+    '.review-title',
+  ],
+
   reviewText: [
     'span[data-hook="review-body"] span',
     'div.review-text-content span',
     'span[data-hook="review-body"]',
+    '.review-text',
+  ],
+
+  reviewDate: [
+    'span[data-hook="review-date"]',
+    '.review-date',
+  ],
+
+  reviewHelpful: [
+    'span[data-hook="helpful-vote-statement"]',
+    'span.cr-vote-text',
+    '.cr-vote-component span.a-color-secondary',
+  ],
+
+  loginPrompt: [
+    'a[href*="/signin"]',
+    'a[href*="/ap/signin"]',
+    'div[data-hook="reviews-medley-footer"] a[href*="signin"]',
+    '#ask_dp_login_alert',
+    'span:contains("Sign in to review")',
   ],
 };
 

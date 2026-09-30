@@ -15,7 +15,13 @@ import {
   DollarSign,
   TrendingUp,
   Plus,
+  Clock,
+  History,
+  Sparkles,
 } from 'lucide-react';
+import { getWatchlist } from '../../services/watchlist';
+import { setStorageItem } from '../../storage';
+import type { WatchlistItem, HistoryPoint } from '../../types';
 
 export const App: React.FC = () => {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
@@ -105,6 +111,98 @@ export const App: React.FC = () => {
       }
       return { ...prev, bsrSalesTable: updated };
     });
+  };
+
+  const handleSimulate24hLater = async () => {
+    const list = await getWatchlist();
+    if (list.length === 0) {
+      setStatusMessage('Watchlist is empty. Add books first before simulating.');
+      setTimeout(() => setStatusMessage(null), 3000);
+      return;
+    }
+    const twentyFiveHoursAgo = Date.now() - 25 * 60 * 60 * 1000;
+    const shifted = list.map((item) => ({
+      ...item,
+      lastCheckedAt: twentyFiveHoursAgo,
+    }));
+    await setStorageItem('kdp_watchlist', shifted);
+
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+      chrome.runtime.sendMessage({ type: 'REFRESH_WATCHLIST_NOW' }, () => {
+        setStatusMessage('Simulated 24h later: lastCheckedAt shifted back 25h and refresh triggered!');
+        setTimeout(() => setStatusMessage(null), 3500);
+      });
+    } else {
+      setStatusMessage('Simulated 24h later: lastCheckedAt shifted back 25h!');
+      setTimeout(() => setStatusMessage(null), 3500);
+    }
+  };
+
+  const handleLoadSampleHistory = async () => {
+    const baseDate = new Date();
+    const historySample1: HistoryPoint[] = [];
+    const historySample2: HistoryPoint[] = [];
+
+    // Book 1: Improving trend (BSR drops from 120,000 to 35,000)
+    // Book 2: Declining trend (BSR rises from 45,000 to 140,000)
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(baseDate);
+      d.setDate(d.getDate() - i);
+      const iso = d.toISOString().split('T')[0]!;
+
+      // Sample 1: Improving BSR
+      const bsr1 = Math.round(120000 - (120000 - 35000) * ((13 - i) / 13) + (Math.sin(i) * 3000));
+      historySample1.push({
+        date: iso,
+        bsrOverall: bsr1,
+        bsr: bsr1,
+        price: 6.99,
+        reviewCount: 20 + (13 - i) * 2,
+        rating: 4.6,
+      });
+
+      // Sample 2: Declining BSR
+      const bsr2 = Math.round(45000 + (140000 - 45000) * ((13 - i) / 13) + (Math.cos(i) * 3000));
+      historySample2.push({
+        date: iso,
+        bsrOverall: bsr2,
+        bsr: bsr2,
+        price: 7.99,
+        reviewCount: 15 + Math.floor((13 - i) * 0.5),
+        rating: 3.8,
+      });
+    }
+
+    const sampleBooks: WatchlistItem[] = [
+      {
+        asin: 'B09IMPROVE',
+        title: 'Toddler Coloring Book: 50 Cute Animal Designs (Improving BSR)',
+        author: 'Creative Kids Press',
+        price: 6.99,
+        addedAt: Date.now() - 14 * 86400000,
+        lastCheckedAt: Date.now(),
+        lastStatus: 'ok',
+        history: historySample1,
+      },
+      {
+        asin: 'B09DECLINE',
+        title: 'Tracing Letters and Numbers for Preschool (Declining BSR)',
+        author: 'Early Learning Hub',
+        price: 7.99,
+        addedAt: Date.now() - 14 * 86400000,
+        lastCheckedAt: Date.now(),
+        lastStatus: 'ok',
+        history: historySample2,
+      },
+    ];
+
+    const current = await getWatchlist();
+    const withoutSamples = current.filter((w) => w.asin !== 'B09IMPROVE' && w.asin !== 'B09DECLINE');
+    const updated = [...sampleBooks, ...withoutSamples];
+    await setStorageItem('kdp_watchlist', updated);
+
+    setStatusMessage('Sample history loaded: Added 2 books with 14-day BSR trajectories (improving & declining)!');
+    setTimeout(() => setStatusMessage(null), 3500);
   };
 
   const totalWeights = Object.values(settings.weights).reduce((a, b) => a + b, 0);
@@ -638,6 +736,37 @@ export const App: React.FC = () => {
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-mono"
               />
             </div>
+          </div>
+        </section>
+
+        {/* 7. Phase 4 Testing & Debugging Tools */}
+        <section className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+          <div className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
+            <Sparkles className="w-5 h-5 text-indigo-600" />
+            <h2>Phase 4 Testing & Debugging Tools</h2>
+          </div>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Test the automated daily alarm, 20-hour refresh threshold, inverted BSR charts, and trend arrows without having to wait days for real cron triggers.
+          </p>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={handleSimulate24hLater}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 text-xs font-semibold transition cursor-pointer"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              Simulate 24h Later (Trigger Refresh)
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLoadSampleHistory}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition cursor-pointer"
+            >
+              <History className="w-3.5 h-3.5" />
+              Load Sample History (14-Day Trajectory)
+            </button>
           </div>
         </section>
 

@@ -12,8 +12,8 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  BookmarkPlus,
 } from 'lucide-react';
+import { WatchButton } from '../WatchButton';
 
 interface BooksTabProps {
   books: Book[];
@@ -446,13 +446,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
 
                   {/* Save to watchlist */}
                   <td className="py-2 px-1 text-center align-top">
-                    <button
-                      onClick={() => onAddToWatchlist?.(book)}
-                      title="Add to Watchlist"
-                      className="p-1 rounded text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                    >
-                      <BookmarkPlus className="w-3.5 h-3.5" />
-                    </button>
+                    <WatchButton book={book} size="sm" showLabel={false} />
                   </td>
                 </tr>
               );

@@ -43,6 +43,7 @@ export interface Book {
   monthlyRoyaltyEstimate?: number;
   metrics?: BookMetrics;
   topReviewsText?: string[];
+  reviews?: ReviewItem[];
 }
 
 export interface FactorBreakdown {
@@ -84,6 +85,7 @@ export interface SearchSnapshot {
   keywords?: KeywordItem[];
   categories?: CategoryStat[];
   specs?: SpecsSummary;
+  reviewGap?: ReviewGapAnalysis;
 }
 
 export interface KeywordWeights {
@@ -212,20 +214,76 @@ export interface SpecsSummary {
   };
 }
 
-export interface WatchlistHistoryEntry {
-  date: number;
-  bsr?: number;
+export interface ReviewItem {
+  id?: string;
+  rating: number;
+  title: string;
+  body: string;
+  date?: string;
+  helpfulVotes?: number;
+  asin?: string;
+}
+
+export interface ParsedReviewsResult {
+  reviews: ReviewItem[];
+  reviewsRequireLogin: boolean;
+}
+
+export interface ComplaintStat {
+  phrase: string;
+  category: string;
+  count: number;
+  bookCount: number;
+  sampleQuotes: string[];
+}
+
+export interface CategoryComplaintCount {
+  category: string;
+  count: number;
+  percentage: number;
+}
+
+export interface ReviewGapAnalysis {
+  complaints: ComplaintStat[];
+  categorySummary: CategoryComplaintCount[];
+  positivePhrases: WordFrequencyItem[];
+  totalNegativeReviews: number;
+  totalBooksAnalyzed: number;
+  reviewsRequireLogin: boolean;
+  booksRequiringLogin: number;
+}
+
+export interface HistoryPoint {
+  date: string; // ISO day string: "YYYY-MM-DD"
+  bsrOverall?: number;
   price?: number;
   reviewCount?: number;
+  rating?: number;
+  categoryRank?: { name: string; rank: number };
+  // Backward compatibility alias:
+  bsr?: number;
 }
 
 export interface WatchlistItem {
   asin: string;
-  title?: string;
+  title: string;
   author?: string;
   price?: number;
   addedAt: number;
-  history: WatchlistHistoryEntry[];
+  lastCheckedAt?: number;
+  lastStatus?: 'ok' | 'failed' | 'captcha';
+  history: HistoryPoint[];
+}
+
+export interface TrendInfo {
+  trend: 'improving' | 'declining' | 'stable' | 'unknown';
+  percentChange: number;
+  bestBsr?: number;
+  worstBsr?: number;
+  avgBsr?: number;
+  daysTracked: number;
+  reviewCountChange?: number;
+  priceChange?: number;
 }
 
 export interface BsrSalesTier {
@@ -310,4 +368,9 @@ export type ExtensionMessage =
   | { type: 'CAPTCHA_TRIGGERED'; url: string }
   | { type: 'QUEUE_COMPLETE'; totalFetched: number }
   | { type: 'GET_CACHE_ITEMS'; asins: string[] }
-  | { type: 'CHECK_SEARCH_PAGE' };
+  | { type: 'CHECK_SEARCH_PAGE' }
+  | { type: 'REFRESH_WATCHLIST_NOW' }
+  | { type: 'WATCHLIST_REFRESH_COMPLETE'; updatedCount: number }
+  | { type: 'WATCHLIST_CAPTCHA'; url?: string }
+  | { type: 'DOM_PARSE_PRODUCT'; html: string }
+  | { type: 'DOM_PARSE_PRODUCT_RESULT'; parsed: unknown };
