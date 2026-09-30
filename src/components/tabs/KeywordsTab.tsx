@@ -343,7 +343,6 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
               <tbody className="divide-y divide-slate-800/60">
                 {filteredKeywords.map((k) => {
                   const isCheckingThis = checkingKeyword === k.keyword;
-                  const trendsUrl = `https://trends.google.com/trends/explore?q=${encodeURIComponent(k.keyword)}&geo=US`;
 
                   return (
                     <tr key={k.keyword} className="hover:bg-slate-800/30 transition-colors">

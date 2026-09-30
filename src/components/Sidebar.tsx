@@ -13,23 +13,21 @@ import { IdeasTab } from './tabs/IdeasTab';
 import { ExportMenu } from './ExportMenu';
 import { SearchProgress } from './SearchProgress';
 import { CaptchaAlert } from './CaptchaAlert';
+import { ErrorBoundary } from './ErrorBoundary';
 import { calculateNicheScore } from '../services/scoring';
 import { getSettings } from '../storage/settings';
 import { getSnapshots, saveSnapshot, getActiveSnapshot } from '../storage';
 import { addToWatchlist, getWatchlist } from '../services/watchlist';
 import { DEFAULT_SETTINGS } from '../config/defaults';
+import { SEARCH_SELECTORS, PRODUCT_PAGE_SELECTORS, BEST_SELLERS_SELECTORS } from '../config/selectors';
 import type { KeywordItem, CategoryStat, SpecsSummary, ReviewGapAnalysis, BookIdea, WatchlistItem } from '../types';
 import {
   BookMarked,
   Moon,
   Sun,
   ChevronRight,
-  Sparkles,
   ChevronLeft,
-  History,
   Activity,
-  CheckCircle2,
-  XCircle,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -68,6 +66,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     async function init() {
       const s = await getSettings();
       setSettings(s);
+      if (s.sidebarDefaultOpen !== undefined) {
+        setIsOpen(s.sidebarDefaultOpen);
+      }
+      if (s.theme === 'dark') {
+        setIsDarkMode(true);
+      } else if (s.theme === 'light') {
+        setIsDarkMode(false);
+      } else if (s.theme === 'system' && typeof window !== 'undefined') {
+        setIsDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
+      }
       const snaps = await getSnapshots();
       setSnapshots(snaps);
       const active = await getActiveSnapshot();
@@ -85,7 +93,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       areaName: string
     ) => {
       if (areaName === 'local' && changes['kdp_settings']) {
-        getSettings().then(setSettings);
+        getSettings().then((s) => {
+          setSettings(s);
+          if (s.theme === 'dark') setIsDarkMode(true);
+          else if (s.theme === 'light') setIsDarkMode(false);
+          else if (s.theme === 'system' && typeof window !== 'undefined') {
+            setIsDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
+          }
+        });
       }
       if (areaName === 'local' && changes['kdp_snapshots']) {
         getSnapshots().then(setSnapshots);
@@ -107,7 +122,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setIsOpen((prev) => !prev);
+        setIsOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -132,6 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   useEffect(() => {
     if (books.length > 0 || query) {
       setCurrentSnapshot((prev) => ({
+        ...prev,
         query: query || prev?.query || '',
         date: prev?.date || Date.now(),
         books,
@@ -140,6 +156,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         categories: prev?.categories || [],
         specs: prev?.specs,
         reviewGap: prev?.reviewGap,
+        ideas: prev?.ideas || [],
       }));
     }
   }, [books, query, currentScore]);
@@ -160,6 +177,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         categories: selected.categories || [],
         specs: selected.specs,
         reviewGap: selected.reviewGap,
+        ideas: selected.ideas || [],
       });
     }
   };
@@ -233,16 +251,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const isLeft = settings.sidebarPosition === 'left';
+
   // Render collapsed button if closed
   if (!isOpen) {
     return (
       <div className={isDarkMode ? 'dark' : ''}>
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed right-0 top-24 z-[999999] flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-l-xl shadow-2xl transition-all cursor-pointer font-sans text-xs font-semibold"
+          className={`fixed top-24 z-[999999] flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white shadow-2xl transition-all cursor-pointer font-sans text-xs font-semibold ${
+            isLeft ? 'left-0 rounded-r-xl' : 'right-0 rounded-l-xl'
+          }`}
           title="Open KDP Niche Finder"
         >
-          <ChevronLeft className="w-4 h-4" />
+          {isLeft ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           <BookMarked className="w-4 h-4" />
           <span>KDP Niche</span>
           {books.length > 0 && (
@@ -257,7 +279,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div className={isDarkMode ? 'dark' : ''}>
-      <aside className="fixed top-0 right-0 bottom-0 w-[380px] max-w-[100vw] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col z-[999999] font-sans antialiased text-xs transition-colors select-text">
+      <aside
+        className={`fixed top-0 bottom-0 w-[380px] max-w-[100vw] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-2xl flex flex-col z-[999999] font-sans antialiased text-xs transition-colors select-text ${
+          isLeft ? 'left-0 border-r border-slate-200 dark:border-slate-800' : 'right-0 border-l border-slate-200 dark:border-slate-800'
+        }`}
+      >
         {/* Header */}
         <header className="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shrink-0">
           <div className="flex items-center gap-2">
@@ -281,6 +307,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               snapshot={currentSnapshot}
               watchlist={watchlist}
               ideas={currentSnapshot?.ideas || []}
+              exportSettings={settings.exportSettings}
               onImportSnapshot={(imported) => {
                 setCurrentSnapshot(imported);
                 setBooks(imported.books || []);
@@ -321,7 +348,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               title="Collapse Sidebar"
               className="p-1 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
             >
-              <ChevronRight className="w-4 h-4" />
+              {isLeft ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </button>
           </div>
         </header>
@@ -356,78 +383,94 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'overview' && (
-            <OverviewTab
-              query={query}
-              books={books}
-              score={currentScore}
-              settings={settings}
-              onGoToBooks={() => setActiveTab('books')}
-            />
+            <ErrorBoundary name="Overview Tab">
+              <OverviewTab
+                query={query}
+                books={books}
+                score={currentScore}
+                settings={settings}
+                onGoToBooks={() => setActiveTab('books')}
+              />
+            </ErrorBoundary>
           )}
 
           {activeTab === 'books' && (
-            <BooksTab
-              books={books}
-              settings={settings}
-              onAddToWatchlist={handleAddToWatchlist}
-            />
+            <ErrorBoundary name="Books Tab">
+              <BooksTab
+                books={books}
+                settings={settings}
+                onAddToWatchlist={handleAddToWatchlist}
+              />
+            </ErrorBoundary>
           )}
 
           {activeTab === 'keywords' && (
             <div className="p-3">
-              <KeywordsTab
-                snapshot={currentSnapshot}
-                settings={settings}
-                onUpdateSnapshotKeywords={handleUpdateSnapshotKeywords}
-                onCaptchaEncountered={() => onPauseQueue()}
-              />
+              <ErrorBoundary name="Keywords Tab">
+                <KeywordsTab
+                  snapshot={currentSnapshot}
+                  settings={settings}
+                  onUpdateSnapshotKeywords={handleUpdateSnapshotKeywords}
+                  onCaptchaEncountered={() => onPauseQueue()}
+                />
+              </ErrorBoundary>
             </div>
           )}
 
           {activeTab === 'categories' && (
             <div className="p-3">
-              <CategoriesTab
-                snapshot={currentSnapshot}
-                settings={settings}
-                onUpdateSnapshotCategories={handleUpdateSnapshotCategories}
-                onCaptchaEncountered={() => onPauseQueue()}
-              />
+              <ErrorBoundary name="Categories Tab">
+                <CategoriesTab
+                  snapshot={currentSnapshot}
+                  settings={settings}
+                  onUpdateSnapshotCategories={handleUpdateSnapshotCategories}
+                  onCaptchaEncountered={() => onPauseQueue()}
+                />
+              </ErrorBoundary>
             </div>
           )}
 
           {activeTab === 'specs' && (
             <div className="p-3">
-              <SpecsTab
-                snapshot={currentSnapshot}
-                onUpdateSnapshotSpecs={handleUpdateSnapshotSpecs}
-              />
+              <ErrorBoundary name="Specs Tab">
+                <SpecsTab
+                  snapshot={currentSnapshot}
+                  onUpdateSnapshotSpecs={handleUpdateSnapshotSpecs}
+                />
+              </ErrorBoundary>
             </div>
           )}
 
           {activeTab === 'reviews' && (
             <div className="p-3">
-              <ReviewsTab
-                snapshot={currentSnapshot}
-                onUpdateSnapshotReviewGap={handleUpdateSnapshotReviewGap}
-                onCaptchaEncountered={() => onPauseQueue()}
-              />
+              <ErrorBoundary name="Reviews Tab">
+                <ReviewsTab
+                  snapshot={currentSnapshot}
+                  onUpdateSnapshotReviewGap={handleUpdateSnapshotReviewGap}
+                  onCaptchaEncountered={() => onPauseQueue()}
+                />
+              </ErrorBoundary>
             </div>
           )}
 
           {activeTab === 'watchlist' && (
             <div className="p-3">
-              <WatchlistTab
-                onCaptchaEncountered={() => onPauseQueue()}
-              />
+              <ErrorBoundary name="Watchlist Tab">
+                <WatchlistTab
+                  onCaptchaEncountered={() => onPauseQueue()}
+                />
+              </ErrorBoundary>
             </div>
           )}
 
           {activeTab === 'ideas' && (
             <div className="p-3">
-              <IdeasTab
-                snapshot={currentSnapshot}
-                onUpdateSnapshotIdeas={handleUpdateSnapshotIdeas}
-              />
+              <ErrorBoundary name="AI Ideas Tab">
+                <IdeasTab
+                  snapshot={currentSnapshot}
+                  onUpdateSnapshotIdeas={handleUpdateSnapshotIdeas}
+                />
+              </ErrorBoundary>
             </div>
           )}
         </div>
@@ -451,19 +494,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>KDP Niche Finder · Phase 5</span>
             <button
               onClick={() => {
-                // Selector health check on current page
-                const searchCards = document.querySelectorAll('div[data-component-type="s-search-result"]').length;
-                const bsrEl = document.querySelector('#detailBullets_feature_div, #productDetails_db_sections');
-                const reviewsEl = document.querySelector('#cm-cr-dp-review-list, div[data-hook="review"]');
-                const isSearch = searchCards > 0;
-                const isProduct = Boolean(bsrEl || reviewsEl);
+                const issues: string[] = [];
+                const searchCards = document.querySelectorAll(SEARCH_SELECTORS.items.join(', ')).length;
+                const bsrEl = document.querySelector(
+                  PRODUCT_PAGE_SELECTORS.detailBullets.concat(PRODUCT_PAGE_SELECTORS.detailTable).join(', ')
+                );
+                const reviewsEl = document.querySelector(PRODUCT_PAGE_SELECTORS.reviewSection.join(', '));
+                const bestSellerCards = document.querySelectorAll(BEST_SELLERS_SELECTORS.items.join(', ')).length;
 
-                if (isSearch) {
-                  setHealthReport(`✅ Health Check: Search parser OK (${searchCards} cards found)`);
-                } else if (isProduct) {
-                  setHealthReport(`✅ Health Check: Product details parser OK (${bsrEl ? 'BSR table found' : 'Reviews found'})`);
+                if (searchCards > 0) {
+                  const firstCard = document.querySelector(SEARCH_SELECTORS.items.join(', '));
+                  const titleFound = firstCard ? Boolean(firstCard.querySelector(SEARCH_SELECTORS.title.join(', '))) : false;
+                  const priceFound = firstCard ? Boolean(firstCard.querySelector(SEARCH_SELECTORS.price.join(', '))) : false;
+                  if (!titleFound) issues.push('Title selector failed on card');
+                  if (!priceFound) issues.push('Price selector failed on card');
+
+                  if (issues.length === 0) {
+                    setHealthReport(`✅ Health Check: Search parser OK (${searchCards} cards, title & price OK)`);
+                  } else {
+                    setHealthReport(`⚠️ Health Check: Search cards found (${searchCards}) but: ${issues.join(', ')}`);
+                  }
+                } else if (bsrEl || reviewsEl) {
+                  const titleFound = Boolean(document.querySelector(PRODUCT_PAGE_SELECTORS.title.join(', ')));
+                  if (!titleFound) issues.push('Product title selector failed');
+                  if (issues.length === 0) {
+                    setHealthReport(`✅ Health Check: Product details parser OK (${bsrEl ? 'BSR table found' : 'Reviews found'})`);
+                  } else {
+                    setHealthReport(`⚠️ Health Check: Product page detected but: ${issues.join(', ')}`);
+                  }
+                } else if (bestSellerCards > 0) {
+                  setHealthReport(`✅ Health Check: Best Sellers parser OK (${bestSellerCards} items found)`);
                 } else {
-                  setHealthReport('ℹ️ Health Check: Currently on non-search page. Selectors ready.');
+                  setHealthReport('ℹ️ Health Check: Selectors loaded & ready. Navigate to Amazon book search, product, or best sellers page to test live DOM matching.');
                 }
               }}
               title="Test if Amazon selectors match current page"

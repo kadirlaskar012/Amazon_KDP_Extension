@@ -65,13 +65,16 @@ export function analyzeReviewGap(
 
   const targetBooks = books.slice(0, limitBooks);
   let totalNegativeReviews = 0;
-  let totalPositiveReviews = 0;
   let booksRequiringLogin = 0;
 
   const negativeReviewsByBook = new Map<string, ReviewItem[]>();
   const allPositiveReviews: ReviewItem[] = [];
 
   for (const book of targetBooks) {
+    if (book.reviewsRequireLogin) {
+      booksRequiringLogin++;
+    }
+
     const reviews = book.reviews || [];
 
     const negList: ReviewItem[] = [];
@@ -81,7 +84,6 @@ export function analyzeReviewGap(
         totalNegativeReviews++;
       } else if (r.rating >= 4) {
         allPositiveReviews.push(r);
-        totalPositiveReviews++;
       }
     }
 

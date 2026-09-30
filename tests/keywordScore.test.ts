@@ -67,6 +67,7 @@ describe('keywordScore service', () => {
   it('verifies label boundaries for 39/40 and 69/70', () => {
     // Label rules: high >= 70, medium 40-69, low < 40
     const mock39 = scoreKeyword('test', 9, 3, 250000, { autocompletePosition: 50, titleFrequency: 50, topResultBsr: 0 });
+    expect(mock39.scoreLabel).toBe('low');
     // Let's directly verify label assignment
     const lowItem = scoreKeyword('low test', 9, 1, 500000); // very low score
     expect(lowItem.scoreLabel).toBe('low');

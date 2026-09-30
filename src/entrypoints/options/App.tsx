@@ -7,22 +7,17 @@ import type {
   Settings,
   ScoreWeights,
   BsrSalesTier,
-  PrintingCostTier,
-  Thresholds,
-  KeywordWeights,
 } from '../../types';
 import {
   getSettings,
   saveSettings,
   clearCache,
   clearAllData,
-  getSnapshots,
   setStorageItem,
 } from '../../storage';
-import { getWatchlist, removeFromWatchlist } from '../../services/watchlist';
+import { getWatchlist } from '../../services/watchlist';
 import { DEFAULT_SETTINGS, DEFAULT_AI_SETTINGS } from '../../config/defaults';
 import { DEFAULT_FORBIDDEN_WORDS } from '../../config/forbiddenWords';
-import { DEFAULT_COMPLAINT_LEXICON } from '../../config/complaintLexicon';
 import { DEFAULT_KDP_SYSTEM_PROMPT } from '../../services/aiPrompt';
 import { normalizeWeights } from '../../services/scoring';
 import { ApiKeyField } from '../../components/ApiKeyField';
@@ -38,11 +33,8 @@ import {
   Database,
   Info,
   CheckCircle2,
-  RotateCcw,
-  Save,
   Trash2,
   Plus,
-  RefreshCw,
   Clock,
   History,
   Download,

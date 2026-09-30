@@ -214,6 +214,34 @@ describe('Exporter Service (Module L)', () => {
       expect(csv).toContain('Books > Animals | Books > Coloring');
     });
 
+    it('builds watchlist CSV with historical tracking entries', () => {
+      const watchlist: WatchlistItem[] = [
+        {
+          asin: 'B001',
+          title: 'Tracked Coloring Book',
+          author: 'Test Author',
+          price: 6.99,
+          addedAt: 123456,
+          history: [
+            {
+              date: '2026-09-30',
+              bsrOverall: 5000,
+              price: 6.99,
+              reviewCount: 50,
+              rating: 4.5,
+              categoryRank: { name: 'Coloring', rank: 12 },
+            },
+          ],
+        },
+      ];
+
+      const csv = buildWatchlistCsv(watchlist);
+      expect(csv).toContain('ASIN,Title,Author,Track Date,BSR Overall');
+      expect(csv).toContain('B001');
+      expect(csv).toContain('Tracked Coloring Book');
+      expect(csv).toContain('2026-09-30,5000,6.99,50,4.5');
+    });
+
     it('builds full research pack combining multiple sections with section headers', () => {
       const snapshot: SearchSnapshot = {
         query: 'dinosaur coloring book',

@@ -5,6 +5,8 @@ import ReactDOM from 'react-dom/client';
 import { Sidebar } from '../components/Sidebar';
 import { WatchButton } from '../components/WatchButton';
 import { parseSearchResults, getSearchQuery, isAmazonBookSearchPage } from '../parsers/searchPage';
+import { parseBestSellersPage, isBestSellersCaptcha } from '../parsers/bestSellersPage';
+import { PRODUCT_PAGE_SELECTORS } from '../config/selectors';
 import type { Book, QueueProgressState, ExtensionMessage } from '../types';
 import { saveSnapshot } from '../storage';
 import { calculateNicheScore } from '../services/scoring';
@@ -29,8 +31,10 @@ const ContentApp: React.FC<ContentAppProps> = ({ initialBooks, initialQuery }) =
   const [captchaUrl, setCaptchaUrl] = useState<string | undefined>();
 
   // Start background queue for product details
-  const startBackgroundQueue = useCallback((booksToFetch: Book[]) => {
-    const asins = booksToFetch.map((b) => b.asin);
+  const startBackgroundQueue = useCallback(async (booksToFetch: Book[]) => {
+    const settings = await getSettings();
+    const maxFetches = settings.maxFetchesPerSearch || 20;
+    const asins = booksToFetch.slice(0, maxFetches).map((b) => b.asin);
     if (asins.length === 0) return;
 
     try {
@@ -143,11 +147,40 @@ export default defineContentScript({
   async main(ctx) {
     console.log('[KDP Niche Finder] Content script active on:', window.location.href);
 
+    const pathname = window.location.pathname.toLowerCase();
+
     // 1. Check if this is an Amazon search page or contains book search results
     const isSearch = isAmazonBookSearchPage(document);
-    if (isSearch) {
-      const books = parseSearchResults(document);
-      const query = getSearchQuery(document);
+
+    // 2. Check if this is an Amazon Best Sellers books category page
+    const isBestSellers =
+      (pathname.includes('/bestsellers/books') ||
+        pathname.includes('/best-sellers-books') ||
+        pathname.includes('/gp/bestsellers/books') ||
+        pathname.includes('/gp/bestsellers/digital-text')) &&
+      !isBestSellersCaptcha(document);
+
+    if (isSearch || isBestSellers) {
+      let books: Book[] = [];
+      let query = '';
+
+      if (isSearch) {
+        books = parseSearchResults(document);
+        query = getSearchQuery(document);
+      } else {
+        const parsedBestSellers = parseBestSellersPage(document.documentElement.outerHTML);
+        books = parsedBestSellers.items.map((item) => ({
+          asin: item.asin,
+          title: item.title,
+          author: 'N/A',
+          price: item.price,
+          rating: item.rating,
+          reviewCount: item.reviewCount,
+          bsrOverall: item.rank,
+          categoryRanks: [],
+        }));
+        query = parsedBestSellers.categoryName || 'Best Sellers';
+      }
 
       // Save initial snapshot
       if (books.length > 0) {
@@ -159,55 +192,82 @@ export default defineContentScript({
       }
 
       // Mount Sidebar Shadow DOM UI
-      const ui = await createShadowRootUi(ctx, {
-        name: 'kdp-niche-finder-container',
-        position: 'overlay',
-        anchor: 'body',
-        append: 'last',
-        onMount: (uiContainer) => {
-          const root = ReactDOM.createRoot(uiContainer);
-          root.render(<ContentApp initialBooks={books} initialQuery={query} />);
-          return root;
-        },
-        onRemove: (root) => {
-          root?.unmount();
-        },
+      const mountSidebar = async () => {
+        const existing = document.querySelector('kdp-niche-finder-container');
+        if (existing) return;
+
+        const ui = await createShadowRootUi(ctx, {
+          name: 'kdp-niche-finder-container',
+          position: 'overlay',
+          anchor: 'body',
+          append: 'last',
+          onMount: (uiContainer) => {
+            const root = ReactDOM.createRoot(uiContainer);
+            root.render(<ContentApp initialBooks={books} initialQuery={query} />);
+            return root;
+          },
+          onRemove: (root) => {
+            root?.unmount();
+          },
+        });
+
+        ui.mount();
+      };
+
+      await mountSidebar();
+
+      // MutationObserver to ensure the sidebar survives Amazon's client-side SPA updates
+      let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+      const observer = new MutationObserver(() => {
+        if (!document.querySelector('kdp-niche-finder-container')) {
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            if (!document.querySelector('kdp-niche-finder-container')) {
+              mountSidebar();
+            }
+          }, 500);
+        }
       });
 
-      ui.mount();
+      if (document.body) {
+        observer.observe(document.body, { childList: true });
+      }
+
       return;
     }
 
-    // 2. Check if this is an Amazon book product page (/dp/ or /gp/product/ in Books category)
-    const pathname = window.location.pathname;
-    const asinMatch = pathname.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i);
+    // 3. Check if this is an Amazon book product page (/dp/ or /gp/product/ in Books category)
+    const asinMatch = pathname.match(/\/(?:dp|gp\/product)\/([a-z0-9]{10})/i);
     if (asinMatch && asinMatch[1]) {
       const asin = asinMatch[1].toUpperCase();
 
-      // Check if it's Books category
-      const breadcrumbText = (
-        document.querySelector('#wayfinding-breadcrumbs_feature_div, #nav-subnav, #nav-search-dropdown-card')?.textContent || ''
-      ).toLowerCase();
+      // Check if it's Books category using centralized selector fallbacks
+      const breadcrumbEl = document.querySelector(PRODUCT_PAGE_SELECTORS.breadcrumbs.join(', '));
+      const breadcrumbText = (breadcrumbEl?.textContent || '').toLowerCase();
       const bodyText = document.body?.textContent?.toLowerCase() || '';
 
       const isBooksCategory =
         breadcrumbText.includes('books') ||
         breadcrumbText.includes('kindle') ||
-        document.querySelector('#detailBullets_feature_div') !== null ||
+        document.querySelector(PRODUCT_PAGE_SELECTORS.detailBullets.join(', ')) !== null ||
         (bodyText.includes('best sellers rank') && (bodyText.includes('in books') || bodyText.includes('in kindle store')));
 
       if (isBooksCategory) {
-        const title = document.querySelector('#productTitle')?.textContent?.trim() || document.title || 'Amazon Book';
+        const titleEl = document.querySelector(PRODUCT_PAGE_SELECTORS.title.join(', '));
+        const title = titleEl?.textContent?.trim() || document.title || 'Amazon Book';
 
-        const priceText = document.querySelector('.a-price .a-offscreen, #price, #priceblock_ourprice, #kindle-price')?.textContent || '';
+        const priceEl = document.querySelector(PRODUCT_PAGE_SELECTORS.price.join(', '));
+        const priceText = priceEl?.textContent || '';
         const priceMatch = priceText.match(/[\d,.]+/);
         const price = priceMatch ? parseFloat(priceMatch[0].replace(/,/g, '')) : undefined;
 
-        const ratingText = document.querySelector('#acrPopover, i[data-hook="average-star-rating"] span.a-icon-alt')?.textContent || '';
+        const ratingEl = document.querySelector(PRODUCT_PAGE_SELECTORS.rating.join(', '));
+        const ratingText = ratingEl?.textContent || '';
         const rMatch = ratingText.match(/(\d+(?:\.\d+)?)/);
         const rating = rMatch && rMatch[1] ? parseFloat(rMatch[1]) : undefined;
 
-        const reviewText = document.querySelector('#acrCustomerReviewText')?.textContent?.replace(/,/g, '') || '';
+        const reviewEl = document.querySelector(PRODUCT_PAGE_SELECTORS.reviewCount.join(', '));
+        const reviewText = reviewEl?.textContent?.replace(/,/g, '') || '';
         const revMatch = reviewText.match(/\d+/);
         const reviewCount = revMatch ? parseInt(revMatch[0], 10) : undefined;
 

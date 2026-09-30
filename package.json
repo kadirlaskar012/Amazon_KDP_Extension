@@ -12,6 +12,7 @@
     "zip": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
+    "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
     "postinstall": "wxt prepare"
@@ -32,6 +33,7 @@
     "postcss": "^8.5.28",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.0",
     "vitest": "^5.0.2",
     "web-ext": "^10.5.0",
     "wxt": "^0.21.3"

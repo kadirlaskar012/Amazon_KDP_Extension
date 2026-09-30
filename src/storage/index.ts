@@ -1,5 +1,8 @@
-import type { Settings, Book, WatchlistItem, SearchSnapshot } from '../types';
+import type { Book, WatchlistItem, SearchSnapshot } from '../types';
 import { DEFAULT_SETTINGS, CACHE_TTL_MS } from '../config/defaults';
+
+export const STORAGE_VERSION = 1;
+export const STORAGE_VERSION_KEY = 'kdp_storage_version';
 
 const STORAGE_KEYS = {
   SETTINGS: 'kdp_settings',
@@ -13,6 +16,32 @@ interface CacheEntry {
   asin: string;
   data: Partial<Book>;
   timestamp: number;
+}
+
+/**
+ * Migrates older extension storage representations to the current version schema
+ */
+export async function migrateStorage(): Promise<void> {
+  const currentVer = await getStorageItem<number>(STORAGE_VERSION_KEY, 0);
+  if (currentVer < STORAGE_VERSION) {
+    try {
+      const snapshots = await getSnapshots();
+      if (Array.isArray(snapshots)) {
+        const cleaned = snapshots.map((s) => ({
+          ...s,
+          books: Array.isArray(s.books) ? s.books : [],
+          keywords: Array.isArray(s.keywords) ? s.keywords : [],
+          categories: Array.isArray(s.categories) ? s.categories : [],
+          ideas: Array.isArray(s.ideas) ? s.ideas : [],
+        }));
+        await setStorageItem(STORAGE_KEYS.SNAPSHOTS, cleaned);
+      }
+      await setStorageItem(STORAGE_VERSION_KEY, STORAGE_VERSION);
+      console.log(`[KDP Storage] Migrated storage schema to version ${STORAGE_VERSION}`);
+    } catch (err) {
+      console.warn('[KDP Storage] Migration encountered an error:', err);
+    }
+  }
 }
 
 /**
@@ -37,7 +66,25 @@ export async function setStorageItem<T>(key: string, value: T): Promise<void> {
       return;
     }
     await chrome.storage.local.set({ [key]: value });
-  } catch (error) {
+  } catch (error: any) {
+    const errStr = String(error?.message || error || '');
+    if (errStr.includes('QUOTA') || errStr.includes('quota')) {
+      console.warn(`[KDP Storage] Storage quota warning while writing ${key}. Pruning old snapshots and cache...`);
+      try {
+        // Drop oldest snapshots (keep top 10)
+        const snapshots = await getSnapshots();
+        if (snapshots.length > 10) {
+          await chrome.storage.local.set({ [STORAGE_KEYS.SNAPSHOTS]: snapshots.slice(0, 10) });
+        }
+        // Clear expired cache entries
+        await clearCache();
+        // Retry writing the requested item
+        await chrome.storage.local.set({ [key]: value });
+        return;
+      } catch (retryErr) {
+        console.error('[KDP Storage] Quota recovery failed:', retryErr);
+      }
+    }
     console.warn(`[KDP Storage] Failed to write ${key}:`, error);
   }
 }
@@ -57,7 +104,19 @@ export async function removeStorageItem(key: string): Promise<void> {
 import { getSettings, saveSettings } from './settings';
 export { getSettings, saveSettings };
 
-// 24-Hour Product Cache
+async function getEffectiveTtl(): Promise<number> {
+  try {
+    const settings = await getSettings();
+    if (settings.cacheDurationHours && settings.cacheDurationHours > 0) {
+      return settings.cacheDurationHours * 3600 * 1000;
+    }
+  } catch {
+    // Fall back to default
+  }
+  return CACHE_TTL_MS;
+}
+
+// Dynamic Product Cache
 export async function getCachedBook(asin: string): Promise<Book | null> {
   if (!asin) return null;
   const key = `${STORAGE_KEYS.CACHE_PREFIX}${asin}`;
@@ -65,7 +124,8 @@ export async function getCachedBook(asin: string): Promise<Book | null> {
   if (!entry) return null;
 
   const now = Date.now();
-  if (now - entry.timestamp > CACHE_TTL_MS) {
+  const ttl = await getEffectiveTtl();
+  if (now - entry.timestamp > ttl) {
     // Expired
     await removeStorageItem(key);
     return null;
@@ -93,9 +153,10 @@ export async function getCachedBooks(asins: string[]): Promise<Record<string, Bo
   try {
     const raw = await chrome.storage.local.get(keys);
     const now = Date.now();
+    const ttl = await getEffectiveTtl();
     for (const asin of asins) {
       const entry = raw[`${STORAGE_KEYS.CACHE_PREFIX}${asin}`] as CacheEntry | undefined;
-      if (entry && now - entry.timestamp <= CACHE_TTL_MS) {
+      if (entry && now - entry.timestamp <= ttl) {
         result[asin] = entry.data as Book;
       }
     }

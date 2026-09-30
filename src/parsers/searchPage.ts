@@ -74,9 +74,9 @@ export function parseRating(text?: string | null): number | undefined {
 export function parseReviewCount(text?: string | null): number | undefined {
   if (!text) return undefined;
   // Match digits with possible commas or dots as thousand separators
-  const match = text.replace(/\s/g, '').match(/(\d{1,3}(?:[,\.]\d{3})+|\d+)/);
+  const match = text.replace(/\s/g, '').match(/(\d{1,3}(?:[,.]\d{3})+|\d+)/);
   if (match && match[1]) {
-    const cleaned = match[1].replace(/[,\.]/g, '');
+    const cleaned = match[1].replace(/[,.]/g, '');
     const val = parseInt(cleaned, 10);
     return isNaN(val) ? undefined : val;
   }

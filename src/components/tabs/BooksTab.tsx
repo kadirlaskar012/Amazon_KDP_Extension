@@ -4,7 +4,6 @@ import { OpportunityBadge } from '../OpportunityBadge';
 import { isOpportunity, getOpportunityReasons } from '../../services/weakCompetitor';
 import { estimateMonthlySales, estimateMonthlyRoyalty } from '../../services/salesEstimator';
 import {
-  ExternalLink,
   Search,
   Sparkles,
   Copy,
@@ -446,7 +445,16 @@ export const BooksTab: React.FC<BooksTabProps> = ({
 
                   {/* Save to watchlist */}
                   <td className="py-2 px-1 text-center align-top">
-                    <WatchButton book={book} size="sm" showLabel={false} />
+                    <WatchButton
+                      book={book}
+                      size="sm"
+                      showLabel={false}
+                      onWatchChange={(isWatched) => {
+                        if (isWatched && onAddToWatchlist) {
+                          onAddToWatchlist(book);
+                        }
+                      }}
+                    />
                   </td>
                 </tr>
               );

@@ -122,4 +122,178 @@ describe('Niche Scoring System (Phase 2)', () => {
     expect(normalized.profit).toBe(20);
     expect(normalized.newEntrant).toBe(20);
   });
+
+  it('recomputes all 5 factors by hand for a fixture of 10 books and matches exact manual points', () => {
+    const now = Date.now();
+    const fixture10: Book[] = [
+      {
+        asin: 'B01',
+        title: 'Book 1',
+        author: 'A1',
+        categoryRanks: [],
+        bsrOverall: 20000,
+        reviewCount: 15,
+        rating: 3.8,
+        price: 9.99,
+        pageCount: 100,
+        publishDate: new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        asin: 'B02',
+        title: 'Book 2',
+        author: 'A2',
+        categoryRanks: [],
+        bsrOverall: 50000,
+        reviewCount: 25,
+        rating: 4.5,
+        price: 8.99,
+        pageCount: 100,
+        publishDate: new Date(now - 60 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        asin: 'B03',
+        title: 'Book 3',
+        author: 'A3',
+        categoryRanks: [],
+        bsrOverall: 80000,
+        reviewCount: 40,
+        rating: 3.7,
+        price: 7.99,
+        pageCount: 100,
+        publishDate: new Date(now - 90 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        asin: 'B04',
+        title: 'Book 4',
+        author: 'A4',
+        categoryRanks: [],
+        bsrOverall: 90000,
+        reviewCount: 45,
+        rating: 4.2,
+        price: 6.99,
+        pageCount: 80,
+        publishDate: '2023-01-01',
+      },
+      {
+        asin: 'B05',
+        title: 'Book 5',
+        author: 'A5',
+        categoryRanks: [],
+        bsrOverall: 95000,
+        reviewCount: 48,
+        rating: 4.4,
+        price: 9.99,
+        pageCount: 100,
+        publishDate: '2023-01-01',
+      },
+      {
+        asin: 'B06',
+        title: 'Book 6',
+        author: 'A6',
+        categoryRanks: [],
+        bsrOverall: 150000,
+        reviewCount: 60,
+        rating: 4.6,
+        price: 7.99,
+        pageCount: 80,
+        publishDate: '2022-01-01',
+      },
+      {
+        asin: 'B07',
+        title: 'Book 7',
+        author: 'A7',
+        categoryRanks: [],
+        bsrOverall: 200000,
+        reviewCount: 80,
+        rating: 4.5,
+        price: 9.99,
+        pageCount: 100,
+        publishDate: '2022-01-01',
+      },
+      {
+        asin: 'B08',
+        title: 'Book 8',
+        author: 'A8',
+        categoryRanks: [],
+        bsrOverall: 250000,
+        reviewCount: 120,
+        rating: 4.7,
+        price: 9.99,
+        pageCount: 100,
+        publishDate: '2022-01-01',
+      },
+      {
+        asin: 'B09',
+        title: 'Book 9',
+        author: 'A9',
+        categoryRanks: [],
+        bsrOverall: 300000,
+        reviewCount: 200,
+        rating: 4.8,
+        price: 9.99,
+        pageCount: 100,
+        publishDate: '2021-01-01',
+      },
+      {
+        asin: 'B10',
+        title: 'Book 10',
+        author: 'A10',
+        categoryRanks: [],
+        bsrOverall: 400000,
+        reviewCount: 500,
+        rating: 4.9,
+        price: 9.99,
+        pageCount: 100,
+        publishDate: '2020-01-01',
+      },
+    ];
+
+    const score = calculateNicheScore(fixture10, DEFAULT_SETTINGS);
+
+    // 1. Demand: 5/10 books < 100k -> 0.5 * 35 = 17.5
+    expect(score.breakdown.demand.points).toBe(17.5);
+    // 2. Comp gap: 5/10 books < 50 reviews -> 0.5 * 30 = 15.0
+    expect(score.breakdown.competitionGap.points).toBe(15);
+    // 3. Weak competitors: 3 books (B01, B02, B03) -> 3/3 = 1.0 * 15 = 15.0
+    expect(score.breakdown.weakCompetitors.points).toBe(15);
+    // 4. Profit: Median profit is 3.79 >= 3.0 -> 1.0 * 10 = 10.0
+    expect(score.breakdown.profit.points).toBe(10);
+    // 5. New entrant: 3/10 books <= 6 months -> 0.3 / 0.3 = 1.0 * 10 = 10.0
+    expect(score.breakdown.newEntrant.points).toBe(10);
+
+    // Total: 17.5 + 15 + 15 + 10 + 10 = 67.5 -> rounded to 68
+    expect(score.total).toBe(68);
+    expect(score.label).toBe('yellow');
+  });
+
+  it('guarantees total score is strictly clamped between 0 and 100', () => {
+    // Extreme custom weights that could overshoot if unhandled
+    const extremeSettings = {
+      ...DEFAULT_SETTINGS,
+      weights: {
+        demand: 150,
+        competitionGap: 150,
+        weakCompetitors: 100,
+        profit: 100,
+        newEntrant: 100,
+      },
+    };
+
+    const strongBooks: Book[] = Array.from({ length: 10 }).map((_, i) => ({
+      asin: `B${i}`,
+      title: `Book ${i}`,
+      author: 'Author',
+      categoryRanks: [],
+      bsrOverall: 5000,
+      reviewCount: 10,
+      rating: 3.5,
+      price: 15.99,
+      pageCount: 100,
+      publishDate: new Date().toISOString(),
+    }));
+
+    const score = calculateNicheScore(strongBooks, extremeSettings);
+    expect(score.total).toBeLessThanOrEqual(100);
+    expect(score.total).toBeGreaterThanOrEqual(0);
+  });
 });

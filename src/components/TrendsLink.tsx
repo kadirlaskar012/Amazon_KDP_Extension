@@ -2,7 +2,7 @@
 // Small clickable shortcut to open Google Trends for a keyword
 
 import React from 'react';
-import { TrendingUp, ExternalLink } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { buildTrendsUrl } from '../services/trends';
 
 interface TrendsLinkProps {

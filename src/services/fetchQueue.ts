@@ -1,4 +1,4 @@
-import type { Book, QueueProgressState, ExtensionMessage } from '../types';
+import type { Book, QueueProgressState } from '../types';
 import { parseProductPage } from '../parsers/productPage';
 import { ProductCache } from './cache';
 import { MAX_FETCHES_PER_SEARCH } from '../config';
@@ -122,6 +122,13 @@ export class FetchQueueService {
     this.isRunning = true;
 
     const settings = await getSettings();
+    if (settings.pauseAllFetching) {
+      this.isPaused = true;
+      this.isRunning = false;
+      this.notifyStatus();
+      return;
+    }
+
     const minDelay = settings.fetchDelayMs?.min || 2000;
     const maxDelay = settings.fetchDelayMs?.max || 3000;
 
@@ -140,8 +147,10 @@ export class FetchQueueService {
         // 2-3 seconds randomized rate limiting
         await this.sleepRandom(minDelay, maxDelay);
 
-        if (this.isPaused || this.captchaDetected) {
-          // Re-queue the asin if paused during delay
+        const currentSettings = await getSettings();
+        if (currentSettings.pauseAllFetching || this.isPaused || this.captchaDetected) {
+          // Re-queue the asin if paused during delay or settings toggled
+          if (currentSettings.pauseAllFetching) this.isPaused = true;
           this.queue.unshift(asin);
           break;
         }

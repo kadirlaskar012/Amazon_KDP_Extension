@@ -11,11 +11,12 @@ import {
   Tooltip,
   Cell,
 } from 'recharts';
-import type { SearchSnapshot, ReviewGapAnalysis, Book, ReviewItem } from '../../types';
+import type { SearchSnapshot, ReviewGapAnalysis, Book } from '../../types';
 import { analyzeReviewGap } from '../../services/reviewGap';
 import { parseProductReviews } from '../../parsers/reviewsParser';
 import { getSuggestionForCategory } from '../../config/complaintLexicon';
 import { ProductCache } from '../../services/cache';
+import { getSettings } from '../../storage/settings';
 
 interface ReviewsTabProps {
   snapshot?: SearchSnapshot | null;
@@ -51,6 +52,12 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({
   };
 
   const handleAnalyzeReviews = async () => {
+    const settings = await getSettings();
+    if (settings.pauseAllFetching) {
+      alert('Background fetching is paused in Options/Settings.');
+      return;
+    }
+
     const books = snapshot?.books || [];
     if (books.length === 0) return;
 

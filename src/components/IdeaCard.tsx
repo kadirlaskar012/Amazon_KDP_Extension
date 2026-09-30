@@ -12,9 +12,7 @@ import {
   ChevronDown,
   ChevronUp,
   AlertTriangle,
-  Lightbulb,
   Trash2,
-  Sparkles,
   Layers,
   Tag,
   BookOpen,
@@ -164,6 +162,18 @@ export const IdeaCard: React.FC<IdeaCardProps> = ({
                 {isSaved ? <BookmarkCheck className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
               </button>
             )}
+
+            <button
+              onClick={handleCopyTitle}
+              className="p-1.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 hover:text-white transition cursor-pointer"
+              title="Copy Title & Subtitle"
+            >
+              {copiedAction === 'title' ? (
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+            </button>
 
             <button
               onClick={handleCopyAll}

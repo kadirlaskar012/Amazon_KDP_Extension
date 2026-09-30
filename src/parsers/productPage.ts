@@ -1,4 +1,4 @@
-import type { Book, CategoryRank } from '../types';
+import type { CategoryRank } from '../types';
 import { CAPTCHA_DETECTION } from '../config';
 
 export interface ParsedProductDetails {
@@ -129,7 +129,7 @@ export function parseCategoryRanks(doc: Document | Element): CategoryRank[] {
     for (const b of Array.from(bulletItems)) {
       const text = b.textContent || '';
       if (text.includes('in ') && text.includes('#')) {
-        const matches = text.matchAll(/#([0-9,]+)\s+in\s+([A-Za-z0-9\s&,–—\-\/]+?)(?=\s*\(|#|$)/gi);
+        const matches = text.matchAll(/#([0-9,]+)\s+in\s+([A-Za-z0-9\s&,–—/-]+?)(?=\s*\(|#|$)/gi);
         for (const m of matches) {
           if (m && m[1] && m[2]) {
             const rank = parseInt(m[1].replace(/,/g, ''), 10);

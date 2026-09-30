@@ -4,6 +4,7 @@
 import type { WatchlistItem, HistoryPoint } from '../types';
 import { DEFAULT_TRACKER_CONFIG } from '../config/defaults';
 import { getStorageItem, setStorageItem, removeStorageItem } from '../storage';
+import { getSettings } from '../storage/settings';
 import { getWatchlist, appendHistoryPoint, getTodayIsoDate } from './watchlist';
 import { parseProductPage, isCaptchaPage, type ParsedProductDetails } from '../parsers/productPage';
 
@@ -61,7 +62,7 @@ function sleepRandom(minMs: number = 2000, maxMs: number = 3000): Promise<void> 
 
 export interface TrackerResult {
   success: boolean;
-  reason?: 'LOCKED' | 'CAPTCHA_DETECTED' | 'NO_ITEMS';
+  reason?: 'LOCKED' | 'CAPTCHA_DETECTED' | 'NO_ITEMS' | 'PAUSED';
   updatedCount: number;
   totalEligible: number;
   captchaUrl?: string;
@@ -78,7 +79,7 @@ export function setTrackerBadge(text: string, color: string = '#ef4444'): void {
         chrome.action.setBadgeBackgroundColor({ color });
       }
     }
-  } catch (err) {
+  } catch {
     // Ignore in unsupported environments
   }
 }
@@ -116,6 +117,16 @@ export async function refreshWatchlist(options?: {
         reason: 'NO_ITEMS',
         updatedCount: 0,
         totalEligible: 0,
+      };
+    }
+
+    const settings = await getSettings();
+    if (settings.pauseAllFetching) {
+      return {
+        success: false,
+        reason: 'PAUSED',
+        updatedCount: 0,
+        totalEligible: eligible.length,
       };
     }
 

@@ -44,6 +44,7 @@ export interface Book {
   metrics?: BookMetrics;
   topReviewsText?: string[];
   reviews?: ReviewItem[];
+  reviewsRequireLogin?: boolean;
 }
 
 export interface FactorBreakdown {

@@ -105,9 +105,71 @@ export const SEARCH_SELECTORS = {
     'a.a-link-normal[href*="/dp/"]',
     'a.a-link-normal[href*="/gp/product/"]',
   ],
+
+  // Search input box on Amazon
+  searchInput: [
+    'input#twotabsearchtextbox',
+    'input[name="field-keywords"]',
+    '#nav-bb-search',
+    'input.nav-input[type="text"]',
+  ],
+
+  // Search department dropdown
+  searchDropdown: [
+    '#searchDropdownBox',
+    'select[name="url"]',
+  ],
+
+  // Department refinement and pill filters
+  departmentRefinement: [
+    '#departments',
+    '#s-refinements',
+    '#s-all-filters',
+  ],
 };
 
 export const PRODUCT_PAGE_SELECTORS = {
+  // Product title on product page
+  title: [
+    '#productTitle',
+    'h1#title',
+    'span#productTitle',
+    'h1.a-size-large',
+    'h1',
+  ],
+
+  // Product price on product page
+  price: [
+    '.a-price:not(.a-text-price) .a-offscreen',
+    '.a-price .a-offscreen',
+    '#price',
+    '#priceblock_ourprice',
+    '#kindle-price',
+    '.a-color-price',
+  ],
+
+  // Rating on product page
+  rating: [
+    '#acrPopover',
+    'i[data-hook="average-star-rating"] span.a-icon-alt',
+    'span[data-hook="rating-out-of-text"]',
+    '#acrCustomerReviewLink span.a-icon-alt',
+  ],
+
+  // Customer review count on product page
+  reviewCount: [
+    '#acrCustomerReviewText',
+    'span#acrCustomerReviewText',
+    '#reviews-medley-footer .a-size-base',
+  ],
+
+  // Breadcrumbs indicating category
+  breadcrumbs: [
+    '#wayfinding-breadcrumbs_feature_div',
+    '#nav-subnav',
+    '#nav-search-dropdown-card',
+  ],
+
   // Container for book details (bulleted list layout)
   detailBullets: [
     '#detailBullets_feature_div',

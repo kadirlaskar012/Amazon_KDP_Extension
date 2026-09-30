@@ -177,3 +177,8 @@ export function generate7BackendKeywordSlots(
 
   return slots;
 }
+
+/**
+ * Alias for generate7BackendKeywordSlots to match alternative naming conventions
+ */
+export const buildBackendKeywordSlots = generate7BackendKeywordSlots;

@@ -6,10 +6,12 @@ import { FetchQueueService } from '../services/fetchQueue';
 import { refreshWatchlist } from '../services/tracker';
 import { generateBookIdeas, testClaudeApiKey } from '../services/aiIdeas';
 import { DEFAULT_TRACKER_CONFIG } from '../config/defaults';
+import { migrateStorage } from '../storage';
 import type { ExtensionMessage } from '../types';
 
 export default defineBackground(() => {
   console.log('[KDP Niche Finder] Service worker initialized.');
+  migrateStorage();
 
   // Helper to check if an offscreen document currently exists
   const hasOffscreenDocument = async (): Promise<boolean> => {
@@ -187,16 +189,27 @@ export default defineBackground(() => {
     }
   });
 
-  // Register alarm on install / update
+  // Register alarm on install / update (deduplicated)
   chrome.runtime.onInstalled.addListener(() => {
-    chrome.alarms.create(DEFAULT_TRACKER_CONFIG.alarmName, {
-      periodInMinutes: DEFAULT_TRACKER_CONFIG.periodMinutes,
+    chrome.alarms.get(DEFAULT_TRACKER_CONFIG.alarmName, (alarm) => {
+      if (!alarm) {
+        chrome.alarms.create(DEFAULT_TRACKER_CONFIG.alarmName, {
+          periodInMinutes: DEFAULT_TRACKER_CONFIG.periodMinutes,
+        });
+      }
     });
   });
 
-  // Check refresh on browser startup (covers closed browser days)
+  // Check refresh on browser startup (covers closed browser days and verifies alarm)
   chrome.runtime.onStartup.addListener(() => {
     console.log('[KDP Background] Startup check for pending watchlist refresh.');
+    chrome.alarms.get(DEFAULT_TRACKER_CONFIG.alarmName, (alarm) => {
+      if (!alarm) {
+        chrome.alarms.create(DEFAULT_TRACKER_CONFIG.alarmName, {
+          periodInMinutes: DEFAULT_TRACKER_CONFIG.periodMinutes,
+        });
+      }
+    });
     runTrackerRefresh(false);
   });
 });

@@ -4,8 +4,11 @@
 import type { KeywordItem, KeywordWeights, Book } from '../types';
 import { AUTOCOMPLETE_ALPHA_SUFFIXES, AUTOCOMPLETE_DIGIT_SUFFIXES, MIN_KEYWORD_LENGTH, CACHE_TTL_MS } from '../config/defaults';
 import { getStorageItem, setStorageItem } from '../storage';
-import { scoreKeyword } from './keywordScore';
+import { getSettings } from '../storage/settings';
+import { scoreKeyword, generate7BackendKeywordSlots, buildBackendKeywordSlots } from './keywordScore';
 import { containsKeyword } from './titleAnalysis';
+
+export { generate7BackendKeywordSlots, buildBackendKeywordSlots };
 
 export interface AutocompleteProgress {
   current: number;
@@ -128,6 +131,11 @@ export async function fetchAutocompleteKeywords(
     return cached.items;
   }
 
+  const settings = await getSettings();
+  if (settings.pauseAllFetching) {
+    throw new Error('FETCHING_PAUSED: Background fetching is paused in Settings.');
+  }
+
   // 2. Prepare query prefixes: seed, seed + " a" ... seed + " z"
   const prefixes: string[] = [cleanSeed];
   for (const letter of AUTOCOMPLETE_ALPHA_SUFFIXES) {
@@ -239,6 +247,11 @@ export async function checkKeywordBsr(
   weights: KeywordWeights,
   totalTitles: number = 10
 ): Promise<KeywordItem> {
+  const settings = await getSettings();
+  if (settings.pauseAllFetching) {
+    throw new Error('FETCHING_PAUSED: Background fetching is paused in Settings.');
+  }
+
   const { parseSearchResults } = await import('../parsers/searchPage');
   const { parseProductPage, isCaptchaPage } = await import('../parsers/productPage');
   const { ProductCache } = await import('./cache');

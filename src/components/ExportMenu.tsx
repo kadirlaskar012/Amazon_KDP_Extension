@@ -2,7 +2,7 @@
 // Header dropdown menu for exporting research datasets, full packs, and JSON backups
 
 import React, { useState, useRef, useEffect } from 'react';
-import type { SearchSnapshot, WatchlistItem, BookIdea } from '../types';
+import type { SearchSnapshot, WatchlistItem, BookIdea, ExportSettings } from '../types';
 import {
   buildSearchResultsCsv,
   buildKeywordsCsv,
@@ -17,12 +17,13 @@ import {
   exportSnapshotJson,
   parseImportSnapshotJson,
 } from '../services/exporter';
-import { Download, FileText, Upload, ChevronDown, Check, AlertCircle } from 'lucide-react';
+import { Download, FileText, Upload, ChevronDown } from 'lucide-react';
 
 interface ExportMenuProps {
   snapshot?: SearchSnapshot | null;
   watchlist?: WatchlistItem[];
   ideas?: BookIdea[];
+  exportSettings?: ExportSettings;
   onImportSnapshot?: (imported: SearchSnapshot) => void;
 }
 
@@ -30,6 +31,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
   snapshot,
   watchlist = [],
   ideas = [],
+  exportSettings,
   onImportSnapshot,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -69,7 +71,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
       case 'search_results':
         if (!hasBooks) return;
         downloadFile(
-          buildSearchResultsCsv(snapshot!.books, query),
+          buildSearchResultsCsv(snapshot!.books, query, exportSettings),
           buildExportFileName('search_results', query)
         );
         showToast('Exported search results CSV!');
@@ -78,7 +80,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
       case 'keywords':
         if (!hasKeywords) return;
         downloadFile(
-          buildKeywordsCsv(snapshot!.keywords!),
+          buildKeywordsCsv(snapshot!.keywords!, exportSettings),
           buildExportFileName('keywords', query)
         );
         showToast('Exported keywords CSV!');
@@ -87,7 +89,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
       case 'categories':
         if (!hasCategories) return;
         downloadFile(
-          buildCategoriesCsv(snapshot!.categories!),
+          buildCategoriesCsv(snapshot!.categories!, exportSettings),
           buildExportFileName('categories', query)
         );
         showToast('Exported categories CSV!');
@@ -96,7 +98,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
       case 'specs':
         if (!hasSpecs) return;
         downloadFile(
-          buildSpecsCsv(snapshot!.specs!),
+          buildSpecsCsv(snapshot!.specs!, exportSettings),
           buildExportFileName('specs', query)
         );
         showToast('Exported specifications CSV!');
@@ -105,7 +107,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
       case 'reviews':
         if (!hasReviews) return;
         downloadFile(
-          buildReviewsCsv(snapshot!.reviewGap!),
+          buildReviewsCsv(snapshot!.reviewGap!, exportSettings),
           buildExportFileName('reviews', query)
         );
         showToast('Exported review complaints CSV!');
@@ -114,7 +116,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
       case 'watchlist':
         if (!hasWatchlist) return;
         downloadFile(
-          buildWatchlistCsv(watchlist),
+          buildWatchlistCsv(watchlist, exportSettings),
           buildExportFileName('watchlist', query)
         );
         showToast('Exported watchlist CSV!');
@@ -123,7 +125,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
       case 'ai_ideas':
         if (!hasIdeas) return;
         downloadFile(
-          buildAiIdeasCsv(ideas),
+          buildAiIdeasCsv(ideas, exportSettings),
           buildExportFileName('ai_ideas', query)
         );
         showToast('Exported AI book ideas CSV!');
@@ -132,7 +134,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
       case 'full_pack':
         if (!snapshot) return;
         downloadFile(
-          buildFullResearchPackCsv(snapshot, watchlist, ideas),
+          buildFullResearchPackCsv(snapshot, watchlist, ideas, exportSettings),
           buildExportFileName('full_pack', query)
         );
         showToast('Exported complete research pack CSV!');

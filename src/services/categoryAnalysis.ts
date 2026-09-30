@@ -238,6 +238,7 @@ export async function checkCategoryDifficultyLive(
   const { parseProductPage, isCaptchaPage } = await import('../parsers/productPage');
   const { ProductCache } = await import('./cache');
   const { getStorageItem, setStorageItem } = await import('../storage');
+  const { getSettings } = await import('../storage/settings');
   const { CACHE_TTL_MS } = await import('../config/defaults');
 
   const cacheKey = `kdp_cat_diff_${encodeURIComponent(categoryUrl)}`;
@@ -258,6 +259,11 @@ export async function checkCategoryDifficultyLive(
       bsrAtTop10: cached.bsrAtTop10,
       bsrAtTop20: cached.bsrAtTop20,
     };
+  }
+
+  const settings = await getSettings();
+  if (settings.pauseAllFetching) {
+    throw new Error('FETCHING_PAUSED: Background fetching is paused in Settings.');
   }
 
   // Fetch category Best Sellers page
