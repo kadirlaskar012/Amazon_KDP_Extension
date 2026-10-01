@@ -12,6 +12,7 @@ import { refreshWatchlist } from '../../services/tracker';
 import { getSnapshots, getSettings, saveSettings, clearCache } from '../../storage';
 import { BsrChart } from '../../components/BsrChart';
 import { TrendArrow } from '../../components/TrendArrow';
+import { Logo } from '../../components/Logo';
 import {
   BookMarked,
   Settings as SettingsIcon,
@@ -227,17 +228,17 @@ export const App: React.FC = () => {
       {/* Header */}
       <header className="px-3.5 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 flex items-center justify-between shrink-0 shadow-xs">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-xs shrink-0">
-            <BookMarked className="w-4 h-4" />
-          </div>
+          <Logo size={32} />
           <div>
-            <div className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm leading-tight flex items-center gap-1.5">
-              <span>KDP Niche Finder</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-semibold">
-                v1.0.0
+            <div className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm leading-tight flex items-center gap-1.5">
+              <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                KDP Niche Finder
+              </span>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs tracking-wider">
+                PRO
               </span>
             </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400">
+            <div className="text-[10px] text-slate-400 font-medium">
               Personal Amazon Publishing Intelligence
             </div>
           </div>
@@ -540,24 +541,24 @@ export const App: React.FC = () => {
                       </span>
                     </div>
 
-                    {snap.score && (
+                    {snap.scores && (
                       <span
                         className={`px-2 py-0.5 rounded-full font-bold font-mono text-xs border ${
-                          snap.score.label === 'green'
+                          snap.scores.label === 'green'
                             ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/30'
-                            : snap.score.label === 'yellow'
+                            : snap.scores.label === 'yellow'
                             ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-500/30'
                             : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-500/30'
                         }`}
                       >
-                        Score: {snap.score.total}/100
+                        Score: {snap.scores.total}/100
                       </span>
                     )}
                   </div>
 
                   <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
                     <span className="text-xs text-slate-500">
-                      Opportunities: <strong className="text-slate-800 dark:text-slate-200">{snap.books?.filter((b) => (b.opportunityReason?.length || 0) > 0).length || 0}</strong>
+                      Opportunities: <strong className="text-slate-800 dark:text-slate-200">{snap.books?.filter((b) => (b.opportunityReasons?.length || 0) > 0).length || 0}</strong>
                     </span>
 
                     <button
@@ -630,9 +631,9 @@ export const App: React.FC = () => {
                   <span className="font-semibold text-slate-800 dark:text-slate-200 block text-xs">Google Gemini AI</span>
                   <span className="text-[10px] text-slate-500">Book idea generation module</span>
                 </div>
-                {settings?.geminiApiKey ? (
+                {(settings?.geminiApiKey || (settings?.geminiApiKeys && settings.geminiApiKeys.length > 0)) ? (
                   <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold text-xs">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Configured
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Configured {settings?.geminiApiKeys && settings.geminiApiKeys.length > 1 ? `(${settings.geminiApiKeys.length} Keys)` : ''}
                   </span>
                 ) : (
                   <button

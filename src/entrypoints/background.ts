@@ -174,6 +174,32 @@ export default defineBackground(() => {
           }
           return true;
 
+        case 'OPEN_OPTIONS_PAGE':
+        case 'OPEN_OPTIONS':
+          try {
+            if (chrome.runtime?.openOptionsPage) {
+              chrome.runtime.openOptionsPage(() => {
+                if (chrome.runtime.lastError && chrome.tabs?.create) {
+                  chrome.tabs.create({ url: chrome.runtime.getURL('options.html') });
+                }
+                sendResponse({ success: true });
+              });
+            } else if (chrome.tabs?.create) {
+              chrome.tabs.create({ url: chrome.runtime.getURL('options.html') });
+              sendResponse({ success: true });
+            } else {
+              sendResponse({ success: false });
+            }
+          } catch {
+            if (chrome.tabs?.create) {
+              chrome.tabs.create({ url: chrome.runtime.getURL('options.html') });
+              sendResponse({ success: true });
+            } else {
+              sendResponse({ success: false });
+            }
+          }
+          return true;
+
         default:
           break;
       }

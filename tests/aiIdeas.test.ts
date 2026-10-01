@@ -49,9 +49,9 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
     // Set test api key in storage
     mockStorage['kdp_settings'] = {
       geminiApiKey: secretApiKey,
-      geminiModel: 'gemini-2.5-flash',
+      geminiModel: 'gemini-2.0-flash',
       ai: {
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.0-flash',
         maxTokens: 4000,
         temperature: 0.7,
         ideasCount: 10,
@@ -194,7 +194,7 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
       const firstCall = fetchSpy.mock.calls[0];
       expect(firstCall).toBeDefined();
       const [url, options] = firstCall!;
-      expect(url).toContain('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent');
+      expect(url).toContain('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent');
       expect(url).toContain(`key=${secretApiKey}`);
       expect((options as any)?.headers?.['Content-Type']).toBe('application/json');
 
@@ -223,7 +223,7 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
       }
     });
 
-    it('handles 429 Rate Limit with retry advice', async () => {
+    it('handles 429 Rate Limit with retry advice when single key is configured', async () => {
       vi.stubGlobal(
         'fetch',
         vi.fn().mockResolvedValue({
@@ -235,6 +235,88 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
 
       await expect(generateBookIdeas('Payload')).rejects.toThrow(
         /Gemini API rate limit reached/i
+      );
+    });
+
+    it('automatically fails over to backup API key when primary key encounters 429 quota exhaustion', async () => {
+      const backupKey = 'AIzaSy_BACKUP_KEY_22222';
+      mockStorage['kdp_settings'] = {
+        geminiApiKey: secretApiKey,
+        geminiApiKeys: [secretApiKey, backupKey],
+        geminiModel: 'gemini-2.0-flash',
+        ai: {
+          model: 'gemini-2.0-flash',
+          maxTokens: 4000,
+          temperature: 0.7,
+          ideasCount: 10,
+          timeoutMs: 5000,
+        },
+      };
+
+      const mockApiResponse = {
+        candidates: [
+          {
+            content: {
+              parts: [{ text: JSON.stringify(validSampleJson) }],
+            },
+            finishReason: 'STOP',
+          },
+        ],
+      };
+
+      const fetchSpy = vi.fn()
+        // First call with primary key returns 429 quota exhausted
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 429,
+          text: async () => 'RESOURCE_EXHAUSTED: Daily quota reached for key',
+        })
+        // Second call with backup key succeeds with 200 OK
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => mockApiResponse,
+        });
+      vi.stubGlobal('fetch', fetchSpy);
+
+      const result = await generateBookIdeas('Sample prompt');
+      expect(result.ideas.length).toBe(1);
+      expect(result.ideas[0]!.title).toBe('Mindful Animal Tracing for Kids');
+
+      // Verify that fetch was called twice: first with primary key, second with backup key
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      const firstUrl = fetchSpy.mock.calls[0]![0] as string;
+      const secondUrl = fetchSpy.mock.calls[1]![0] as string;
+      expect(firstUrl).toContain(`key=${secretApiKey}`);
+      expect(secondUrl).toContain(`key=${backupKey}`);
+    });
+
+    it('throws clear message when all configured keys encounter 429 quota exhaustion', async () => {
+      const backupKey = 'AIzaSy_BACKUP_KEY_33333';
+      mockStorage['kdp_settings'] = {
+        geminiApiKey: secretApiKey,
+        geminiApiKeys: [secretApiKey, backupKey],
+        geminiModel: 'gemini-2.0-flash',
+        ai: {
+          model: 'gemini-2.0-flash',
+          maxTokens: 4000,
+          temperature: 0.7,
+          ideasCount: 10,
+          timeoutMs: 5000,
+        },
+      };
+
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 429,
+          text: async () => 'RESOURCE_EXHAUSTED',
+        })
+      );
+
+      await expect(generateBookIdeas('Sample prompt')).rejects.toThrow(
+        /All 2 Gemini API keys have reached their quota limit/i
       );
     });
 

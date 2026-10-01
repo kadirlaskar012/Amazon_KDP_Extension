@@ -313,28 +313,56 @@ export const BooksTab: React.FC<BooksTabProps> = ({
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-2.5 space-y-2.5">
         {viewMode === 'cards' ? (
           /* Cards View */
-          sortedBooks.map((book) => {
+          sortedBooks.map((book, sortedIndex) => {
             const hasBsr = book.bsrOverall !== undefined;
             const amazonUrl = book.productUrl || `https://www.amazon.com/dp/${book.asin}`;
+            const isTop1 = sortedIndex === 0;
+            const isTop2 = sortedIndex === 1;
+            const isTop3 = sortedIndex === 2;
 
             return (
               <div
                 key={book.asin}
-                className={`rounded-xl border p-3 transition-all ${
-                  book.isOpp
-                    ? 'border-emerald-500/40 bg-emerald-50/40 dark:bg-emerald-950/20 shadow-xs'
-                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs hover:border-slate-300 dark:hover:border-slate-700'
+                className={`rounded-2xl border p-3.5 transition-all relative ${
+                  isTop1
+                    ? 'border-amber-400/80 bg-gradient-to-br from-amber-50/80 via-yellow-50/30 to-white dark:from-amber-950/30 dark:via-slate-900 dark:to-slate-900 shadow-md ring-2 ring-amber-400/40'
+                    : isTop2
+                    ? 'border-indigo-300/80 dark:border-indigo-800 bg-gradient-to-br from-indigo-50/70 via-slate-50/30 to-white dark:from-indigo-950/30 dark:via-slate-900 dark:to-slate-900 shadow-sm ring-1 ring-indigo-400/40'
+                    : isTop3
+                    ? 'border-orange-300/80 dark:border-orange-900 bg-gradient-to-br from-orange-50/60 via-slate-50/30 to-white dark:from-orange-950/20 dark:via-slate-900 dark:to-slate-900 shadow-sm ring-1 ring-orange-400/30'
+                    : book.isOpp
+                    ? 'border-emerald-500/50 bg-gradient-to-br from-emerald-50/70 via-teal-50/30 to-white dark:from-emerald-950/30 dark:via-slate-900 dark:to-slate-900 shadow-sm ring-1 ring-emerald-500/20'
+                    : 'border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs hover:border-indigo-300 dark:hover:border-slate-700 hover:shadow-sm'
                 }`}
               >
-                {/* Header row: Rank badge + Opportunity badge + Watch Button */}
+                {/* Header row: Target Badges + Rank badge + Opportunity badge + Watch Button */}
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="flex items-center justify-center px-2 py-0.5 rounded-md font-mono text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {/* Top 3 Target Podium Badges */}
+                    {isTop1 ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-400 text-slate-950 shadow-md shadow-amber-500/20 ring-1 ring-amber-300">
+                        <span>🥇</span>
+                        <span>1st Target</span>
+                      </span>
+                    ) : isTop2 ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-slate-200 via-indigo-100 to-slate-200 dark:from-slate-700 dark:via-indigo-900/60 dark:to-slate-700 text-slate-900 dark:text-white shadow-sm ring-1 ring-indigo-400/40">
+                        <span>🥈</span>
+                        <span>2nd Target</span>
+                      </span>
+                    ) : isTop3 ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-700 via-orange-600 to-amber-800 text-amber-100 shadow-sm ring-1 ring-orange-500/40">
+                        <span>🥉</span>
+                        <span>3rd Target</span>
+                      </span>
+                    ) : null}
+
+                    <span className="flex items-center justify-center px-2 py-0.5 rounded-lg font-mono text-xs font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
                       #{book.originalIndex}
                     </span>
+
                     {book.isOpp && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60">
-                        <Sparkles className="w-3 h-3 text-emerald-500" />
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-amber-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/40 shadow-xs">
+                        <Sparkles className="w-3 h-3 text-amber-500 animate-pulse" />
                         Opportunity
                       </span>
                     )}
@@ -472,16 +500,37 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-[11px]">
-                {sortedBooks.map((book) => (
-                  <tr
-                    key={book.asin}
-                    className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${
-                      book.isOpp ? 'bg-emerald-500/5 dark:bg-emerald-500/10' : ''
-                    }`}
-                  >
-                    <td className="py-2 px-1.5 text-center font-mono text-slate-500">
-                      {book.originalIndex}
-                    </td>
+                {sortedBooks.map((book, sortedIndex) => {
+                  const isTop1 = sortedIndex === 0;
+                  const isTop2 = sortedIndex === 1;
+                  const isTop3 = sortedIndex === 2;
+
+                  return (
+                    <tr
+                      key={book.asin}
+                      className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${
+                        isTop1
+                          ? 'bg-amber-500/10 font-medium'
+                          : isTop2
+                          ? 'bg-indigo-500/10'
+                          : isTop3
+                          ? 'bg-orange-500/10'
+                          : book.isOpp
+                          ? 'bg-emerald-500/5 dark:bg-emerald-500/10'
+                          : ''
+                      }`}
+                    >
+                      <td className="py-2 px-1.5 text-center font-mono font-bold">
+                        {isTop1 ? (
+                          <span className="text-amber-600 dark:text-amber-400">🥇 1</span>
+                        ) : isTop2 ? (
+                          <span className="text-indigo-600 dark:text-indigo-400">🥈 2</span>
+                        ) : isTop3 ? (
+                          <span className="text-orange-600 dark:text-orange-400">🥉 3</span>
+                        ) : (
+                          <span className="text-slate-500">#{book.originalIndex}</span>
+                        )}
+                      </td>
                     <td className="py-2 px-2 max-w-[150px]">
                       <a
                         href={book.productUrl || `https://www.amazon.com/dp/${book.asin}`}
@@ -518,7 +567,8 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                       />
                     </td>
                   </tr>
-                ))}
+                );
+              })}
               </tbody>
             </table>
           </div>

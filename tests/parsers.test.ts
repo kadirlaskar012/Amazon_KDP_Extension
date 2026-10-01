@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import { parseSearchResults } from '../src/parsers/searchPage';
-import { parseProductPage, isCaptchaPage } from '../src/parsers/productPage';
+import { parseProductPage, isCaptchaPage, parseCategoryRanksFromString } from '../src/parsers/productPage';
 
 describe('Search Page Parser', () => {
   it('parses organic book cards and filters out sponsored cards', () => {
@@ -73,5 +73,29 @@ describe('Product Page Parser', () => {
 
     const details = parseProductPage(html);
     expect(details.isCaptcha).toBe(true);
+  });
+
+  it('parses category ranks directly from raw HTML strings without DOMParser', () => {
+    const rawHtml = `
+      <div id="detailBullets_feature_div">
+        <ul class="zg_hrsr">
+          <li class="zg_hrsr_item">
+            <span class="zg_hrsr_rank">#3</span>
+            <span class="zg_hrsr_ladder">in <a href="/gp/bestsellers/books/100">Children's Coloring Books</a></span>
+          </li>
+          <li class="zg_hrsr_item">
+            <span class="zg_hrsr_rank">#12</span>
+            <span class="zg_hrsr_ladder">in <a href="/gp/bestsellers/books/200">Activity Books</a></span>
+          </li>
+        </ul>
+      </div>
+    `;
+
+    const ranks = parseCategoryRanksFromString(rawHtml);
+    expect(ranks).toHaveLength(2);
+    expect(ranks[0]!.rank).toBe(3);
+    expect(ranks[0]!.name).toBe("Children's Coloring Books");
+    expect(ranks[1]!.rank).toBe(12);
+    expect(ranks[1]!.name).toBe('Activity Books');
   });
 });

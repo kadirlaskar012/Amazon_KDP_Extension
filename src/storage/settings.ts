@@ -5,14 +5,42 @@ import { getStorageItem, setStorageItem } from './index';
 const SETTINGS_KEY = 'kdp_settings';
 
 /**
+ * Normalizes and validates Gemini model names, automatically migrating deprecated/invalid models
+ */
+export function normalizeGeminiModel(model?: string): string {
+  if (!model) return 'gemini-2.0-flash';
+  const clean = model.replace(/^models\//, '').trim();
+  // Automatically migrate invalid or deprecated 2.5 placeholders to latest official model
+  if (clean === 'gemini-2.5-flash' || clean === 'gemini-2.5-pro' || !clean) {
+    return 'gemini-2.0-flash';
+  }
+  return clean;
+}
+
+/**
  * Retrieves user settings with all default fallbacks cleanly merged
  */
 export async function getSettings(): Promise<Settings> {
   const saved = await getStorageItem<Partial<Settings>>(SETTINGS_KEY, {});
 
+  // Clean and merge multiple API keys if present
+  let apiKeys: string[] = [];
+  if (Array.isArray(saved.geminiApiKeys)) {
+    apiKeys = saved.geminiApiKeys.filter((k) => typeof k === 'string' && k.trim().length > 5);
+  }
+  if (saved.geminiApiKey && saved.geminiApiKey.trim()) {
+    const single = saved.geminiApiKey.trim();
+    if (!apiKeys.includes(single)) {
+      apiKeys.unshift(single);
+    }
+  }
+
   return {
     ...DEFAULT_SETTINGS,
     ...saved,
+    geminiApiKey: saved.geminiApiKey || (apiKeys.length > 0 ? apiKeys[0]! : ''),
+    geminiApiKeys: apiKeys,
+    geminiModel: normalizeGeminiModel(saved.geminiModel),
     weights: {
       ...DEFAULT_SETTINGS.weights,
       ...(saved.weights || {}),

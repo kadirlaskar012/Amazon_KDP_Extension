@@ -19,13 +19,16 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
   onUpdateSnapshotCategories,
   onCaptchaEncountered,
 }) => {
-  // Initialize categories from snapshot if available, or analyze from top 10 books
+  // Initialize categories from snapshot if available, or analyze from books/query
   const initialCategories = useMemo(() => {
     if (snapshot?.categories && snapshot.categories.length > 0) {
       return snapshot.categories;
     }
     if (snapshot?.books && snapshot.books.length > 0) {
-      return analyzeCategories(snapshot.books);
+      return analyzeCategories(snapshot.books, undefined, snapshot?.query);
+    }
+    if (snapshot?.query) {
+      return analyzeCategories([], undefined, snapshot.query);
     }
     return [];
   }, [snapshot]);
@@ -39,7 +42,10 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
     if (snapshot?.categories && snapshot.categories.length > 0) {
       setCategories(snapshot.categories);
     } else if (snapshot?.books && snapshot.books.length > 0) {
-      const computed = analyzeCategories(snapshot.books);
+      const computed = analyzeCategories(snapshot.books, undefined, snapshot?.query);
+      setCategories(computed);
+    } else if (snapshot?.query) {
+      const computed = analyzeCategories([], undefined, snapshot.query);
       setCategories(computed);
     }
   }, [snapshot]);
@@ -96,33 +102,47 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
     }
   };
 
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    showCopyToast(label);
+  };
+
+  const handleCopyTop3KdpPaths = () => {
+    if (recommendedPicks.length === 0) return;
+    const text = recommendedPicks
+      .map((p, i) => `${i + 1}. ${p.category.path || p.category.name}`)
+      .join('\n');
+    copyToClipboard(text, 'Copied Top 3 KDP Category Paths!');
+  };
+
   const handleCopyTsv = () => {
     if (categories.length === 0) return;
     const headers = [
       'Category Name',
+      'KDP Category Path',
       'Books in Top 10',
       'Best Rank',
       'Average Rank',
-      'Is Generic',
+      'Sales Opportunity',
+      'Target #1 BSR',
       'Difficulty',
-      'BSR Needed Top 20',
       'Category URL',
     ];
 
     const rows = categories.map((c) => [
       c.name,
+      c.path || c.name,
       c.bookCount,
       `#${c.bestRankAmongTopBooks}`,
       `#${c.avgRank}`,
-      c.isGeneric ? 'Generic' : 'Specific',
+      c.salesOpportunityLevel ? c.salesOpportunityLevel.toUpperCase() : 'N/A',
+      c.bestSellerTargetBsr ? `#${c.bestSellerTargetBsr.toLocaleString()}` : 'N/A',
       c.difficulty || 'Unchecked',
-      c.bsrAtTop20 ? `#${c.bsrAtTop20.toLocaleString()}` : 'N/A',
       c.url,
     ]);
 
     const tsv = [headers.join('\t'), ...rows.map((r) => r.join('\t'))].join('\n');
-    navigator.clipboard.writeText(tsv);
-    showCopyToast('Copied categories table as TSV!');
+    copyToClipboard(tsv, 'Copied categories table as TSV!');
   };
 
   return (
@@ -137,33 +157,88 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
       {/* Recommended Picks Card */}
       {recommendedPicks.length > 0 && (
         <div className="rounded-xl border border-indigo-200 dark:border-indigo-500/30 bg-gradient-to-br from-indigo-50/60 dark:from-indigo-950/40 via-white dark:via-slate-900 to-white dark:to-slate-900 p-3.5 shadow-xs">
-          <div className="flex items-center justify-between mb-2.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
             <div className="flex items-center gap-1.5">
               <span className="text-base">🎯</span>
-              <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">Recommended Category Picks</h4>
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
+                  Top 3 KDP Category Picks &amp; Beat-Seller Targets
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Amazon KDP allows 3 categories. Strategically picked to maximize visibility and win the #1 Best Seller badge.
+                </p>
+              </div>
             </div>
-            <span className="text-[11px] text-indigo-700 dark:text-indigo-300 font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800">
-              Rule-based suggestion
-            </span>
+            <button
+              onClick={handleCopyTop3KdpPaths}
+              className="rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 px-2.5 py-1 text-xs font-bold shadow-xs transition flex items-center gap-1 cursor-pointer self-start sm:self-auto"
+              title="Copy all 3 category paths formatted for KDP metadata"
+            >
+              📋 Copy Top 3 Paths
+            </button>
           </div>
 
-          <div className="space-y-2">
-            {recommendedPicks.map(({ category, reason }, idx) => (
+          <div className="space-y-2.5">
+            {recommendedPicks.map(({ category, reason, badgeLabel, strategy }, idx) => (
               <div
                 key={category.name}
-                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/70 p-2.5 shadow-2xs"
+                className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/70 p-3 shadow-2xs space-y-2"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-xs font-bold text-indigo-700 dark:text-indigo-400">
-                        {idx + 1}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-300">
+                        {badgeLabel || `#${idx + 1}`}
                       </span>
-                      <span className="font-bold text-slate-900 dark:text-white text-xs">{category.name}</span>
+                      <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
+                        {category.name}
+                      </span>
+                      {category.salesOpportunityLevel === 'high' ? (
+                        <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          🔥 High Sales Opportunity
+                        </span>
+                      ) : (
+                        <span className="rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                          ⚡ Moderate Competition
+                        </span>
+                      )}
+                      {category.bestSellerTargetBsr && (
+                        <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                          🏆 #1 BSR Target: ~#{category.bestSellerTargetBsr.toLocaleString()}
+                          {category.dailySalesForNo1 ? ` (~${category.dailySalesForNo1}/day)` : ''}
+                        </span>
+                      )}
                     </div>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 pl-7">{reason}</p>
+
+                    {/* KDP Breadcrumb Hierarchy Path */}
+                    {category.path && (
+                      <div className="mt-1.5 flex items-center justify-between gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 font-mono text-[10px] text-slate-600 dark:text-slate-300">
+                        <div className="flex items-center gap-1.5 overflow-hidden">
+                          <span className="text-slate-400 font-sans font-bold uppercase text-[9px] shrink-0">KDP Path:</span>
+                          <span className="truncate font-semibold text-indigo-600 dark:text-indigo-400" title={category.path}>
+                            {category.path}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => copyToClipboard(category.path || category.name, 'Copied KDP Category Path!')}
+                          className="shrink-0 flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 transition cursor-pointer"
+                          title="Copy full KDP category path for book setup"
+                        >
+                          📋 Copy Path
+                        </button>
+                      </div>
+                    )}
+
+                    {strategy && (
+                      <div className="mt-1 text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                        <span>🎯 Beat Sellers:</span> {strategy}
+                      </div>
+                    )}
+                    <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{reason}</p>
                   </div>
-                  <DifficultyBadge difficulty={category.difficulty} size="sm" />
+                  <div className="flex-shrink-0">
+                    <DifficultyBadge difficulty={category.difficulty} size="sm" />
+                  </div>
                 </div>
               </div>
             ))}
@@ -177,12 +252,20 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
           Niche Categories ({categories.length})
         </h4>
         {categories.length > 0 && (
-          <button
-            onClick={handleCopyTsv}
-            className="rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
-          >
-            Copy TSV
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleCopyTop3KdpPaths}
+              className="rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-300 dark:border-indigo-700/60 px-2 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 transition cursor-pointer"
+            >
+              📋 Copy Paths
+            </button>
+            <button
+              onClick={handleCopyTsv}
+              className="rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+            >
+              Copy TSV
+            </button>
+          </div>
         )}
       </div>
 
@@ -193,12 +276,12 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
             <table className="w-full text-left text-xs border-collapse">
               <thead className="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700 uppercase tracking-wider text-[10px] select-none">
                 <tr>
-                  <th className="py-2.5 px-3">Category</th>
+                  <th className="py-2.5 px-3">Category &amp; KDP Path</th>
+                  <th className="py-2.5 px-1.5 text-center" title="Target BSR to win #1 Best Seller badge">#1 Target</th>
                   <th className="py-2.5 px-1.5 text-center" title="Number of top 10 books in this category">Books</th>
                   <th className="py-2.5 px-1.5 text-center" title="Best rank among top 10 books">Best</th>
-                  <th className="py-2.5 px-1.5 text-center">Type</th>
                   <th className="py-2.5 px-2 text-center">Difficulty</th>
-                  <th className="py-2.5 px-1.5 text-center">Link</th>
+                  <th className="py-2.5 px-1.5 text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -207,13 +290,34 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
 
                   return (
                     <tr key={c.name} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                      {/* Name */}
-                      <td className="py-2 px-3 font-semibold text-slate-900 dark:text-slate-100 max-w-[140px] truncate" title={c.name}>
-                        {c.name}
+                      {/* Name & KDP Breadcrumb */}
+                      <td className="py-2 px-3 font-semibold text-slate-900 dark:text-slate-100 max-w-[170px]">
+                        <div className="font-bold text-xs truncate" title={c.name}>
+                          {c.name}
+                        </div>
+                        {c.path && (
+                          <div className="text-[10px] text-indigo-600 dark:text-indigo-400 font-mono truncate max-w-[160px] flex items-center gap-1 font-normal" title={c.path}>
+                            <span>{c.path}</span>
+                          </div>
+                        )}
                         {c.difficultyText && (
-                          <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[130px] font-normal" title={c.difficultyText}>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[150px] font-normal" title={c.difficultyText}>
                             {c.bsrAtTop20 ? `Top 20: BSR #${c.bsrAtTop20.toLocaleString()}` : ''}
                           </div>
+                        )}
+                      </td>
+
+                      {/* #1 Best Seller Target */}
+                      <td className="py-2 px-1.5 text-center">
+                        {c.bestSellerTargetBsr ? (
+                          <div className="font-mono text-[11px] font-bold text-amber-600 dark:text-amber-400" title={`Estimated ~${c.dailySalesForNo1 || 2} sales/day to hit #1`}>
+                            #{c.bestSellerTargetBsr.toLocaleString()}
+                            <div className="text-[9px] font-normal text-slate-400">
+                              ~{c.dailySalesForNo1 || 2}/day
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-[11px]">-</span>
                         )}
                       </td>
 
@@ -225,19 +329,6 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
                       {/* Best Rank */}
                       <td className="py-2 px-1.5 text-center font-mono font-bold text-indigo-600 dark:text-indigo-400">
                         #{c.bestRankAmongTopBooks}
-                      </td>
-
-                      {/* Generic vs Specific */}
-                      <td className="py-2 px-1.5 text-center">
-                        {c.isGeneric ? (
-                          <span className="inline-block rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                            Generic
-                          </span>
-                        ) : (
-                          <span className="inline-block rounded bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                            Specific
-                          </span>
-                        )}
                       </td>
 
                       {/* Difficulty or Check button */}
@@ -264,23 +355,32 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
                         )}
                       </td>
 
-                      {/* Open Link */}
+                      {/* Actions: Copy Path & Open Link */}
                       <td className="py-2 px-1.5 text-center">
-                        {c.url ? (
-                          <a
-                            href={c.url.startsWith('http') ? c.url : `https://www.amazon.com${c.url}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition p-1 inline-block"
-                            title="Open Best Sellers page"
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => copyToClipboard(c.path || c.name, 'Copied KDP Category Path!')}
+                            className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition p-1 inline-block cursor-pointer"
+                            title="Copy KDP category path"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
-                          </a>
-                        ) : (
-                          <span className="text-slate-400 text-xs">-</span>
-                        )}
+                          </button>
+                          {c.url && (
+                            <a
+                              href={c.url.startsWith('http') ? c.url : `https://www.amazon.com${c.url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition p-1 inline-block"
+                              title="Open Best Sellers page"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </a>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

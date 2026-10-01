@@ -99,7 +99,169 @@ export function parsePublishDate(text?: string | null): string | undefined {
 }
 
 /**
- * Parse category sub-ranks from a product page
+ * Parse reading age from text or HTML
+ */
+export function parseReadingAge(text?: string | null): string | undefined {
+  if (!text) return undefined;
+  const match = text.match(/Reading age\s*[:\-]\s*([^\n\r<]+)/i) ||
+                text.match(/rpi-attribute-book_details-reading_age[\s\S]*?<span[^>]*class="[^"]*rpi-attribute-value[^"]*"[^>]*>([^<]+)<\/span>/i);
+  if (match && match[1]) {
+    const clean = match[1].replace(/<[^>]+>/g, '').trim();
+    return clean || undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Parse category sub-ranks directly from HTML string using regex
+ * Essential for Chrome Manifest V3 Service Worker where DOMParser is undefined!
+ */
+export function parseCategoryRanksFromString(html: string): CategoryRank[] {
+  const categoryRanks: CategoryRank[] = [];
+  const seen = new Set<string>();
+
+  const addCategory = (rank: number, rawName: string, url?: string) => {
+    let clean = rawName
+      .replace(/^in\s+/i, '')
+      .replace(/\(see top 100.*\)/i, '')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&amp;/g, '&')
+      .replace(/&#39;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/[\n\r\t]+/g, ' ')
+      .trim();
+    clean = clean.replace(/\s*in\s+books\s*$/i, '').trim();
+    if (!clean || isNaN(rank) || rank <= 0) return;
+    const lower = clean.toLowerCase();
+    if (lower === 'books' || lower === 'kindle store' || lower === 'paid in kindle store') return;
+    if (seen.has(lower)) return;
+    seen.add(lower);
+
+    let fullUrl = url;
+    if (fullUrl && !fullUrl.startsWith('http')) {
+      fullUrl = `https://www.amazon.com${fullUrl.startsWith('/') ? '' : '/'}${fullUrl}`;
+    }
+
+    categoryRanks.push({
+      rank,
+      name: clean,
+      url: fullUrl,
+    });
+  };
+
+  // 1. zg_hrsr list items (Standard Amazon bestseller list in bullets)
+  // e.g. <li class="zg_hrsr_item"><span class="zg_hrsr_rank">#14</span><span class="zg_hrsr_ladder">in <a href="...">Category</a></span></li>
+  const zgRegex = /<li[^>]*class="[^"]*zg_hrsr[^"]*"[^>]*>([\s\S]*?)<\/li>/gi;
+  let zgMatch: RegExpExecArray | null;
+  while ((zgMatch = zgRegex.exec(html)) !== null) {
+    const itemContent = zgMatch[1] || '';
+    const rankMatch = itemContent.match(/#\s*([0-9,]+)/i);
+    const linkMatch = itemContent.match(/<a[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/i);
+    if (rankMatch && rankMatch[1]) {
+      const rank = parseInt(rankMatch[1].replace(/,/g, ''), 10);
+      if (linkMatch && linkMatch[2]) {
+        addCategory(rank, linkMatch[2], linkMatch[1]);
+      } else {
+        const textMatch = itemContent.match(/in\s+([^<(\n]+)/i);
+        if (textMatch && textMatch[1]) {
+          addCategory(rank, textMatch[1]);
+        }
+      }
+    }
+  }
+
+  // 2. Direct BestSellers links in product details or table rows:
+  // e.g. #3 in <a href="/gp/bestsellers/books/...">Children's Activity Books</a>
+  const linkRegex = /#\s*([0-9,]+)\s*(?:in|\s)\s*<a[^>]*href="([^"]*(?:bestsellers|Best-Sellers|zgbs)[^"]*)"[^>]*>([^<]+)<\/a>/gi;
+  let linkMatch: RegExpExecArray | null;
+  while ((linkMatch = linkRegex.exec(html)) !== null) {
+    if (linkMatch[1] && linkMatch[3]) {
+      const rank = parseInt(linkMatch[1].replace(/,/g, ''), 10);
+      addCategory(rank, linkMatch[3], linkMatch[2]);
+    }
+  }
+
+  // 3. Reversed or adjacent best seller links:
+  // <a href="...bestsellers...">Category</a> (#12 in ...)
+  const revRegex = /<a[^>]*href="([^"]*(?:bestsellers|Best-Sellers|zgbs)[^"]*)"[^>]*>([^<]+)<\/a>[^<#]*#\s*([0-9,]+)/gi;
+  let revMatch: RegExpExecArray | null;
+  while ((revMatch = revRegex.exec(html)) !== null) {
+    if (revMatch[3] && revMatch[2]) {
+      const rank = parseInt(revMatch[3].replace(/,/g, ''), 10);
+      addCategory(rank, revMatch[2], revMatch[1]);
+    }
+  }
+
+  // 4. Bullet text / Table cell text:
+  // e.g. #14 in Self-Help Calendars or #5 in Activity Books
+  const plainRegex = /#\s*([0-9,]+)\s+in\s+([A-Za-z0-9&',–—/ -]{3,60}?)(?=\s*\(|#|<|\n|$)/gi;
+  let plainMatch: RegExpExecArray | null;
+  while ((plainMatch = plainRegex.exec(html)) !== null) {
+    if (plainMatch[1] && plainMatch[2]) {
+      const rank = parseInt(plainMatch[1].replace(/,/g, ''), 10);
+      const catName = plainMatch[2].trim();
+      if (catName && !/books|kindle store/i.test(catName)) {
+        addCategory(rank, catName);
+      }
+    }
+  }
+
+  // 5. Wayfinding breadcrumb trail
+  // <div id="wayfinding-breadcrumbs_feature_div"> ...
+  const breadcrumbMatch = html.match(/id="wayfinding-breadcrumbs_feature_div"[\s\S]*?<\/div>/i);
+  if (breadcrumbMatch) {
+    const breadcrumbHtml = breadcrumbMatch[0];
+    const crumbs: string[] = [];
+    const crumbRegex = /<a[^>]*class="[^"]*a-link-normal[^"]*"[^>]*>([^<]+)<\/a>/gi;
+    let cm: RegExpExecArray | null;
+    while ((cm = crumbRegex.exec(breadcrumbHtml)) !== null) {
+      if (cm[1]) {
+        const crumb = cm[1].replace(/&amp;/g, '&').replace(/&#39;/g, "'").trim();
+        if (crumb && !crumb.toLowerCase().includes('back to results')) {
+          crumbs.push(crumb);
+        }
+      }
+    }
+    if (crumbs.length > 1) {
+      const leaf = crumbs[crumbs.length - 1];
+      const fullPath = crumbs.join(' > ');
+      if (leaf && !seen.has(leaf.toLowerCase()) && !/books|kindle/i.test(leaf)) {
+        categoryRanks.push({
+          rank: 20, // default top ranking placeholder if breadcrumb only
+          name: leaf,
+          category: fullPath,
+        });
+      }
+    }
+  }
+
+  return categoryRanks.slice(0, 5);
+}
+
+/**
+ * Parse top negative / critical reviews directly from HTML string
+ */
+export function parseTopReviewsFromString(html: string): string[] {
+  const reviews: string[] = [];
+  const reviewBlocks = html.split(/data-hook="review"/i);
+  for (let i = 1; i < reviewBlocks.length; i++) {
+    const block = reviewBlocks[i];
+    if (!block) continue;
+    // Check star rating (1-3 stars)
+    const starMatch = block.match(/([1-3](?:\.0)?)\s*out of 5 stars/i) || block.match(/a-star-([1-3])/i);
+    if (starMatch) {
+      const bodyMatch = block.match(/data-hook="review-body"[\s\S]*?<span>([\s\S]*?)<\/span>/i);
+      if (bodyMatch && bodyMatch[1]) {
+        const body = bodyMatch[1].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&#39;/g, "'").trim();
+        if (body) reviews.push(body);
+      }
+    }
+  }
+  return reviews;
+}
+
+/**
+ * Parse category sub-ranks from a product page DOM element or Document
  */
 export function parseCategoryRanks(doc: Document | Element): CategoryRank[] {
   const categoryRanks: CategoryRank[] = [];
@@ -175,6 +337,14 @@ export function parseCategoryRanks(doc: Document | Element): CategoryRank[] {
     }
   }
 
+  // 4. Fallback to raw HTML regex if DOM queries found nothing
+  if (categoryRanks.length === 0) {
+    const rawHtml = (doc as Document).documentElement?.outerHTML || (doc as HTMLElement).innerHTML || '';
+    if (rawHtml) {
+      return parseCategoryRanksFromString(rawHtml);
+    }
+  }
+
   return categoryRanks.slice(0, 5);
 }
 
@@ -185,13 +355,11 @@ export function parseTopReviewsText(doc: Document | Element): string[] {
   const reviews: string[] = [];
   const reviewCards = doc.querySelectorAll('div[data-hook="review"], div.review');
   for (const card of Array.from(reviewCards)) {
-    // Check star rating
     const ratingEl = card.querySelector('i[data-hook*="star-rating"] span.a-icon-alt, span.a-icon-alt');
     const ratingText = ratingEl?.textContent || '';
     const rating = ratingText.match(/(\d+(?:\.\d+)?)/)?.[1];
     const numRating = rating ? parseFloat(rating) : 5;
 
-    // Filter 1 to 3 star reviews for complaints gap analysis
     if (numRating <= 3) {
       const bodyEl = card.querySelector('span[data-hook="review-body"] span, div.review-text-content span, span[data-hook="review-body"]');
       const body = bodyEl?.textContent?.trim();
@@ -200,6 +368,14 @@ export function parseTopReviewsText(doc: Document | Element): string[] {
       }
     }
   }
+
+  if (reviews.length === 0) {
+    const rawHtml = (doc as Document).documentElement?.outerHTML || (doc as HTMLElement).innerHTML || '';
+    if (rawHtml) {
+      return parseTopReviewsFromString(rawHtml);
+    }
+  }
+
   return reviews;
 }
 
@@ -207,25 +383,41 @@ export function parseTopReviewsText(doc: Document | Element): string[] {
  * Parse complete product details from an HTML document or string
  */
 export function parseProductPage(htmlOrDoc: Document | string): ParsedProductDetails {
-  let doc: Document;
+  let doc: Document | undefined;
   if (typeof htmlOrDoc === 'string') {
     if (isCaptchaPage(htmlOrDoc)) {
       return { isCaptcha: true, categoryRanks: [] };
     }
     if (typeof DOMParser !== 'undefined') {
-      const parser = new DOMParser();
-      doc = parser.parseFromString(htmlOrDoc, 'text/html');
-    } else {
+      try {
+        const parser = new DOMParser();
+        doc = parser.parseFromString(htmlOrDoc, 'text/html');
+      } catch {
+        doc = undefined;
+      }
+    }
+    
+    // If DOMParser is undefined (Service Worker) or failed to parse doc
+    if (!doc) {
+      const bsrOverall = parseBsr(htmlOrDoc);
+      const categoryRanks = parseCategoryRanksFromString(htmlOrDoc);
+      const pageCount = parsePageCount(htmlOrDoc);
+      const trimSize = parseTrimSize(htmlOrDoc);
+      const publishDate = parsePublishDate(htmlOrDoc);
+      const readingAge = parseReadingAge(htmlOrDoc);
+      const topReviewsText = parseTopReviewsFromString(htmlOrDoc);
+      const isLowContent = /coloring book|journal|planner|log book|notebook|sketchbook|tracker/i.test(htmlOrDoc);
+
       return {
         isCaptcha: false,
-        bsrOverall: parseBsr(htmlOrDoc),
-        categoryRanks: [],
-        pageCount: parsePageCount(htmlOrDoc),
-        trimSize: parseTrimSize(htmlOrDoc),
-        publishDate: parsePublishDate(htmlOrDoc),
-        readingAge: undefined,
-        isLowContent: /coloring book|journal|planner|log book|notebook|sketchbook|tracker/i.test(htmlOrDoc),
-        topReviewsText: [],
+        bsrOverall,
+        categoryRanks,
+        pageCount,
+        trimSize,
+        publishDate,
+        readingAge,
+        isLowContent,
+        topReviewsText,
       };
     }
   } else {

@@ -5,6 +5,8 @@ import {
   evaluateCategoryDifficulty,
   getRecommendedCategoryPicks,
   isGenericCategory,
+  formatKdpCategoryPath,
+  inferNicheCategories,
 } from '../src/services/categoryAnalysis';
 import type { Book, CategoryStat } from '../src/types';
 
@@ -129,5 +131,53 @@ describe('categoryAnalysis service', () => {
     expect(recommendedNames).toContain("Children's Dinosaur Books");
     expect(recommendedNames).toContain("Children's Coloring Books");
     expect(recommendedNames).not.toContain('Books'); // Generic excluded or scored lower
+  });
+
+  it('formats full 3-level KDP category hierarchy paths accurately', () => {
+    expect(formatKdpCategoryPath('Coloring Books')).toBe(
+      "Books > Crafts, Hobbies & Home > Crafts & Hobbies > Coloring Books for Grown-Ups > Coloring Books"
+    );
+    expect(formatKdpCategoryPath("Children's Coloring Books")).toBe(
+      "Books > Children's Books > Activities, Crafts & Games > Activity Books > Coloring Books"
+    );
+    expect(formatKdpCategoryPath("Children's Activity Books")).toBe(
+      "Books > Children's Books > Activities, Crafts & Games > Activity Books"
+    );
+  });
+
+  it('infers realistic KDP categories when competitors have no category ranks yet', () => {
+    const mockBooks: Book[] = [
+      {
+        asin: 'B01',
+        title: 'Toddler Coloring Book: 50 Easy Animal Designs',
+        author: 'Author 1',
+        bsrOverall: 3500,
+        categoryRanks: [],
+      },
+      {
+        asin: 'B02',
+        title: 'My First Toddler Coloring Book: Fun with Numbers, Letters, Shapes',
+        author: 'Author 2',
+        bsrOverall: 5200,
+        categoryRanks: [],
+      },
+    ];
+
+    const inferred = inferNicheCategories(mockBooks, 'toddler coloring book');
+    expect(inferred.length).toBeGreaterThanOrEqual(3);
+
+    const names = inferred.map((c) => c.name);
+    expect(names).toContain('Coloring Books for Kids');
+    expect(names).toContain("Children's Activity Books");
+
+    // Must have complete KDP breadcrumb paths
+    const coloringCat = inferred.find((c) => c.name === 'Coloring Books for Kids')!;
+    expect(coloringCat.path).toContain("Books > Children's Books > Activities, Crafts & Games > Activity Books > Coloring Books");
+    expect(coloringCat.bestSellerTargetBsr).toBeDefined();
+    expect(coloringCat.dailySalesForNo1).toBeDefined();
+
+    // Fallback in analyzeCategories
+    const results = analyzeCategories(mockBooks, undefined, 'toddler coloring book');
+    expect(results.length).toBeGreaterThanOrEqual(3);
   });
 });

@@ -1,13 +1,53 @@
 // src/services/aiIdeas.ts
-// Service for communicating with the Google Gemini API (latest models: gemini-2.5-flash, gemini-2.5-pro),
-// parsing structured JSON responses, and validating generated KDP book ideas.
+// Service for communicating with the Google Gemini API (latest official models: gemini-2.0-flash, gemini-2.0-flash-lite, gemini-1.5-pro, gemini-1.5-flash),
+// parsing structured JSON responses, multi-key automatic failover, and validating generated KDP book ideas.
 
 import type { BookIdea, AiIdeasResponse, Settings } from '../types';
-import { getSettings } from '../storage/settings';
+import { getSettings, normalizeGeminiModel } from '../storage/settings';
 import { DEFAULT_KDP_SYSTEM_PROMPT } from './aiPrompt';
 import { validateBatchIdeas } from './ideaScoring';
 
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+/**
+ * Extracts and deduplicates all valid Gemini API keys from settings or string input
+ */
+export function extractAllGeminiKeys(
+  input?: Partial<Settings> | Settings | string | string[]
+): string[] {
+  if (!input) return [];
+
+  const keys: string[] = [];
+
+  if (typeof input === 'string') {
+    const splits = input.split(/[\n,;]+/);
+    for (const s of splits) {
+      if (s.trim().length > 5) keys.push(s.trim());
+    }
+  } else if (Array.isArray(input)) {
+    for (const item of input) {
+      if (typeof item === 'string' && item.trim().length > 5) {
+        keys.push(item.trim());
+      }
+    }
+  } else if (typeof input === 'object') {
+    if (Array.isArray(input.geminiApiKeys)) {
+      for (const k of input.geminiApiKeys) {
+        if (typeof k === 'string' && k.trim().length > 5) {
+          keys.push(k.trim());
+        }
+      }
+    }
+    if (typeof input.geminiApiKey === 'string' && input.geminiApiKey.trim()) {
+      const splits = input.geminiApiKey.split(/[\n,;]+/);
+      for (const s of splits) {
+        if (s.trim().length > 5) keys.push(s.trim());
+      }
+    }
+  }
+
+  return Array.from(new Set(keys));
+}
 
 /**
  * Extracts and parses JSON from raw LLM output, stripping markdown code fences if present
@@ -94,88 +134,129 @@ export function validateIdeaResponseShape(data: any): { notes?: string; ideas: B
 }
 
 /**
- * Tests a Google Gemini API Key with a minimal request
+ * Tests Google Gemini API Key(s) with a minimal request and supports auto-fallback on 404
  */
 export async function testGeminiApiKey(
-  apiKey?: string,
-  model: string = 'gemini-2.5-flash'
+  apiKeyOrKeys?: string | string[],
+  model: string = 'gemini-2.0-flash'
 ): Promise<{ success: boolean; message: string }> {
-  let keyToUse = apiKey;
-  if (!keyToUse) {
+  let keysToTest: string[] = [];
+
+  if (apiKeyOrKeys) {
+    keysToTest = extractAllGeminiKeys(apiKeyOrKeys);
+  } else {
     const s = await getSettings();
-    keyToUse = s.geminiApiKey;
+    keysToTest = extractAllGeminiKeys(s);
   }
 
-  if (!keyToUse || !keyToUse.trim()) {
+  if (keysToTest.length === 0) {
     return {
       success: false,
-      message: 'No API key provided. Please enter your Google Gemini API key.',
+      message: 'No API key provided. Please enter at least one Google Gemini API key.',
     };
   }
 
-  const cleanModel = model.replace(/^models\//, '') || 'gemini-2.5-flash';
-  const url = `${GEMINI_BASE_URL}/${cleanModel}:generateContent?key=${encodeURIComponent(keyToUse.trim())}`;
+  let cleanModel = normalizeGeminiModel(model);
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const testSingleKey = async (key: string, targetModel: string) => {
+    const url = `${GEMINI_BASE_URL}/${targetModel}:generateContent?key=${encodeURIComponent(key.trim())}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: 'ping' }] }],
+          generationConfig: { maxOutputTokens: 5 },
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        return { ok: true, status: res.status };
+      }
+
+      // If 404 on model, test fallback to gemini-1.5-flash
+      if (res.status === 404 && targetModel !== 'gemini-1.5-flash') {
+        const fallbackRes = await fetch(
+          `${GEMINI_BASE_URL}/gemini-1.5-flash:generateContent?key=${encodeURIComponent(key.trim())}`,
           {
-            role: 'user',
-            parts: [{ text: 'Hello' }],
-          },
-        ],
-        generationConfig: {
-          maxOutputTokens: 5,
-        },
-      }),
-      signal: controller.signal,
-    });
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ role: 'user', parts: [{ text: 'ping' }] }],
+              generationConfig: { maxOutputTokens: 5 },
+            }),
+          }
+        );
+        if (fallbackRes.ok) {
+          cleanModel = 'gemini-1.5-flash';
+          return { ok: true, status: fallbackRes.status };
+        }
+      }
 
-    clearTimeout(timeoutId);
-
-    if (res.ok) {
-      return { success: true, message: 'API key is valid and connected to Google Gemini!' };
+      const errText = await res.text();
+      return { ok: false, status: res.status, errText };
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      return { ok: false, status: 0, errText: err?.message || 'Network error' };
     }
+  };
 
-    if (res.status === 400 || res.status === 403) {
+  // Test primary key first
+  const primaryResult = await testSingleKey(keysToTest[0]!, cleanModel);
+  if (!primaryResult.ok) {
+    if (primaryResult.status === 400 || primaryResult.status === 403) {
       return {
         success: false,
         message: 'Invalid Gemini API Key (400/403). Please verify your key at Google AI Studio.',
       };
     }
-
-    if (res.status === 429) {
+    if (primaryResult.status === 429) {
       return {
         success: false,
-        message: 'Gemini rate limit reached (429). Your key is valid, but please wait a moment before querying.',
+        message: 'Gemini rate limit / quota reached (429) for Primary Key. Auto-failover will switch to backup keys during generation.',
       };
     }
-
-    const errText = await res.text();
     return {
       success: false,
-      message: `Gemini API error (${res.status}): ${errText.slice(0, 100)}`,
+      message: `Gemini API error (${primaryResult.status}): ${(primaryResult.errText || '').slice(0, 100)}`,
     };
-  } catch (err: any) {
-    clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
-      return { success: false, message: 'Request timed out after 15 seconds.' };
-    }
-    return { success: false, message: `Connection failed: ${err?.message || 'Network error'}` };
   }
+
+  // If multiple keys, test remaining backup keys
+  if (keysToTest.length > 1) {
+    let validCount = 1;
+    for (let i = 1; i < keysToTest.length; i++) {
+      const res = await testSingleKey(keysToTest[i]!, cleanModel);
+      if (res.ok) validCount++;
+    }
+
+    if (validCount === keysToTest.length) {
+      return {
+        success: true,
+        message: `All ${keysToTest.length} API keys are valid and connected to Google Gemini (${cleanModel})! Auto-Failover is ready.`,
+      };
+    }
+    return {
+      success: true,
+      message: `${validCount} of ${keysToTest.length} API keys are valid (${cleanModel}). Invalid keys will be skipped during auto-failover.`,
+    };
+  }
+
+  return {
+    success: true,
+    message: `API key is valid and connected to Google Gemini (${cleanModel})!`,
+  };
 }
 
 /**
  * Generates KDP book ideas by calling the Google Gemini generateContent API.
- * Uses structured JSON mode (responseMimeType: "application/json") and system instructions.
+ * Uses structured JSON mode and supports automatic failover across multiple API keys on 429 quota exhaustion.
  */
 export async function generateBookIdeas(
   payloadText: string,
@@ -183,113 +264,174 @@ export async function generateBookIdeas(
   customSettings?: Partial<Settings>
 ): Promise<AiIdeasResponse> {
   const settings = await getSettings();
-  const apiKey = (
-    customSettings?.geminiApiKey ||
-    settings.geminiApiKey ||
-    ''
-  ).trim();
+  const allKeys = extractAllGeminiKeys(customSettings || settings);
 
-  if (!apiKey) {
-    throw new Error('Add your Google Gemini API key in Options to generate AI book ideas.');
+  if (allKeys.length === 0) {
+    throw new Error('Please add your Google Gemini API key in Options or Sidebar Settings to generate AI book ideas.');
   }
 
-  const model = (
+  let model = normalizeGeminiModel(
     customSettings?.geminiModel ||
     settings.geminiModel ||
-    settings.ai?.model ||
-    'gemini-2.5-flash'
-  ).replace(/^models\//, '');
+    settings.ai?.model
+  );
 
-  const maxTokens = settings.ai?.maxTokens || 8192;
+  const maxTokens = settings.ai?.maxTokens || 4000;
   const temperature = settings.ai?.temperature ?? 0.7;
   const timeoutMs = settings.ai?.timeoutMs || 60000;
   const systemPrompt = customSystemPrompt || settings.ai?.systemPrompt || DEFAULT_KDP_SYSTEM_PROMPT;
 
-  const url = `${GEMINI_BASE_URL}/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  let lastError: Error | null = null;
+  let usedKeyIndex = 0;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  for (let keyIdx = 0; keyIdx < allKeys.length; keyIdx++) {
+    const currentKey = allKeys[keyIdx]!;
+    usedKeyIndex = keyIdx;
 
-  let responseText = '';
-  let usage: { input_tokens?: number; output_tokens?: number } | undefined;
+    const url = `${GEMINI_BASE_URL}/${model}:generateContent?key=${encodeURIComponent(currentKey)}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: systemPrompt }],
+    let responseText = '';
+    let usage: { input_tokens?: number; output_tokens?: number } | undefined;
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: payloadText }],
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: systemPrompt }],
           },
-        ],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature,
-          maxOutputTokens: maxTokens,
-        },
-      }),
-      signal: controller.signal,
-    });
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: payloadText }],
+            },
+          ],
+          generationConfig: {
+            responseMimeType: 'application/json',
+            temperature,
+            maxOutputTokens: maxTokens,
+          },
+        }),
+        signal: controller.signal,
+      });
 
-    clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-    if (!res.ok) {
-      if (res.status === 400 || res.status === 403) {
-        throw new Error('Invalid Google Gemini API Key. Please verify your API key in Options.');
-      }
-      if (res.status === 429) {
-        throw new Error('Gemini API rate limit reached (429). Please wait a moment and click Retry.');
-      }
-      if (res.status >= 500) {
-        throw new Error(`Google Gemini server error (${res.status}). Please try again in a few moments.`);
-      }
-      const errBody = await res.text();
-      throw new Error(`Gemini API request failed with status ${res.status}: ${errBody.slice(0, 150)}`);
-    }
+      if (!res.ok) {
+        const errBody = await res.text();
+        const isQuotaOrRateLimit =
+          res.status === 429 ||
+          errBody.includes('RESOURCE_EXHAUSTED') ||
+          errBody.includes('quota') ||
+          errBody.includes('rate limit') ||
+          errBody.includes('Too Many Requests');
 
-    const data = await res.json();
-    if (data.usageMetadata) {
-      usage = {
-        input_tokens: data.usageMetadata.promptTokenCount,
-        output_tokens: data.usageMetadata.candidatesTokenCount,
+        const isInvalidKey =
+          res.status === 400 ||
+          res.status === 403 ||
+          errBody.includes('API_KEY_INVALID') ||
+          errBody.includes('not valid');
+
+        const isModel404 =
+          res.status === 404 &&
+          (errBody.includes('not found') || errBody.includes('no longer available'));
+
+        // If model returned 404, fallback to gemini-1.5-flash and retry this key!
+        if (isModel404 && model !== 'gemini-1.5-flash') {
+          console.warn(`[Gemini AI] Model ${model} returned 404. Falling back to gemini-1.5-flash...`);
+          model = 'gemini-1.5-flash';
+          keyIdx--; // retry with same key
+          continue;
+        }
+
+        // Automatic Failover: If quota exceeded (429) or invalid key, switch to next available key in the list!
+        if ((isQuotaOrRateLimit || isInvalidKey) && keyIdx < allKeys.length - 1) {
+          console.warn(
+            `[Gemini AI] Key #${keyIdx + 1} quota reached or failed (HTTP ${res.status}). Automatically failing over to Backup Key #${keyIdx + 2}...`
+          );
+          continue;
+        }
+
+        if (isInvalidKey) {
+          throw new Error('Invalid Google Gemini API Key. Please verify your API key in Options.');
+        }
+        if (isQuotaOrRateLimit) {
+          throw new Error(
+            allKeys.length > 1
+              ? `All ${allKeys.length} Gemini API keys have reached their quota limit (429). Please wait a moment or add another key.`
+              : 'Gemini API rate limit reached (429). You can add a backup API key in Settings for automatic failover, or wait a moment and retry.'
+          );
+        }
+        if (res.status >= 500) {
+          throw new Error(`Google Gemini server error (${res.status}). Please try again in a few moments.`);
+        }
+        throw new Error(`Gemini API request failed with status ${res.status}: ${errBody.slice(0, 150)}`);
+      }
+
+      const data = await res.json();
+      if (data.usageMetadata) {
+        usage = {
+          input_tokens: data.usageMetadata.promptTokenCount,
+          output_tokens: data.usageMetadata.candidatesTokenCount,
+        };
+      }
+
+      const candidate = data.candidates && data.candidates[0];
+      const candidatePart = candidate?.content?.parts && candidate.content.parts[0];
+      if (candidatePart && candidatePart.text) {
+        responseText = candidatePart.text;
+      } else {
+        throw new Error('Gemini response did not contain expected content parts.');
+      }
+
+      // Parse JSON
+      const parsedJson = extractJsonFromText(responseText);
+      const shaped = validateIdeaResponseShape(parsedJson);
+
+      // Validate ideas locally for KDP compliance & sanity checks
+      const validatedIdeas = validateBatchIdeas(shaped.ideas, settings.ai?.forbiddenWords);
+
+      const notesSuffix =
+        usedKeyIndex > 0
+          ? ` (Auto-Failover: Switched to Backup Key #${usedKeyIndex + 1} after primary key quota was reached)`
+          : '';
+
+      return {
+        notes: shaped.notes ? `${shaped.notes}${notesSuffix}` : (notesSuffix.trim() || undefined),
+        ideas: validatedIdeas,
+        rawText: responseText,
+        usage,
       };
-    }
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      lastError = err;
 
-    const candidate = data.candidates && data.candidates[0];
-    const candidatePart = candidate?.content?.parts && candidate.content.parts[0];
-    if (candidatePart && candidatePart.text) {
-      responseText = candidatePart.text;
-    } else {
-      throw new Error('Gemini response did not contain expected content parts.');
+      // If user aborted or timeout, don't keep rotating
+      if (err.name === 'AbortError') {
+        throw new Error(`Request timed out after ${Math.round(timeoutMs / 1000)} seconds. Please try again.`);
+      }
+
+      const errMsg = err?.message || '';
+      const isQuota = errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('rate limit');
+      if (isQuota && keyIdx < allKeys.length - 1) {
+        console.warn(`[Gemini AI] Key #${keyIdx + 1} quota exhausted. Auto-switching to Key #${keyIdx + 2}...`);
+        continue;
+      }
+
+      if (keyIdx >= allKeys.length - 1) {
+        const cleanMsg = errMsg.replace(
+          new RegExp(currentKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+          '[REDACTED]'
+        );
+        throw new Error(cleanMsg);
+      }
     }
-  } catch (err: any) {
-    clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
-      throw new Error(`Request timed out after ${Math.round(timeoutMs / 1000)} seconds. Please try again.`);
-    }
-    const cleanMsg = (err?.message || 'Network error communicating with Google Gemini API.')
-      .replace(new RegExp(apiKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), '[REDACTED]');
-    throw new Error(cleanMsg);
   }
 
-  // Parse JSON
-  const parsedJson = extractJsonFromText(responseText);
-  const shaped = validateIdeaResponseShape(parsedJson);
-
-  // Validate ideas locally for KDP compliance & sanity checks
-  const validatedIdeas = validateBatchIdeas(shaped.ideas, settings.ai?.forbiddenWords);
-
-  return {
-    notes: shaped.notes,
-    ideas: validatedIdeas,
-    rawText: responseText,
-    usage,
-  };
+  throw lastError || new Error('Failed to generate ideas with Gemini API.');
 }

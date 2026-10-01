@@ -16,9 +16,9 @@ export const OpportunityBadge: React.FC<OpportunityBadgeProps> = ({ reasons }) =
     >
       <span
         title={reasons.join(' • ')}
-        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-semibold text-[10px] cursor-help transition-colors hover:bg-emerald-500/25 select-none"
+        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-500/20 via-teal-500/15 to-amber-500/20 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] cursor-help transition-all hover:scale-105 hover:shadow-xs shadow-emerald-500/10 select-none"
       >
-        <Sparkles className="w-2.5 h-2.5" />
+        <Sparkles className="w-2.5 h-2.5 text-amber-500 animate-pulse" />
         Opportunity
       </span>
 

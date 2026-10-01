@@ -22,6 +22,7 @@ import { DEFAULT_FORBIDDEN_WORDS } from '../../config/forbiddenWords';
 import { DEFAULT_KDP_SYSTEM_PROMPT } from '../../services/aiPrompt';
 import { normalizeWeights } from '../../services/scoring';
 import { ApiKeyField } from '../../components/ApiKeyField';
+import { Logo } from '../../components/Logo';
 import {
   Settings as SettingsIcon,
   Shield,
@@ -222,6 +223,7 @@ export const App: React.FC = () => {
     const exported = { ...settings };
     if (!includeKeyInExport) {
       delete (exported as any).geminiApiKey;
+      delete (exported as any).geminiApiKeys;
     }
     const jsonStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exported, null, 2));
     const dlAnchor = document.createElement('a');
@@ -245,7 +247,8 @@ export const App: React.FC = () => {
           ...prev,
           ...imported,
           geminiApiKey: imported.geminiApiKey || prev.geminiApiKey,
-          geminiModel: imported.geminiModel || prev.geminiModel || 'gemini-2.5-flash',
+          geminiApiKeys: imported.geminiApiKeys || prev.geminiApiKeys,
+          geminiModel: imported.geminiModel || prev.geminiModel || 'gemini-2.0-flash',
         }));
         alert('Settings successfully imported!');
       } catch (err: any) {
@@ -299,12 +302,19 @@ export const App: React.FC = () => {
       <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 sm:p-4 flex flex-col justify-between shrink-0 shadow-xs">
         <div className="space-y-3 sm:space-y-4">
           <div className="flex items-center justify-between px-1">
-            <div>
-              <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse" />
-                KDP Niche Finder
-              </h1>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Control Center & System Settings</p>
+            <div className="flex items-center gap-2.5">
+              <Logo size={32} />
+              <div>
+                <h1 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 leading-tight">
+                  <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                    KDP Niche Finder
+                  </span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs tracking-wider">
+                    PRO
+                  </span>
+                </h1>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Control Center & System Settings</p>
+              </div>
             </div>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-semibold border border-indigo-200 dark:border-indigo-800 md:hidden">
               v1.0.0
@@ -849,22 +859,29 @@ export const App: React.FC = () => {
               <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Google Gemini AI Credentials</h3>
               <ApiKeyField
                 apiKey={settings.geminiApiKey || ''}
-                onChange={(key) => updateSettings((s) => ({ ...s, geminiApiKey: key }))}
-                model={settings.geminiModel || 'gemini-2.5-flash'}
+                apiKeys={settings.geminiApiKeys || []}
+                onChange={(primaryKey, allKeys) =>
+                  updateSettings((s) => ({
+                    ...s,
+                    geminiApiKey: primaryKey,
+                    geminiApiKeys: allKeys || [primaryKey],
+                  }))
+                }
+                model={settings.geminiModel || 'gemini-2.0-flash'}
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 <div>
                   <label className="block text-slate-700 dark:text-slate-300 font-medium mb-1">Gemini Model</label>
                   <select
-                    value={settings.geminiModel || 'gemini-2.5-flash'}
+                    value={settings.geminiModel || 'gemini-2.0-flash'}
                     onChange={(e) => updateSettings((s) => ({ ...s, geminiModel: e.target.value }))}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 font-mono text-xs sm:text-sm text-slate-900 dark:text-slate-100"
                   >
-                    <option value="gemini-2.5-flash">gemini-2.5-flash (Recommended: Fast & Intelligent)</option>
-                    <option value="gemini-2.5-pro">gemini-2.5-pro (Deep Reasoning & Niche Strategy)</option>
-                    <option value="gemini-1.5-flash">gemini-1.5-flash (Lightweight)</option>
-                    <option value="gemini-1.5-pro">gemini-1.5-pro (Large Context)</option>
+                    <option value="gemini-2.0-flash">gemini-2.0-flash (Recommended: Latest, Ultra-Fast & High Accuracy)</option>
+                    <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite (Fastest, Low Latency)</option>
+                    <option value="gemini-1.5-pro">gemini-1.5-pro (Deep Reasoning & Niche Strategy)</option>
+                    <option value="gemini-1.5-flash">gemini-1.5-flash (High-Speed Workhorse)</option>
                   </select>
                 </div>
                 <div>
@@ -1009,8 +1026,23 @@ export const App: React.FC = () => {
 
         {/* Section 10: About & Guide */}
         {activeSection === 'about' && (
-          <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-            <h3 className="font-bold text-slate-900 dark:text-white text-base">About KDP Niche Finder</h3>
+          <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
+            <div className="flex items-center gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+              <Logo size={56} />
+              <div>
+                <h3 className="font-extrabold text-slate-900 dark:text-white text-lg sm:text-xl flex items-center gap-2">
+                  <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
+                    KDP Niche Finder PRO
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold tracking-wider shadow-xs">
+                    v1.0.0
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Executive Amazon KDP Niche, Keyword & BSR Research Intelligence Tool
+                </p>
+              </div>
+            </div>
             <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-xs sm:text-sm">
               KDP Niche Finder is a personal Amazon KDP research intelligence tool designed to run entirely locally in your browser. It extracts organic search metrics, calculates multi-factor Niche Scores, tracks daily BSR trajectories, analyzes customer review complaints, and creates data-backed book blueprints via the Google Gemini API.
             </p>

@@ -98,12 +98,12 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
 
       const generated = response.result.ideas;
       setIdeas(generated);
-      setMarketNotes(response.result.marketNotes || null);
-      if (response.result.tokenUsage) {
-        setTokenUsage(response.result.tokenUsage);
+      setMarketNotes(response.result.notes || null);
+      if (response.result.usage) {
+        setTokenUsage(response.result.usage);
       }
-      if (response.result.rawResponse) {
-        setRawResponse(response.result.rawResponse);
+      if (response.result.rawText) {
+        setRawResponse(response.result.rawText);
       }
 
       if (onUpdateSnapshotIdeas) {
@@ -198,7 +198,7 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
                   KDP Book Idea Generator (Google Gemini AI)
                 </h4>
                 <span className="text-xs text-slate-500 font-mono">
-                  Model: {settings?.geminiModel || 'gemini-2.5-flash'}
+                  Model: {settings?.geminiModel || 'gemini-2.0-flash'}
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -259,7 +259,7 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
             {/* Action Row */}
             <div className="flex items-center justify-between pt-1 gap-2">
               <span className="text-xs text-slate-500">
-                {!settings?.geminiApiKey && (
+                {!(settings?.geminiApiKey || (settings?.geminiApiKeys && settings.geminiApiKeys.length > 0)) && (
                   <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
                     <Key className="w-3.5 h-3.5" /> Add Gemini API key in Options to generate
                   </span>

@@ -1,9 +1,9 @@
 // src/services/titleAnalysis.ts
 // Word and bigram frequency analyzer for top books' titles and subtitles
 
-import type { Book, WordFrequencyItem, TitleAnalysisResult } from '../types';
+import type { Book, WordFrequencyItem, TitleAnalysisResult, KeywordItem } from '../types';
 import { DEFAULT_ENGLISH_STOPWORDS, DEFAULT_KDP_FILLER_WORDS } from '../config/stopwords';
-import { TOP_N_TITLE_WORDS } from '../config/defaults';
+import { TOP_N_TITLE_WORDS, DEFAULT_KEYWORD_WEIGHTS } from '../config/defaults';
 
 /**
  * Escapes regex special characters
@@ -140,5 +140,127 @@ export function analyzeTitles(
     unigrams,
     bigrams,
     totalTitlesAnalyzed,
+  };
+}
+
+/**
+ * Automatically extracts high-ranking niche keywords, multi-word phrases,
+ * and top 7 golden target keywords directly from ranking book titles on the current page
+ */
+export function extractNicheKeywordsFromBooks(
+  books: Book[],
+  query: string = '',
+  weights = DEFAULT_KEYWORD_WEIGHTS
+): {
+  top7GoldenKeywords: KeywordItem[];
+  allExtractedKeywords: KeywordItem[];
+} {
+  const topBooks = books.slice(0, 15);
+  const totalBooks = topBooks.length;
+  if (totalBooks === 0 && !query) {
+    return { top7GoldenKeywords: [], allExtractedKeywords: [] };
+  }
+
+  const candidatesMap = new Map<string, { count: number; inTitles: number; bsrValues: number[] }>();
+
+  const recordCandidate = (phrase: string, inTitleCount: number, bsrList: number[]) => {
+    const clean = phrase.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/\s+/g, ' ');
+    if (clean.length < 3 || clean.split(' ').length > 6) return;
+    const existing = candidatesMap.get(clean);
+    if (existing) {
+      existing.inTitles = Math.max(existing.inTitles, inTitleCount);
+      existing.count++;
+      existing.bsrValues.push(...bsrList);
+    } else {
+      candidatesMap.set(clean, { count: 1, inTitles: inTitleCount, bsrValues: [...bsrList] });
+    }
+  };
+
+  // 1. Seed query
+  if (query && query.trim()) {
+    const qClean = query.toLowerCase().trim();
+    const queryTitlesCount = topBooks.filter((b) => containsKeyword(b.title, qClean)).length;
+    const bsrs = topBooks.filter((b) => containsKeyword(b.title, qClean) && b.bsrOverall).map((b) => b.bsrOverall!);
+    recordCandidate(qClean, Math.max(queryTitlesCount, Math.round(totalBooks * 0.7)), bsrs);
+  }
+
+  // 2. High-frequency bigrams and unigrams from titles
+  const titleData = analyzeTitles(topBooks, undefined, 20);
+
+  for (const bi of titleData.bigrams) {
+    const bsrs = topBooks.filter((b) => containsKeyword(b.title, bi.word) && b.bsrOverall).map((b) => b.bsrOverall!);
+    recordCandidate(bi.word, bi.inTitlesCount, bsrs);
+  }
+
+  for (const uni of titleData.unigrams) {
+    if (uni.inTitlesCount >= 3) {
+      const bsrs = topBooks.filter((b) => containsKeyword(b.title, uni.word) && b.bsrOverall).map((b) => b.bsrOverall!);
+      recordCandidate(uni.word, uni.inTitlesCount, bsrs);
+    }
+  }
+
+  // 3. Extract common 3-word title phrases
+  for (const book of topBooks) {
+    const tokens = tokenizeText(book.title || '');
+    if (tokens.length >= 3) {
+      for (let i = 0; i <= tokens.length - 3; i++) {
+        const trigram = `${tokens[i]} ${tokens[i + 1]} ${tokens[i + 2]}`;
+        const count = topBooks.filter((b) => containsKeyword(b.title, trigram)).length;
+        if (count >= 2) {
+          const bsrs = topBooks.filter((b) => containsKeyword(b.title, trigram) && b.bsrOverall).map((b) => b.bsrOverall!);
+          recordCandidate(trigram, count, bsrs);
+        }
+      }
+    }
+  }
+
+  // Convert to KeywordItems
+  const allItems: KeywordItem[] = Array.from(candidatesMap.entries()).map(([kw, data], idx) => {
+    const avgBsr = data.bsrValues.length > 0 ? Math.round(data.bsrValues.reduce((a, b) => a + b, 0) / data.bsrValues.length) : null;
+    
+    // Position simulation (0-9 for top candidates)
+    const pos = Math.min(9, Math.floor(idx / 2));
+    
+    // Fallback scoring calculation if scoreKeyword is imported
+    const posScore = Math.round(100 - pos * (80 / 9));
+    const freqScore = Math.round((Math.min(data.inTitles, totalBooks || 10) / (totalBooks || 10)) * 100);
+    const bsrScore = avgBsr && avgBsr < 20000 ? 100 : avgBsr && avgBsr < 100000 ? 75 : 40;
+    const totalScore = Math.round((posScore * 0.4) + (freqScore * 0.4) + (bsrScore * 0.2));
+    const scoreLabel: 'high' | 'medium' | 'low' = totalScore >= 70 ? 'high' : totalScore >= 40 ? 'medium' : 'low';
+
+    return {
+      keyword: kw,
+      bestPosition: pos,
+      inTitlesCount: data.inTitles,
+      avgBsr,
+      totalScore,
+      scoreLabel,
+      isPartial: false,
+    };
+  });
+
+  // Sort by score descending and title frequency
+  allItems.sort((a, b) => b.totalScore - a.totalScore || b.inTitlesCount - a.inTitlesCount);
+
+  // Pick top 7 distinct golden keywords
+  const top7GoldenKeywords: KeywordItem[] = [];
+  const seenWordRoots = new Set<string>();
+
+  for (const item of allItems) {
+    if (top7GoldenKeywords.length >= 7) break;
+    top7GoldenKeywords.push(item);
+  }
+
+  // If fewer than 7, fill with remaining
+  for (const item of allItems) {
+    if (top7GoldenKeywords.length >= 7) break;
+    if (!top7GoldenKeywords.some((g) => g.keyword === item.keyword)) {
+      top7GoldenKeywords.push(item);
+    }
+  }
+
+  return {
+    top7GoldenKeywords,
+    allExtractedKeywords: allItems,
   };
 }

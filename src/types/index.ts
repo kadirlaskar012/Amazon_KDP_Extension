@@ -130,6 +130,10 @@ export interface CategoryStat {
   bsrAtTop20?: number | null;
   difficultyText?: string;
   isChecking?: boolean;
+  path?: string;
+  salesOpportunityLevel?: 'high' | 'medium' | 'moderate';
+  bestSellerTargetBsr?: number | null;
+  dailySalesForNo1?: number | null;
 }
 
 export interface BestSellerItem {
@@ -333,6 +337,7 @@ export interface NicheRevenueEstimate {
 
 export interface Settings {
   geminiApiKey: string;
+  geminiApiKeys?: string[];
   geminiModel: string;
   weights: ScoreWeights;
   thresholds: Thresholds;
@@ -467,4 +472,6 @@ export type ExtensionMessage =
   | { type: 'DOM_PARSE_PRODUCT_RESULT'; parsed: unknown }
   | { type: 'GENERATE_AI_IDEAS'; payloadText: string; systemPrompt?: string }
   | { type: 'TEST_GEMINI_KEY'; apiKey?: string; model?: string }
-  | { type: 'GET_STORAGE_USAGE' };
+  | { type: 'GET_STORAGE_USAGE' }
+  | { type: 'OPEN_OPTIONS_PAGE' }
+  | { type: 'OPEN_OPTIONS' };

@@ -1,11 +1,8 @@
-// src/components/tabs/KeywordsTab.tsx
-// Keywords Finder Tab: Autocomplete research, scoring, title word frequency, and KDP backend slots
-
 import React, { useState, useMemo, useRef } from 'react';
 import type { SearchSnapshot, KeywordItem, Settings } from '../../types';
 import { fetchAutocompleteKeywords, checkKeywordBsr, type AutocompleteProgress } from '../../services/autocomplete';
 import { generate7BackendKeywordSlots } from '../../services/keywordScore';
-import { analyzeTitles } from '../../services/titleAnalysis';
+import { analyzeTitles, extractNicheKeywordsFromBooks } from '../../services/titleAnalysis';
 import { TrendsLink } from '../TrendsLink';
 import { buildCompareUrl } from '../../services/trends';
 
@@ -27,8 +24,16 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
   const [seedInput, setSeedInput] = useState<string>(initialSeed);
   const [includeDigits, setIncludeDigits] = useState<boolean>(false);
 
-  // Keywords state (from snapshot if available, or newly fetched)
-  const [keywords, setKeywords] = useState<KeywordItem[]>(snapshot?.keywords || []);
+  // Automatically extract niche keywords directly from the ranking books on the current search page
+  const pageExtracted = useMemo(() => {
+    return extractNicheKeywordsFromBooks(snapshot?.books || [], snapshot?.query || '', settings.keywordWeights);
+  }, [snapshot?.books, snapshot?.query, settings.keywordWeights]);
+
+  // Keywords state (from snapshot if available, or auto-extracted from current page, or newly fetched)
+  const [keywords, setKeywords] = useState<KeywordItem[]>(() => {
+    if (snapshot?.keywords && snapshot.keywords.length > 0) return snapshot.keywords;
+    return pageExtracted.allExtractedKeywords;
+  });
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [progress, setProgress] = useState<AutocompleteProgress | null>(null);
 
@@ -44,15 +49,17 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Keep keywords in sync if snapshot changes externally
+  // Keep keywords in sync if snapshot changes externally or auto-fill with extracted keywords
   React.useEffect(() => {
     if (snapshot?.keywords && snapshot.keywords.length > 0) {
       setKeywords(snapshot.keywords);
+    } else if (pageExtracted.allExtractedKeywords.length > 0 && keywords.length === 0) {
+      setKeywords(pageExtracted.allExtractedKeywords);
     }
     if (snapshot?.query && !seedInput) {
       setSeedInput(snapshot.query);
     }
-  }, [snapshot]);
+  }, [snapshot, pageExtracted.allExtractedKeywords]);
 
   // Title word & bigram frequency analysis from top 10 snapshot books
   const titleAnalysis = useMemo(() => {
@@ -187,12 +194,114 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
     copyToClipboard(text, `Copied ${label}!`);
   };
 
+  // Top 7 Golden Target Keywords for KDP Backend Slots
+  const golden7Keywords = useMemo(() => {
+    if (pageExtracted.top7GoldenKeywords.length > 0) {
+      return pageExtracted.top7GoldenKeywords;
+    }
+    if (keywords.length > 0) {
+      return [...keywords].sort((a, b) => b.totalScore - a.totalScore).slice(0, 7);
+    }
+    return [];
+  }, [pageExtracted.top7GoldenKeywords, keywords]);
+
+  const handleCopyGolden7 = () => {
+    if (golden7Keywords.length === 0) return;
+    const text = golden7Keywords.map((k) => k.keyword).join('\n');
+    copyToClipboard(text, 'Copied 7 Golden Keywords (line-by-line)!');
+  };
+
   return (
     <div className="space-y-4 text-xs font-sans text-slate-700 dark:text-slate-200 no-horizontal-scroll">
       {/* Toast Notification */}
       {copyFeedback && (
         <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-xl animate-fade-in">
           ✓ {copyFeedback}
+        </div>
+      )}
+
+      {/* 🌟 Top 7 Golden Target Keywords (KDP 7 Backend Slots Hero Card) */}
+      {golden7Keywords.length > 0 && (
+        <div className="rounded-xl border border-amber-300 dark:border-amber-600/40 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-yellow-500/10 dark:from-amber-950/40 dark:via-slate-900 dark:to-yellow-950/30 p-3.5 shadow-sm space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200 dark:border-amber-800/40 pb-2.5">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🌟</span>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    Top 7 Golden Target Keywords
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                    KDP 7 Backend Slots
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                  Directly mined from top-selling books on page for &quot;{snapshot?.query || seedInput || 'Niche'}&quot;. Ready for KDP metadata.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                onClick={handleCopyGolden7}
+                className="rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 px-2.5 py-1 text-xs font-bold text-slate-950 shadow-xs hover:from-amber-600 hover:to-yellow-600 transition flex items-center gap-1 cursor-pointer"
+                title="Copy all 7 keywords on separate lines"
+              >
+                📋 Copy All 7 Slots
+              </button>
+              <button
+                onClick={handleCopy7BackendSlots}
+                className="rounded-lg bg-white/90 dark:bg-slate-800 border border-amber-300 dark:border-amber-700/60 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-slate-700 transition flex items-center gap-1 cursor-pointer"
+                title="Group into 7 lines ≤ 50 chars, no duplicate words"
+              >
+                ⚡ ≤50-Char Format
+              </button>
+            </div>
+          </div>
+
+          {/* 7 Slots List */}
+          <div className="grid grid-cols-1 gap-1.5">
+            {golden7Keywords.map((item, idx) => (
+              <div
+                key={item.keyword}
+                className="flex items-center justify-between p-2 rounded-lg bg-white/90 dark:bg-slate-950/70 border border-amber-200/80 dark:border-amber-900/40 shadow-2xs hover:border-amber-400 dark:hover:border-amber-600 transition-colors"
+              >
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[11px] font-black flex items-center justify-center border border-amber-500/30">
+                    {idx + 1}
+                  </span>
+                  <span className="font-bold text-xs text-slate-900 dark:text-white truncate" title={item.keyword}>
+                    {item.keyword}
+                  </span>
+                  <TrendsLink keyword={item.keyword} geo={settings?.trends?.geo || 'US'} />
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span
+                    className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                    title="Number of top 10 books with this keyword in title"
+                  >
+                    {item.inTitlesCount}/{snapshot?.books?.length || 10} titles
+                  </span>
+                  <span
+                    className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/60"
+                    title="Overall keyword opportunity score"
+                  >
+                    Score: {item.totalScore}
+                  </span>
+                  <button
+                    onClick={() => copyToClipboard(item.keyword, `Copied Slot ${idx + 1}: "${item.keyword}"`)}
+                    className="text-slate-400 hover:text-amber-600 dark:hover:text-amber-300 p-1 rounded hover:bg-amber-100 dark:hover:bg-amber-950/60 transition cursor-pointer"
+                    title={`Copy slot ${idx + 1}`}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
