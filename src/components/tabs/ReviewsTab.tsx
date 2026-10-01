@@ -154,10 +154,10 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({
   };
 
   return (
-    <div className="space-y-3 text-[13px] leading-[1.4] no-horizontal-scroll">
+    <div className="space-y-3 no-horizontal-scroll" style={{ color: 'var(--text)' }}>
       {/* Toast Notification */}
       {copyFeedback && (
-        <div className="p-1 border border-[var(--line)] bg-[var(--bg)] text-[var(--good)] text-xs">
+        <div className="p-1 border border-[var(--line)] bg-[var(--bg)]" style={{ color: 'var(--good)', fontSize: 'var(--font-small)' }}>
           {copyFeedback}
         </div>
       )}
@@ -165,8 +165,8 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({
       {/* Top Header Card: plain box */}
       <div className="border border-[var(--line)] p-2 flex items-center justify-between gap-2 flex-wrap">
         <div>
-          <span className="font-bold text-xs">Customer Review Gap Analysis</span>
-          <div className="text-[11px] text-[var(--muted)]">
+          <span className="section-subheading">Customer Review Gap Analysis</span>
+          <div style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
             {reviewGap
               ? `Based on ${reviewGap.totalNegativeReviews} negative reviews across ${reviewGap.totalBooksAnalyzed} books`
               : 'Scan top 5 competitor listings for customer complaints and design gaps'}
@@ -176,7 +176,7 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({
         <button
           onClick={handleAnalyzeReviews}
           disabled={isAnalyzing || (snapshot?.books || []).length === 0}
-          className="plain-btn text-xs font-bold px-3 py-1"
+          className="plain-btn font-bold"
         >
           {isAnalyzing ? 'Analyzing...' : 'Analyze Reviews'}
         </button>
@@ -184,14 +184,14 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({
 
       {/* Progress status */}
       {isAnalyzing && progressMsg && (
-        <div className="border border-[var(--line)] p-1.5 text-xs text-[var(--muted)] font-mono">
+        <div className="border border-[var(--line)] p-1.5" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
           {progressMsg}
         </div>
       )}
 
       {/* Login Wall Warning */}
       {reviewGap?.reviewsRequireLogin && (
-        <div className="border border-[var(--line)] p-1.5 text-xs text-[var(--warn)]">
+        <div className="border border-[var(--line)] p-1.5" style={{ fontSize: 'var(--font-small)', color: 'var(--warn)' }}>
           Reviews for {reviewGap.booksRequiringLogin} books were not visible without Amazon login.
         </div>
       )}
@@ -200,23 +200,18 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({
         <>
           {/* Action Row */}
           <div className="flex justify-end">
-            <button
-              onClick={handleCopyTsv}
-              className="plain-btn text-xs px-2 py-0.5"
-            >
-              Copy as TSV
-            </button>
+            <button onClick={handleCopyTsv} className="plain-btn plain-btn-sm">Copy as TSV</button>
           </div>
 
           {/* Category Summary Table */}
           {reviewGap.categorySummary.length > 0 && (
             <div className="border border-[var(--line)] p-2 space-y-1">
-              <span className="font-bold text-xs">Complaint Categories</span>
-              <table className="plain-table w-full text-xs">
+              <span className="section-subheading">Complaint Categories</span>
+              <table className="plain-table w-full">
                 <thead>
                   <tr>
                     <th>Category</th>
-                    <th className="w-16 text-right">Complaints</th>
+                    <th className="text-right" style={{ width: '80px' }}>Complaints</th>
                     <th>Recommended Fix</th>
                   </tr>
                 </thead>
@@ -224,8 +219,8 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({
                   {reviewGap.categorySummary.map((cat) => (
                     <tr key={cat.category}>
                       <td className="font-medium">{cat.category}</td>
-                      <td className="text-right font-mono text-[var(--bad)] font-bold">{cat.count}</td>
-                      <td className="text-[var(--muted)]">{getSuggestionForCategory(cat.category)}</td>
+                      <td className="text-right font-bold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--bad)' }}>{cat.count}</td>
+                      <td style={{ color: 'var(--muted)' }}>{getSuggestionForCategory(cat.category)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -240,13 +235,13 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({
             </span>
 
             <div className="max-h-[340px] overflow-y-auto no-horizontal-scroll">
-              <table className="plain-table w-full text-xs">
+              <table className="plain-table w-full">
                 <thead>
                   <tr>
                     <th>Phrase</th>
-                    <th className="w-24">Category</th>
-                    <th className="w-12 text-center">Books</th>
-                    <th className="w-12 text-right">Count</th>
+                    <th style={{ width: '96px' }}>Category</th>
+                    <th className="text-center" style={{ width: '48px' }}>Books</th>
+                    <th className="text-right" style={{ width: '48px' }}>Count</th>
                     <th>Sample Excerpt</th>
                   </tr>
                 </thead>
@@ -257,13 +252,13 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({
 
                     return (
                       <tr key={c.phrase}>
-                        <td className="font-bold text-xs max-w-[120px] truncate" title={c.phrase}>
+                        <td className="font-bold" style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={c.phrase}>
                           "{c.phrase}"
                         </td>
-                        <td className="text-[11px] text-[var(--muted)]">{c.category}</td>
-                        <td className="text-center font-mono">{c.bookCount}</td>
-                        <td className="text-right font-mono text-[var(--bad)] font-bold">{c.count}</td>
-                        <td className="text-[11px] text-[var(--muted)] max-w-[200px]">
+                        <td style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>{c.category}</td>
+                        <td className="text-center" style={{ fontFamily: 'var(--font-mono)' }}>{c.bookCount}</td>
+                        <td className="text-right font-bold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--bad)' }}>{c.count}</td>
+                        <td style={{ fontSize: 'var(--font-small)', color: 'var(--muted)', maxWidth: '200px' }}>
                           <div
                             onClick={() => setExpandedQuoteIdx(isExpanded ? null : idx)}
                             className="cursor-pointer"
@@ -271,7 +266,7 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({
                           >
                             <span className="italic">"{isExpanded ? sample : sample.slice(0, 70) + (sample.length > 70 ? '...' : '')}"</span>
                             {c.sampleQuotes.length > 1 && !isExpanded && (
-                              <span className="text-[10px] text-[var(--link)] underline block">
+                              <span className="underline block" style={{ fontSize: 'var(--font-small)', color: 'var(--link)' }}>
                                 +{c.sampleQuotes.length - 1} more
                               </span>
                             )}
@@ -285,15 +280,15 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({
             </div>
           </div>
 
-          {/* Positive Signals */}
           {reviewGap.positivePhrases.length > 0 && (
             <div className="border border-[var(--line)] p-2 space-y-1">
-              <span className="font-bold text-xs">What Customers Like (Keep These)</span>
+              <span className="section-subheading">What Customers Like (Keep These)</span>
               <div className="flex flex-wrap gap-1">
                 {reviewGap.positivePhrases.map((p) => (
                   <span
                     key={p.word}
-                    className="border border-[var(--line)] px-1.5 py-0.5 text-xs text-[var(--good)]"
+                    className="border border-[var(--line)] px-1.5 py-0.5"
+                    style={{ fontSize: 'var(--font-small)', color: 'var(--good)' }}
                   >
                     "{p.word}" ({p.count})
                   </span>
@@ -303,7 +298,7 @@ export const ReviewsTab: React.FC<ReviewsTabProps> = ({
           )}
         </>
       ) : (
-        <div className="border border-dashed border-[var(--line)] p-4 text-center text-[var(--muted)]">
+        <div className="border border-dashed border-[var(--line)] p-4 text-center" style={{ color: 'var(--muted)' }}>
           No review analysis yet. Click "Analyze Reviews" above to inspect complaints across top competitor books.
         </div>
       )}

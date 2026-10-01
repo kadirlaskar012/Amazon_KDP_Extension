@@ -1,7 +1,9 @@
 import type { Book, WatchlistItem, SearchSnapshot } from '../types';
 import { DEFAULT_SETTINGS, CACHE_TTL_MS } from '../config/defaults';
 
-export const STORAGE_VERSION = 1;
+export { getDiscoverIdeas, saveDiscoverIdeas, getDiscoverHistory, saveDiscoverHistoryEntry, clearDiscoverHistory, getDiscoverDismissed, dismissPhrase, restoreDismissedPhrase, getActiveDismissedPhrases, clearDiscoverDismissed, getDiscoverScanState, saveDiscoverScanState, clearDiscoverScanState } from './discover';
+
+export const STORAGE_VERSION = 2;
 export const STORAGE_VERSION_KEY = 'kdp_storage_version';
 
 const STORAGE_KEYS = {
@@ -10,6 +12,10 @@ const STORAGE_KEYS = {
   SNAPSHOTS: 'kdp_snapshots',
   ACTIVE_SNAPSHOT: 'kdp_active_snapshot',
   CACHE_PREFIX: 'kdp_cache_',
+  DISCOVER_IDEAS: 'kdp_discover_ideas',
+  DISCOVER_HISTORY: 'kdp_discover_history',
+  DISCOVER_DISMISSED: 'kdp_discover_dismissed',
+  DISCOVER_SCAN_STATE: 'kdp_discover_scan_state',
 } as const;
 
 interface CacheEntry {
@@ -25,6 +31,7 @@ export async function migrateStorage(): Promise<void> {
   const currentVer = await getStorageItem<number>(STORAGE_VERSION_KEY, 0);
   if (currentVer < STORAGE_VERSION) {
     try {
+      // Version 1→2: clean up snapshots
       const snapshots = await getSnapshots();
       if (Array.isArray(snapshots)) {
         const cleaned = snapshots.map((s) => ({
@@ -36,6 +43,32 @@ export async function migrateStorage(): Promise<void> {
         }));
         await setStorageItem(STORAGE_KEYS.SNAPSHOTS, cleaned);
       }
+
+      // Version 1→2: migrate old top-50 discover data to top-10 shape
+      if (currentVer < 2) {
+        const oldDiscover = await getStorageItem<any>(STORAGE_KEYS.DISCOVER_IDEAS, null);
+        if (oldDiscover && Array.isArray(oldDiscover.ideas)) {
+          // Old shape: { ideas: Idea[], generatedAt } → new: { pool, top10, scanStatus, requestsUsed }
+          const sorted = [...oldDiscover.ideas].sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0));
+          const top10 = sorted.slice(0, 10).map((idea: any) => ({
+            phrase: idea.phrase || idea.keyword || '',
+            source: 'Autocomplete' as const,
+            score: idea.score ?? 0,
+            status: 'quick' as const,
+            bsrChecked: 0,
+            bsrTotal: 5,
+            whyText: 'Migrated from previous scan data',
+          }));
+          await setStorageItem(STORAGE_KEYS.DISCOVER_IDEAS, {
+            generatedAt: oldDiscover.generatedAt ?? Date.now(),
+            scanStatus: 'complete',
+            requestsUsed: 0,
+            pool: top10,
+            top10,
+          });
+        }
+      }
+
       await setStorageItem(STORAGE_VERSION_KEY, STORAGE_VERSION);
       console.log(`[KDP Storage] Migrated storage schema to version ${STORAGE_VERSION}`);
     } catch (err) {

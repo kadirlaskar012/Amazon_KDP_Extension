@@ -1,3 +1,4 @@
+export * from './discover';
 export interface CategoryRank {
   name: string;
   rank: number;
@@ -381,6 +382,7 @@ export interface Settings {
   };
   stopWords?: string[];
   genericCategories?: string[];
+  discover?: import('./discover').DiscoverSettings;
 }
 
 export interface BookIdea {
@@ -506,4 +508,9 @@ export type ExtensionMessage =
   | { type: 'TEST_GEMINI_KEY'; apiKey?: string; model?: string }
   | { type: 'GET_STORAGE_USAGE' }
   | { type: 'OPEN_OPTIONS_PAGE' }
-  | { type: 'OPEN_OPTIONS' };
+  | { type: 'OPEN_OPTIONS' }
+  | { type: 'DISCOVER_SCAN_START'; forceRefresh?: boolean }
+  | { type: 'DISCOVER_SCAN_CANCEL' }
+  | { type: 'DISCOVER_SCAN_PROGRESS'; requestsUsed: number; total: number; message: string }
+  | { type: 'DISCOVER_SCAN_COMPLETE'; scanStatus: string; requestsUsed: number; top10Count: number }
+  | { type: 'DISCOVER_SCAN_CAPTCHA'; url: string };

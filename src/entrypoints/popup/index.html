@@ -5,8 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KDP Niche Finder</title>
     <link rel="icon" type="image/png" href="/icon/32.png" />
+    <style>
+      /* Popup sizing — locked to Chrome popup constraints */
+      html, body {
+        width: 440px;
+        min-height: 560px;
+        max-height: 600px;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        overflow-x: hidden;
+      }
+      #root {
+        width: 440px;
+        min-height: 560px;
+        max-height: 600px;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+    </style>
   </head>
-  <body class="w-[450px] min-h-[560px] bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans antialiased">
+  <body>
     <div id="root"></div>
     <script type="module" src="./main.tsx"></script>
   </body>

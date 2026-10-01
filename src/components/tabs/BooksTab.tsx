@@ -185,13 +185,13 @@ export const BooksTab: React.FC<BooksTabProps> = ({
 
   const renderSortIndicator = (field: SortField) => {
     if (sortField !== field) {
-      return <span className="text-[var(--muted)] ml-0.5">↕</span>;
+      return <span style={{ color: 'var(--muted)' }} className="ml-0.5">↕</span>;
     }
     return <span className="ml-0.5">{sortAsc ? '▲' : '▼'}</span>;
   };
 
   return (
-    <div className="flex flex-col h-full text-[13px] leading-[1.4] no-horizontal-scroll">
+    <div className="flex flex-col h-full no-horizontal-scroll" style={{ color: 'var(--text)' }}>
       {/* 1. Toolbar */}
       <div className="p-2 border-b border-[var(--line)] bg-[var(--bg)] space-y-1.5 shrink-0">
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -201,20 +201,20 @@ export const BooksTab: React.FC<BooksTabProps> = ({
             placeholder="Filter title, author or ASIN..."
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
-            className="plain-input flex-1 min-w-[140px] text-xs"
+            className="plain-input flex-1 min-w-[140px]"
           />
 
           {/* View Toggle */}
           <div className="flex items-center gap-0.5">
             <button
               onClick={() => setViewMode('table')}
-              className={`plain-btn text-xs px-1.5 py-0.5 ${viewMode === 'table' ? 'font-bold underline' : ''}`}
+              className={`plain-btn plain-btn-sm ${viewMode === 'table' ? 'font-bold underline' : ''}`}
             >
               Table
             </button>
             <button
               onClick={() => setViewMode('cards')}
-              className={`plain-btn text-xs px-1.5 py-0.5 ${viewMode === 'cards' ? 'font-bold underline' : ''}`}
+              className={`plain-btn plain-btn-sm ${viewMode === 'cards' ? 'font-bold underline' : ''}`}
             >
               Cards
             </button>
@@ -224,7 +224,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
           <button
             onClick={handleCopyTsv}
             title="Copy table data as TSV (for Excel / Google Sheets)"
-            className="plain-btn text-xs px-2 py-0.5"
+            className="plain-btn plain-btn-sm"
           >
             {copiedTsv ? 'Copied TSV' : 'Copy TSV'}
           </button>
@@ -232,7 +232,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
 
         {/* Opportunity filter toggle & Sort selector */}
         <div className="flex items-center justify-between gap-2 pt-0.5 flex-wrap">
-          <label className="inline-flex items-center gap-1 cursor-pointer text-xs select-none">
+          <label className="inline-flex items-center gap-1 cursor-pointer select-none" style={{ fontSize: 'var(--font-small)' }}>
             <input
               type="checkbox"
               checked={showOnlyOpportunities}
@@ -249,7 +249,8 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                 setSortField(e.target.value as SortField);
                 setSortAsc(e.target.value === 'bsr' || e.target.value === 'index');
               }}
-              className="plain-select text-xs py-0.5 px-1"
+              className="plain-select"
+              style={{ fontSize: 'var(--font-small)' }}
             >
               <option value="bsr">Sort: BSR</option>
               <option value="sales">Sort: Est. Sales</option>
@@ -260,7 +261,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
               <option value="index">Sort: Original #</option>
             </select>
 
-            <span className="text-[11px] text-[var(--muted)] font-mono">
+            <span style={{ fontSize: 'var(--font-small)', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
               {sortedBooks.length}/{books.length}
             </span>
           </div>
@@ -268,108 +269,130 @@ export const BooksTab: React.FC<BooksTabProps> = ({
       </div>
 
       {/* 2. Main Content: Table View (default) or Cards View */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-2">
+      <div className="flex-1 overflow-y-auto overflow-x-auto p-0">
         {viewMode === 'table' ? (
-          <table className="plain-table w-full text-xs">
-            <thead>
-              <tr>
-                <th
-                  onClick={() => handleHeaderSort('index')}
-                  className="w-7 text-center cursor-pointer"
-                  title="Original search rank"
-                >
-                  #{renderSortIndicator('index')}
-                </th>
-                <th
-                  onClick={() => handleHeaderSort('title')}
-                  className="cursor-pointer"
-                >
-                  Title / Author{renderSortIndicator('title')}
-                </th>
-                <th
-                  onClick={() => handleHeaderSort('price')}
-                  className="w-12 text-right cursor-pointer"
-                >
-                  Price{renderSortIndicator('price')}
-                </th>
-                <th
-                  onClick={() => handleHeaderSort('bsr')}
-                  className="w-16 text-right cursor-pointer"
-                >
-                  BSR{renderSortIndicator('bsr')}
-                </th>
-                <th
-                  onClick={() => handleHeaderSort('reviews')}
-                  className="w-12 text-right cursor-pointer"
-                >
-                  Rev{renderSortIndicator('reviews')}
-                </th>
-                <th className="w-16 text-center">Status</th>
-                <th className="w-12 text-center">Save</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedBooks.map((book) => {
-                return (
-                  <tr
-                    key={book.asin}
-                    className={book.isOpp ? 'bg-[var(--row-highlight)]' : undefined}
+          /* Books table: horizontally scrollable, title column truncates with ellipsis + tooltip */
+          <div className="table-scroll-x">
+            <table className="plain-table table-sticky-first" style={{ minWidth: '480px' }}>
+              <thead>
+                <tr>
+                  <th
+                    onClick={() => handleHeaderSort('index')}
+                    className="w-8 text-center cursor-pointer"
+                    title="Original search rank"
                   >
-                    <td className="text-center font-mono">
-                      {book.originalIndex}
-                    </td>
-                    <td>
-                      <a
-                        href={book.productUrl || `https://www.amazon.com/dp/${book.asin}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="plain-link line-clamp-1"
-                        title={book.title}
-                      >
-                        {book.title}
-                      </a>
-                      <div className="text-[10px] text-[var(--muted)] truncate">
-                        {book.author || book.asin}
-                      </div>
-                    </td>
-                    <td className="text-right">
-                      {book.price !== undefined ? `$${book.price.toFixed(2)}` : '-'}
-                    </td>
-                    <td className="text-right font-mono">
-                      {book.bsrOverall ? `#${book.bsrOverall.toLocaleString()}` : '-'}
-                    </td>
-                    <td className="text-right font-mono">
-                      {book.reviewCount ?? '-'}
-                    </td>
-                    <td className="text-center">
-                      {book.isOpp ? (
-                        <span className="text-[var(--good)] font-bold text-[10px]">
-                          Opportunity
-                        </span>
-                      ) : (
-                        <span className="text-[var(--muted)] text-[10px]">-</span>
-                      )}
-                    </td>
-                    <td className="text-center">
-                      <WatchButton
-                        book={book}
-                        size="sm"
-                        showLabel={false}
-                        onWatchChange={(isWatched) => {
-                          if (isWatched && onAddToWatchlist) {
-                            onAddToWatchlist(book);
-                          }
-                        }}
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    #{renderSortIndicator('index')}
+                  </th>
+                  <th
+                    onClick={() => handleHeaderSort('title')}
+                    className="cursor-pointer"
+                    style={{ minWidth: '140px', maxWidth: '220px' }}
+                  >
+                    Title / Author{renderSortIndicator('title')}
+                  </th>
+                  <th
+                    onClick={() => handleHeaderSort('price')}
+                    className="text-right cursor-pointer"
+                    style={{ width: '56px' }}
+                  >
+                    Price{renderSortIndicator('price')}
+                  </th>
+                  <th
+                    onClick={() => handleHeaderSort('bsr')}
+                    className="text-right cursor-pointer"
+                    style={{ width: '72px' }}
+                  >
+                    BSR{renderSortIndicator('bsr')}
+                  </th>
+                  <th
+                    onClick={() => handleHeaderSort('reviews')}
+                    className="text-right cursor-pointer"
+                    style={{ width: '54px' }}
+                  >
+                    Rev{renderSortIndicator('reviews')}
+                  </th>
+                  <th className="text-center" style={{ width: '80px' }}>Status</th>
+                  <th className="text-center" style={{ width: '48px' }}>Save</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedBooks.map((book) => {
+                  return (
+                    <tr
+                      key={book.asin}
+                      className={book.isOpp ? 'bg-[var(--row-highlight)]' : undefined}
+                    >
+                      <td className="text-center" style={{ fontFamily: 'var(--font-mono)' }}>
+                        {book.originalIndex}
+                      </td>
+                      <td style={{ maxWidth: '220px' }}>
+                        <a
+                          href={book.productUrl || `https://www.amazon.com/dp/${book.asin}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="plain-link"
+                          title={book.title}
+                          style={{
+                            display: 'block',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            maxWidth: '100%',
+                          }}
+                        >
+                          {book.title}
+                        </a>
+                        <div
+                          style={{
+                            fontSize: 'var(--font-small)',
+                            color: 'var(--muted)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {book.author || book.asin}
+                        </div>
+                      </td>
+                      <td className="text-right">
+                        {book.price !== undefined ? `$${book.price.toFixed(2)}` : '-'}
+                      </td>
+                      <td className="text-right" style={{ fontFamily: 'var(--font-mono)' }}>
+                        {book.bsrOverall ? `#${book.bsrOverall.toLocaleString()}` : '-'}
+                      </td>
+                      <td className="text-right" style={{ fontFamily: 'var(--font-mono)' }}>
+                        {book.reviewCount ?? '-'}
+                      </td>
+                      <td className="text-center">
+                        {book.isOpp ? (
+                          <span className="font-bold" style={{ color: 'var(--good)', fontSize: 'var(--font-small)' }}>
+                            Opp.
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--muted)' }}>-</span>
+                        )}
+                      </td>
+                      <td className="text-center">
+                        <WatchButton
+                          book={book}
+                          size="sm"
+                          showLabel={false}
+                          onWatchChange={(isWatched) => {
+                            if (isWatched && onAddToWatchlist) {
+                              onAddToWatchlist(book);
+                            }
+                          }}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         ) : (
           /* Cards View - plain 1px bordered boxes */
-          <div className="space-y-2">
+          <div className="space-y-2 p-2">
             {sortedBooks.map((book, sortedIndex) => {
               const hasBsr = book.bsrOverall !== undefined;
               const amazonUrl = book.productUrl || `https://www.amazon.com/dp/${book.asin}`;
@@ -382,17 +405,17 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between gap-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-mono font-bold text-xs">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-bold" style={{ fontFamily: 'var(--font-mono)' }}>
                         #{book.originalIndex}
                       </span>
                       {sortedIndex < 3 && (
-                        <span className="text-[11px] text-[var(--muted)]">
+                        <span style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
                           [{sortedIndex + 1} Target]
                         </span>
                       )}
                       {book.isOpp && (
-                        <span className="text-[11px] font-bold text-[var(--good)]">
+                        <span className="font-bold" style={{ fontSize: 'var(--font-small)', color: 'var(--good)' }}>
                           Opportunity
                         </span>
                       )}
@@ -414,35 +437,41 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                       href={amazonUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="plain-link line-clamp-2 text-xs"
+                      className="plain-link"
                       title={book.title}
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      } as React.CSSProperties}
                     >
                       {book.title}
                     </a>
-                    <div className="text-[11px] text-[var(--muted)] mt-0.5">
+                    <div className="mt-0.5" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
                       {book.author || 'Author N/A'} | {book.asin} {book.publishDate ? `| ${book.publishDate}` : ''}
                     </div>
                   </div>
 
                   {/* 2-row plain metrics table */}
-                  <table className="plain-table w-full text-xs">
+                  <table className="plain-table w-full">
                     <tbody>
                       <tr>
-                        <td className="text-[var(--muted)] w-24">BSR Rank</td>
-                        <td className="font-mono">
+                        <td style={{ color: 'var(--muted)', width: '96px' }}>BSR Rank</td>
+                        <td style={{ fontFamily: 'var(--font-mono)' }}>
                           {hasBsr ? `#${book.bsrOverall?.toLocaleString()}` : 'Pending'}
                           {book.salesEst !== null ? ` (~${book.salesEst.toLocaleString()} sales/mo)` : ''}
                         </td>
                       </tr>
                       <tr>
-                        <td className="text-[var(--muted)]">Price &amp; Roy.</td>
+                        <td style={{ color: 'var(--muted)' }}>Price &amp; Roy.</td>
                         <td>
                           {book.price !== undefined ? `$${book.price.toFixed(2)}` : 'N/A'}
                           {book.royaltyEst !== null ? ` (~$${Math.round(book.royaltyEst)}/mo royalty)` : ''}
                         </td>
                       </tr>
                       <tr>
-                        <td className="text-[var(--muted)]">Rating / Reviews</td>
+                        <td style={{ color: 'var(--muted)' }}>Rating / Reviews</td>
                         <td>
                           {book.rating !== undefined ? `${book.rating.toFixed(1)} / 5` : 'N/A'}{' '}
                           ({book.reviewCount !== undefined ? book.reviewCount.toLocaleString() : 0} reviews)
@@ -453,7 +482,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                   </table>
 
                   {book.isOpp && book.reasons && book.reasons.length > 0 && (
-                    <div className="text-[11px] text-[var(--good)]">
+                    <div style={{ fontSize: 'var(--font-small)', color: 'var(--good)' }}>
                       Reasons: {book.reasons.join(', ')}
                     </div>
                   )}
@@ -465,7 +494,10 @@ export const BooksTab: React.FC<BooksTabProps> = ({
       </div>
 
       {/* 3. Footer */}
-      <div className="p-1.5 border-t border-[var(--line)] bg-[var(--bg)] text-[11px] text-[var(--muted)] text-center shrink-0">
+      <div
+        className="p-1.5 border-t border-[var(--line)] bg-[var(--bg)] text-center shrink-0"
+        style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}
+      >
         Estimates are rough. BSR to sales mapping is configurable in Settings.
       </div>
     </div>

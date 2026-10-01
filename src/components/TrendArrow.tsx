@@ -29,7 +29,7 @@ export const TrendArrow: React.FC<TrendArrowProps> = ({
           title={`BSR Improving: rank dropped by ${formattedPercent} (Sales velocity up)`}
         >
           <span>▲</span>
-          {showPercent && <span className="text-[10px]">{formattedPercent}</span>}
+          {showPercent && <span style={{ fontSize: 'var(--font-small)' }}>{formattedPercent}</span>}
         </span>
       );
 
@@ -41,7 +41,7 @@ export const TrendArrow: React.FC<TrendArrowProps> = ({
           title={`BSR Declining: rank rose by ${formattedPercent} (Sales velocity down)`}
         >
           <span>▼</span>
-          {showPercent && <span className="text-[10px]">{formattedPercent}</span>}
+          {showPercent && <span style={{ fontSize: 'var(--font-small)' }}>{formattedPercent}</span>}
         </span>
       );
 
@@ -53,7 +53,7 @@ export const TrendArrow: React.FC<TrendArrowProps> = ({
           title={`BSR Stable: changed within ±5% (${formattedPercent})`}
         >
           <span>—</span>
-          {showPercent && <span className="text-[10px]">{formattedPercent}</span>}
+          {showPercent && <span style={{ fontSize: 'var(--font-small)' }}>{formattedPercent}</span>}
         </span>
       );
 

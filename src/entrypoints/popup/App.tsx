@@ -1,11 +1,9 @@
 // src/entrypoints/popup/App.tsx
-// Plain utilitarian Extension Popup (400px width):
-// 1. Amazon Niche Search & Shortcuts
-// 2. Tracked Watchlist with BSR Trajectory Charts & CSV Export
-// 3. Saved Research Snapshots History
-// 4. Quick Tools & Diagnostics
+// KDP Niche Finder Popup — 440px fixed width, 560-600px height.
+// Tabs: Top 10 | Watchlist (n) | Snapshots (n) | Tools
+// Default tab: Top 10 (read-only view of the latest snapshot's top 10 books)
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { WatchlistItem, SearchSnapshot, Settings } from '../../types';
 import { getWatchlist, removeFromWatchlist, getTrend } from '../../services/watchlist';
 import { refreshWatchlist } from '../../services/tracker';
@@ -13,20 +11,175 @@ import { getSnapshots, getSettings, saveSettings, clearCache } from '../../stora
 import { BsrChart } from '../../components/BsrChart';
 import { TrendArrow } from '../../components/TrendArrow';
 
-type PopupTab = 'watchlist' | 'snapshots' | 'tools';
+type PopupTab = 'top10' | 'watchlist' | 'snapshots' | 'tools';
 
+// ─── Quick links — mirrored from the Options seed list ───────────────────────
+const POPULAR_NICHES = [
+  { label: 'Coloring Books',    q: 'coloring books for kids' },
+  { label: 'Activity Books',    q: 'activity books for toddlers' },
+  { label: 'Gratitude Journal', q: 'gratitude journal for women' },
+  { label: 'Log Books',         q: 'log book record keeper' },
+  { label: 'Word Search',       q: 'word search puzzle book' },
+  { label: 'Sudoku',            q: 'sudoku puzzle book for adults' },
+  { label: 'Maze Book',         q: 'maze book for kids' },
+  { label: 'Handwriting',       q: 'handwriting practice book for kids' },
+  { label: 'Dot Markers',       q: 'dot markers activity book' },
+];
+
+// ─── Helper: tab button style ─────────────────────────────────────────────────
+const tabStyle = (active: boolean): React.CSSProperties => ({
+  fontWeight: active ? 'bold' : 'normal',
+  color: 'var(--text)',
+  background: 'none',
+  border: 'none',
+  borderBottom: active ? '2px solid var(--text)' : '2px solid transparent',
+  padding: '2px 4px',
+  cursor: 'pointer',
+  fontSize: 'var(--font-small)',
+  whiteSpace: 'nowrap' as const,
+  lineHeight: 'var(--line-height)',
+});
+
+// ─── Top 10 Tab ───────────────────────────────────────────────────────────────
+interface Top10TabProps {
+  snapshot: SearchSnapshot | null;
+  onAnalyze: (query: string) => void;
+  onRefresh: () => void;
+  isRefreshing: boolean;
+}
+
+const Top10Tab: React.FC<Top10TabProps> = ({ snapshot, onAnalyze, onRefresh, isRefreshing }) => {
+  const books = snapshot ? snapshot.books.slice(0, 10) : [];
+  const score = snapshot?.scores;
+  const dateStr = snapshot
+    ? new Date(snapshot.date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
+    : null;
+
+  const statusLabel = (() => {
+    if (!snapshot) return null;
+    if (!score) return 'No Score';
+    if (score.label === 'green') return 'Strong';
+    if (score.label === 'yellow') return 'Moderate';
+    if (score.label === 'red') return 'Weak';
+    return 'Insufficient data';
+  })();
+
+  const scoreColor = (() => {
+    if (!score) return 'var(--muted)';
+    if (score.label === 'green') return 'var(--good)';
+    if (score.label === 'yellow') return 'var(--warn)';
+    return 'var(--bad)';
+  })();
+
+  return (
+    <div className="space-y-2">
+      {/* Header row */}
+      <div
+        className="flex items-center justify-between pb-1 border-b"
+        style={{ borderColor: 'var(--line)', fontSize: 'var(--font-small)' }}
+      >
+        {snapshot ? (
+          <span style={{ color: 'var(--muted)' }}>
+            &quot;{snapshot.query}&quot; &middot; {dateStr}
+            {score && (
+              <span style={{ marginLeft: 6, fontWeight: 'bold', color: scoreColor }}>
+                {score.total}/100 · {statusLabel}
+              </span>
+            )}
+          </span>
+        ) : (
+          <span style={{ color: 'var(--muted)' }}>No scan yet</span>
+        )}
+        <button
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          className="plain-btn plain-btn-sm"
+        >
+          {isRefreshing ? 'Scanning…' : 'Refresh Now'}
+        </button>
+      </div>
+
+      {books.length > 0 ? (
+        <div className="border" style={{ borderColor: 'var(--line)' }}>
+          <table className="plain-table" style={{ fontSize: 'var(--font-small)' }}>
+            <thead>
+              <tr>
+                <th style={{ width: '24px' }}>#</th>
+                <th>Title</th>
+                <th className="text-right" style={{ width: '36px' }}>BSR</th>
+                <th className="text-center" style={{ width: '28px' }}>Rev</th>
+                <th className="text-center" style={{ width: '36px' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {books.map((book, idx) => (
+                <tr key={book.asin}>
+                  <td
+                    className="text-center font-bold"
+                    style={{ color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}
+                  >
+                    {idx + 1}
+                  </td>
+                  <td
+                    style={{ maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                    title={book.title}
+                  >
+                    {book.title}
+                  </td>
+                  <td
+                    className="text-right"
+                    style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}
+                  >
+                    {book.bsrOverall ? `#${book.bsrOverall.toLocaleString()}` : '—'}
+                  </td>
+                  <td
+                    className="text-center"
+                    style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}
+                  >
+                    {book.reviewCount ?? '—'}
+                  </td>
+                  <td className="text-center" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => onAnalyze(book.title)}
+                      className="plain-link"
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 'var(--font-small)' }}
+                      title={`Analyze: ${book.title}`}
+                    >
+                      Search
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div
+          className="p-4 text-center border"
+          style={{ borderColor: 'var(--line)', color: 'var(--muted)', borderRadius: '2px', fontSize: 'var(--font-small)' }}
+        >
+          No scan yet. Open an Amazon Books page to run the analyzer, or press <strong>Refresh Now</strong> above.
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Main Popup ───────────────────────────────────────────────────────────────
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<PopupTab>('watchlist');
+  const [activeTab, setActiveTab] = useState<PopupTab>('top10');
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [snapshots, setSnapshots] = useState<SearchSnapshot[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [expandedAsin, setExpandedAsin] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isTop10Refreshing, setIsTop10Refreshing] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [cacheCleared, setCacheCleared] = useState<boolean>(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -104,6 +257,7 @@ export const App: React.FC = () => {
     }
   };
 
+  // Navigate to Amazon search — same as sidebar header input
   const handleSearchAmazon = (queryToSearch: string) => {
     const q = queryToSearch.trim();
     if (!q) return;
@@ -122,7 +276,7 @@ export const App: React.FC = () => {
     showToast(`Removed ${asin}`);
   };
 
-  const handleRefreshNow = async () => {
+  const handleRefreshWatchlist = async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
     try {
@@ -133,6 +287,23 @@ export const App: React.FC = () => {
       console.warn('[Popup] Refresh error:', err);
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  // "Refresh now" for Top 10 — opens the Amazon Books page so the sidebar scanner runs
+  const handleTop10Refresh = async () => {
+    if (isTop10Refreshing) return;
+    setIsTop10Refreshing(true);
+    try {
+      const url = 'https://www.amazon.com/s?i=stripbooks&k=low+content+books';
+      if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
+        chrome.tabs.create({ url });
+      } else {
+        window.open(url, '_blank');
+      }
+    } finally {
+      // Reset flag after brief delay
+      setTimeout(() => setIsTop10Refreshing(false), 1500);
     }
   };
 
@@ -173,6 +344,7 @@ export const App: React.FC = () => {
     setTimeout(() => setCacheCleared(false), 3000);
   };
 
+  // Last refresh time — only show when list has items
   const lastRefreshTime = useMemo(() => {
     let latest = 0;
     for (const w of watchlist) {
@@ -180,205 +352,241 @@ export const App: React.FC = () => {
         latest = w.lastCheckedAt;
       }
     }
-    return latest > 0 ? new Date(latest).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never';
+    return latest > 0
+      ? new Date(latest).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : null;
   }, [watchlist]);
 
   const hasCaptcha = watchlist.some((w) => w.lastStatus === 'captcha');
 
-  const popularNiches = [
-    { label: 'Coloring Books', q: 'coloring books for kids' },
-    { label: 'Activity Books', q: 'activity books for toddlers' },
-    { label: 'Gratitude Journal', q: 'gratitude journal for women' },
-    { label: 'Log Books', q: 'log book record keeper' },
-    { label: 'Word Search', q: 'word search puzzle book' },
-    { label: 'Dot Markers', q: 'dot markers activity book' },
-  ];
+  // Latest snapshot for Top 10 tab
+  const latestSnapshot: SearchSnapshot | null = (snapshots[0] as SearchSnapshot | undefined) ?? null;
+
+  // Root style vars must be applied regardless of which tab is active
+  const rootStyle: React.CSSProperties = {
+    width: '440px',
+    minHeight: '560px',
+    maxHeight: '600px',
+    display: 'flex',
+    flexDirection: 'column',
+    background: 'var(--bg)',
+    color: 'var(--text)',
+    fontFamily: 'var(--font-base, system-ui, Arial, sans-serif)',
+    fontSize: 'var(--font-base-size)',
+    lineHeight: 'var(--line-height)',
+    boxSizing: 'border-box',
+    overflowX: 'hidden',
+  };
 
   return (
-    <div
-      className={`w-[400px] min-h-[500px] max-h-[580px] flex flex-col select-text no-horizontal-scroll ${
-        isDarkMode ? 'dark' : ''
-      }`}
-      style={{
-        background: 'var(--bg)',
-        color: 'var(--text)',
-        fontFamily: 'system-ui, Arial, sans-serif',
-        fontSize: 'var(--font-base-size)',
-        lineHeight: 'var(--line-height)',
-      }}
-    >
-      {/* Toast Notification */}
+    <div className={isDarkMode ? 'dark' : ''} style={rootStyle}>
+
+      {/* Toast */}
       {toastMessage && (
         <div
-          className="fixed top-2 right-2 z-50 px-2 py-1 border"
-          style={{ background: 'var(--bg)', color: 'var(--text)', borderColor: 'var(--line)', borderRadius: '2px', fontSize: 'var(--font-small)' }}
+          style={{
+            position: 'fixed',
+            top: '8px',
+            right: '8px',
+            zIndex: 50,
+            padding: '4px 8px',
+            border: '1px solid var(--line)',
+            background: 'var(--bg)',
+            color: 'var(--text)',
+            fontSize: 'var(--font-small)',
+            borderRadius: '2px',
+          }}
         >
           {toastMessage}
         </div>
       )}
 
-      {/* Header: Single plain line */}
+      {/* ── HEADER ─────────────────────────────────────────────────────────── */}
       <header
-        className="px-2 py-1.5 border-b flex items-center justify-between shrink-0"
-        style={{ borderColor: 'var(--line)' }}
+        style={{
+          padding: '6px 8px',
+          borderBottom: '1px solid var(--line)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexShrink: 0,
+          flexWrap: 'wrap',
+          gap: '4px',
+        }}
       >
-        <div className="font-bold" style={{ fontSize: 'var(--font-heading)' }}>KDP Niche Finder</div>
+        <div style={{ fontWeight: 'bold', fontSize: 'var(--font-heading)' }}>KDP Niche Finder</div>
 
-        <div className="flex items-center gap-1">
-          <button
-            onClick={toggleTheme}
-            className="plain-btn text-xs"
-            title="Toggle Light / Dark mode"
-          >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <button onClick={toggleTheme} className="plain-btn plain-btn-sm" title="Toggle theme">
             {isDarkMode ? 'Light' : 'Dark'}
           </button>
-
-          <button
-            onClick={openSettings}
-            className="plain-btn text-xs"
-            title="Open Extension Settings"
-          >
+          <button onClick={openSettings} className="plain-btn plain-btn-sm" title="Open Settings">
             Settings
           </button>
         </div>
       </header>
 
-      {/* Search Input and Shortcuts */}
-      <div className="p-2 border-b space-y-1.5 shrink-0" style={{ borderColor: 'var(--line)' }}>
+      {/* ── SEARCH ROW + QUICK LINKS ────────────────────────────────────────── */}
+      <div
+        style={{
+          padding: '8px',
+          borderBottom: '1px solid var(--line)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '6px',
+          flexShrink: 0,
+        }}
+      >
+        {/* Search form — input flex:1 min-width:0, button no-shrink */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSearchAmazon(searchQuery);
           }}
-          className="flex items-center gap-1"
+          style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
         >
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="Search Amazon Books niche..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="plain-input flex-1"
+            className="plain-input"
+            style={{ flex: 1, minWidth: 0 }}
           />
-          <button type="submit" className="plain-btn font-medium">
+          <button type="submit" className="plain-btn" style={{ flexShrink: 0, fontWeight: 500 }}>
             Search
           </button>
         </form>
 
-        <div className="quick-chips-wrapper">
-          <div className="quick-chips-container items-center text-xs">
-            <span className="shrink-0" style={{ color: 'var(--muted)' }}>Quick:</span>
-            {popularNiches.map((n) => (
-              <button
-                key={n.q}
-                onClick={() => handleSearchAmazon(n.q)}
-                className="plain-link text-xs shrink-0 whitespace-nowrap"
-                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-              >
-                {n.label}
-              </button>
-            ))}
-          </div>
+        {/* Quick links — flex-wrap so they always fit */}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '4px 8px',
+            fontSize: 'var(--font-small)',
+            alignItems: 'center',
+            overflowWrap: 'anywhere',
+          }}
+        >
+          <span style={{ color: 'var(--muted)', flexShrink: 0 }}>Quick:</span>
+          {POPULAR_NICHES.map((n) => (
+            <button
+              key={n.q}
+              onClick={() => handleSearchAmazon(n.q)}
+              className="plain-link"
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 'var(--font-small)' }}
+            >
+              {n.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Navigation Tabs: text row separated by | */}
+      {/* ── TAB BAR ─────────────────────────────────────────────────────────── */}
       <div
-        className="px-2 py-1 border-b flex items-center gap-2 text-xs shrink-0"
-        style={{ borderColor: 'var(--line)' }}
+        style={{
+          padding: '0 8px',
+          borderBottom: '1px solid var(--line)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          flexShrink: 0,
+          flexWrap: 'wrap',
+          minHeight: '32px',
+        }}
       >
-        <button
-          onClick={() => setActiveTab('watchlist')}
-          className="cursor-pointer"
-          style={{
-            fontWeight: activeTab === 'watchlist' ? 'bold' : 'normal',
-            borderBottom: activeTab === 'watchlist' ? '2px solid var(--text)' : '2px solid transparent',
-            color: 'var(--text)',
-            background: 'none',
-            borderLeft: 'none',
-            borderRight: 'none',
-            borderTop: 'none',
-            padding: '2px 4px',
-          }}
-        >
+        <button style={tabStyle(activeTab === 'top10')} onClick={() => setActiveTab('top10')}>
+          Top 10
+        </button>
+        <span style={{ color: 'var(--line)' }}>|</span>
+        <button style={tabStyle(activeTab === 'watchlist')} onClick={() => setActiveTab('watchlist')}>
           Watchlist ({watchlist.length})
         </button>
         <span style={{ color: 'var(--line)' }}>|</span>
-        <button
-          onClick={() => setActiveTab('snapshots')}
-          className="cursor-pointer"
-          style={{
-            fontWeight: activeTab === 'snapshots' ? 'bold' : 'normal',
-            borderBottom: activeTab === 'snapshots' ? '2px solid var(--text)' : '2px solid transparent',
-            color: 'var(--text)',
-            background: 'none',
-            borderLeft: 'none',
-            borderRight: 'none',
-            borderTop: 'none',
-            padding: '2px 4px',
-          }}
-        >
+        <button style={tabStyle(activeTab === 'snapshots')} onClick={() => setActiveTab('snapshots')}>
           Snapshots ({snapshots.length})
         </button>
         <span style={{ color: 'var(--line)' }}>|</span>
-        <button
-          onClick={() => setActiveTab('tools')}
-          className="cursor-pointer"
-          style={{
-            fontWeight: activeTab === 'tools' ? 'bold' : 'normal',
-            borderBottom: activeTab === 'tools' ? '2px solid var(--text)' : '2px solid transparent',
-            color: 'var(--text)',
-            background: 'none',
-            borderLeft: 'none',
-            borderRight: 'none',
-            borderTop: 'none',
-            padding: '2px 4px',
-          }}
-        >
+        <button style={tabStyle(activeTab === 'tools')} onClick={() => setActiveTab('tools')}>
           Tools
         </button>
       </div>
 
-      {/* CAPTCHA Warning Banner */}
+      {/* CAPTCHA banner — shown above content if needed */}
       {hasCaptcha && (
         <div
-          className="m-2 p-1.5 text-xs border"
-          style={{ borderColor: 'var(--warn)', color: 'var(--warn)', borderRadius: '2px' }}
+          style={{
+            margin: '8px 8px 0',
+            padding: '6px 8px',
+            border: '1px solid var(--warn)',
+            color: 'var(--warn)',
+            fontSize: 'var(--font-small)',
+            flexShrink: 0,
+          }}
         >
           <strong>Verification Required:</strong> Open Amazon in a tab, solve the puzzle, then click Refresh.
         </div>
       )}
 
-      {/* Main Content Area */}
-      <div className="flex-1 p-2 overflow-y-auto space-y-2">
+      {/* ── CONTENT AREA ────────────────────────────────────────────────────── */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          padding: '8px',
+        }}
+      >
         {loading ? (
-          <div className="py-8 text-center text-xs" style={{ color: 'var(--muted)' }}>
-            Loading extension data...
+          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 'var(--font-small)' }}>
+            Loading extension data…
           </div>
+        ) : activeTab === 'top10' ? (
+          /* ── TAB: TOP 10 ── */
+          <Top10Tab
+            snapshot={latestSnapshot}
+            onAnalyze={handleSearchAmazon}
+            onRefresh={handleTop10Refresh}
+            isRefreshing={isTop10Refreshing}
+          />
         ) : activeTab === 'watchlist' ? (
-          /* TAB 1: WATCHLIST */
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs pb-1 border-b" style={{ borderColor: 'var(--line)' }}>
-              <span style={{ color: 'var(--muted)' }}>Refreshed: {lastRefreshTime}</span>
-              <div className="flex items-center gap-1">
-                {watchlist.length > 0 && (
-                  <button onClick={handleExportCsv} className="plain-btn" title="Export CSV">
+          /* ── TAB: WATCHLIST ── */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {/* Controls row — only when list has items */}
+            {watchlist.length > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingBottom: '4px',
+                  borderBottom: '1px solid var(--line)',
+                  fontSize: 'var(--font-small)',
+                }}
+              >
+                <span style={{ color: 'var(--muted)' }}>
+                  {lastRefreshTime ? `Refreshed: ${lastRefreshTime}` : 'Not refreshed yet'}
+                </span>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button onClick={handleExportCsv} className="plain-btn plain-btn-sm">
                     Export CSV
                   </button>
-                )}
-                <button
-                  onClick={handleRefreshNow}
-                  disabled={isRefreshing || watchlist.length === 0}
-                  className="plain-btn"
-                  title="Refresh All"
-                >
-                  {isRefreshing ? 'Checking...' : 'Refresh All'}
-                </button>
+                  <button
+                    onClick={handleRefreshWatchlist}
+                    disabled={isRefreshing}
+                    className="plain-btn plain-btn-sm"
+                  >
+                    {isRefreshing ? 'Checking…' : 'Refresh All'}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {watchlist.length > 0 ? (
-              <div className="border" style={{ borderColor: 'var(--line)', borderRadius: '2px' }}>
-                <table className="plain-table">
+              <div style={{ border: '1px solid var(--line)' }}>
+                <table className="plain-table" style={{ fontSize: 'var(--font-small)' }}>
                   <thead>
                     <tr>
                       <th style={{ width: '20px' }}></th>
@@ -386,7 +594,7 @@ export const App: React.FC = () => {
                       <th className="text-right">BSR</th>
                       <th className="text-center">Trend</th>
                       <th className="text-right">Price</th>
-                      <th className="text-center">Actions</th>
+                      <th className="text-center">Act.</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -401,30 +609,33 @@ export const App: React.FC = () => {
                         <React.Fragment key={item.asin}>
                           <tr
                             onClick={() => setExpandedAsin(isExpanded ? null : item.asin)}
-                            className="cursor-pointer"
+                            style={{ cursor: 'pointer' }}
                           >
-                            <td className="text-center text-xs" style={{ color: 'var(--muted)' }}>
+                            <td style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 'var(--font-small)' }}>
                               {isExpanded ? '▼' : '►'}
                             </td>
-                            <td className="max-w-[120px] truncate font-medium" title={item.title}>
+                            <td
+                              style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}
+                              title={item.title}
+                            >
                               {item.title}
                             </td>
-                            <td className="text-right font-mono text-xs">
+                            <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
                               {currentBsr ? `#${currentBsr.toLocaleString()}` : 'N/A'}
                             </td>
-                            <td className="text-center">
+                            <td style={{ textAlign: 'center' }}>
                               <TrendArrow trend={trend.trend} percentChange={trend.percentChange} />
                             </td>
-                            <td className="text-right text-xs">
+                            <td style={{ textAlign: 'right' }}>
                               {latestPoint?.price !== undefined ? `$${latestPoint.price.toFixed(2)}` : '—'}
                             </td>
-                            <td className="text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
                               <a
                                 href={amazonUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="plain-link mr-1.5"
-                                title="Open on Amazon"
+                                className="plain-link"
+                                style={{ marginRight: '6px' }}
                               >
                                 Link
                               </a>
@@ -432,31 +643,29 @@ export const App: React.FC = () => {
                                 onClick={(e) => handleRemove(e, item.asin)}
                                 className="plain-link"
                                 style={{ color: 'var(--bad)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-                                title="Remove"
                               >
                                 Del
                               </button>
                             </td>
                           </tr>
 
-                          {/* Expanded detail row */}
                           {isExpanded && (
                             <tr>
-                              <td colSpan={6} className="p-2" style={{ background: 'var(--bg)' }}>
-                                <div className="space-y-1.5">
-                                  <table className="plain-table" style={{ width: '100%' }}>
+                              <td colSpan={6} style={{ padding: '8px', background: 'var(--bg)' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                  <table className="plain-table" style={{ width: '100%', fontSize: 'var(--font-small)' }}>
                                     <tbody>
                                       <tr>
-                                        <td className="font-medium">Best BSR:</td>
-                                        <td className="font-mono" style={{ color: 'var(--good)' }}>
+                                        <td style={{ fontWeight: 500 }}>Best BSR:</td>
+                                        <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--good)' }}>
                                           {trend.bestBsr ? `#${trend.bestBsr.toLocaleString()}` : 'N/A'}
                                         </td>
-                                        <td className="font-medium">Worst BSR:</td>
-                                        <td className="font-mono" style={{ color: 'var(--bad)' }}>
+                                        <td style={{ fontWeight: 500 }}>Worst:</td>
+                                        <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--bad)' }}>
                                           {trend.worstBsr ? `#${trend.worstBsr.toLocaleString()}` : 'N/A'}
                                         </td>
-                                        <td className="font-medium">Tracked:</td>
-                                        <td>{trend.daysTracked}d</td>
+                                        <td style={{ fontWeight: 500 }}>Days:</td>
+                                        <td>{trend.daysTracked}</td>
                                       </tr>
                                     </tbody>
                                   </table>
@@ -472,28 +681,36 @@ export const App: React.FC = () => {
                 </table>
               </div>
             ) : (
-              <div className="p-4 text-center border" style={{ borderColor: 'var(--line)', borderRadius: '2px', color: 'var(--muted)' }}>
-                Watchlist is empty. Search books on Amazon and click "Watch" to begin tracking.
+              <div
+                style={{
+                  padding: '16px',
+                  textAlign: 'center',
+                  border: '1px solid var(--line)',
+                  color: 'var(--muted)',
+                  fontSize: 'var(--font-small)',
+                }}
+              >
+                Watchlist is empty. Search books on Amazon and click &quot;Watch&quot; to begin tracking.
               </div>
             )}
           </div>
         ) : activeTab === 'snapshots' ? (
-          /* TAB 2: RESEARCH HISTORY */
-          <div className="space-y-2">
-            <div className="text-xs pb-1 border-b" style={{ borderColor: 'var(--line)', color: 'var(--muted)' }}>
-              {snapshots.length} Saved Search Snapshots
+          /* ── TAB: SNAPSHOTS ── */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ paddingBottom: '4px', borderBottom: '1px solid var(--line)', color: 'var(--muted)', fontSize: 'var(--font-small)' }}>
+              {snapshots.length} saved search snapshots
             </div>
 
             {snapshots.length > 0 ? (
-              <div className="border" style={{ borderColor: 'var(--line)', borderRadius: '2px' }}>
-                <table className="plain-table">
+              <div style={{ border: '1px solid var(--line)' }}>
+                <table className="plain-table" style={{ fontSize: 'var(--font-small)' }}>
                   <thead>
                     <tr>
                       <th>Query</th>
-                      <th>Date</th>
-                      <th className="text-right">Books</th>
-                      <th className="text-right">Score</th>
-                      <th className="text-center">Action</th>
+                      <th style={{ width: '72px' }}>Date</th>
+                      <th className="text-right" style={{ width: '32px' }}>Books</th>
+                      <th className="text-right" style={{ width: '52px' }}>Score</th>
+                      <th className="text-center" style={{ width: '36px' }}>Open</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -508,22 +725,25 @@ export const App: React.FC = () => {
 
                       return (
                         <tr key={idx}>
-                          <td className="font-medium max-w-[120px] truncate" title={snap.query}>
+                          <td
+                            style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}
+                            title={snap.query}
+                          >
                             {snap.query}
                           </td>
-                          <td className="text-xs whitespace-nowrap" style={{ color: 'var(--muted)' }}>
+                          <td style={{ color: 'var(--muted)', whiteSpace: 'nowrap' }}>
                             {new Date(snap.date).toLocaleDateString()}
                           </td>
-                          <td className="text-right text-xs">
+                          <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)' }}>
                             {snap.books?.length || 0}
                           </td>
-                          <td className="text-right font-bold font-mono text-xs" style={{ color: scoreColor }}>
+                          <td style={{ textAlign: 'right', fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: scoreColor }}>
                             {snap.scores ? `${snap.scores.total}/100` : '—'}
                           </td>
-                          <td className="text-center">
+                          <td style={{ textAlign: 'center' }}>
                             <button
                               onClick={() => handleSearchAmazon(snap.query)}
-                              className="plain-link text-xs"
+                              className="plain-link"
                               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
                             >
                               Open
@@ -536,66 +756,67 @@ export const App: React.FC = () => {
                 </table>
               </div>
             ) : (
-              <div className="p-4 text-center border" style={{ borderColor: 'var(--line)', borderRadius: '2px', color: 'var(--muted)' }}>
+              <div
+                style={{
+                  padding: '16px',
+                  textAlign: 'center',
+                  border: '1px solid var(--line)',
+                  color: 'var(--muted)',
+                  fontSize: 'var(--font-small)',
+                }}
+              >
                 No search history yet. Search on Amazon to save niche audits.
               </div>
             )}
           </div>
         ) : (
-          /* TAB 3: TOOLS */
-          <div className="space-y-2">
-            <div className="border" style={{ borderColor: 'var(--line)', borderRadius: '2px' }}>
-              <table className="plain-table">
+          /* ── TAB: TOOLS ── */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ border: '1px solid var(--line)' }}>
+              <table className="plain-table" style={{ fontSize: 'var(--font-small)' }}>
                 <tbody>
                   <tr>
-                    <td className="font-medium">Amazon Book Store</td>
-                    <td className="text-right">
-                      <button
-                        onClick={() => handleSearchAmazon('low content books')}
-                        className="plain-btn"
-                      >
+                    <td style={{ fontWeight: 500 }}>Amazon Book Store</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button onClick={() => handleSearchAmazon('low content books')} className="plain-btn plain-btn-sm">
                         Open Amazon Books
                       </button>
                     </td>
                   </tr>
                   <tr>
-                    <td className="font-medium">Options & Settings</td>
-                    <td className="text-right">
-                      <button onClick={openSettings} className="plain-btn">
+                    <td style={{ fontWeight: 500 }}>Options &amp; Settings</td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button onClick={openSettings} className="plain-btn plain-btn-sm">
                         Open Settings
                       </button>
                     </td>
                   </tr>
                   <tr>
                     <td>
-                      <div className="font-medium">Product Cache</div>
-                      <div className="text-xs" style={{ color: 'var(--muted)' }}>Stores listing details for speed</div>
+                      <div style={{ fontWeight: 500 }}>Product Cache</div>
+                      <div style={{ color: 'var(--muted)', fontSize: 'var(--font-small)' }}>Stores listing details for speed</div>
                     </td>
-                    <td className="text-right">
-                      <button
-                        onClick={handleClearCache}
-                        disabled={cacheCleared}
-                        className="plain-btn"
-                      >
+                    <td style={{ textAlign: 'right' }}>
+                      <button onClick={handleClearCache} disabled={cacheCleared} className="plain-btn plain-btn-sm">
                         {cacheCleared ? 'Cleared' : 'Clear Cache'}
                       </button>
                     </td>
                   </tr>
                   <tr>
                     <td>
-                      <div className="font-medium">Gemini AI Status</div>
-                      <div className="text-xs" style={{ color: 'var(--muted)' }}>Niche idea generator</div>
+                      <div style={{ fontWeight: 500 }}>Gemini AI Status</div>
+                      <div style={{ color: 'var(--muted)', fontSize: 'var(--font-small)' }}>Niche idea generator</div>
                     </td>
-                    <td className="text-right">
+                    <td style={{ textAlign: 'right' }}>
                       {(settings?.geminiApiKey || (settings?.geminiApiKeys && settings.geminiApiKeys.length > 0)) ? (
-                        <span className="font-bold text-xs" style={{ color: 'var(--good)' }}>
-                          Configured {settings?.geminiApiKeys && settings.geminiApiKeys.length > 1 ? `(${settings.geminiApiKeys.length} keys)` : ''}
+                        <span style={{ fontWeight: 'bold', color: 'var(--good)', fontSize: 'var(--font-small)' }}>
+                          Configured{settings?.geminiApiKeys && settings.geminiApiKeys.length > 1 ? ` (${settings.geminiApiKeys.length} keys)` : ''}
                         </span>
                       ) : (
                         <button
                           onClick={openSettings}
-                          className="plain-link text-xs"
-                          style={{ color: 'var(--warn)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                          className="plain-link"
+                          style={{ color: 'var(--warn)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 'var(--font-small)' }}
                         >
                           Add API Key
                         </button>
@@ -609,19 +830,28 @@ export const App: React.FC = () => {
         )}
       </div>
 
-      {/* Footer: One plain line */}
+      {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
       <footer
-        className="px-2 py-1 border-t text-xs flex items-center justify-between shrink-0"
-        style={{ borderColor: 'var(--line)', color: 'var(--muted)' }}
+        style={{
+          padding: '4px 8px',
+          borderTop: '1px solid var(--line)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexShrink: 0,
+          fontSize: 'var(--font-small)',
+          color: 'var(--muted)',
+        }}
       >
         <span>KDP Niche Finder</span>
-        <button
-          onClick={() => handleSearchAmazon('low content books')}
-          className="plain-link text-xs"
-          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+        <a
+          href="https://www.amazon.com/s?i=stripbooks&k=low+content+books"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="plain-link"
         >
           Open Amazon Books
-        </button>
+        </a>
       </footer>
     </div>
   );

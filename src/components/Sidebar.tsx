@@ -11,6 +11,7 @@ import { SeasonalityTab } from './tabs/SeasonalityTab';
 import { ReviewsTab } from './tabs/ReviewsTab';
 import { WatchlistTab } from './tabs/WatchlistTab';
 import { IdeasTab } from './tabs/IdeasTab';
+import { DiscoverTab } from './tabs/DiscoverTab';
 import { ExportMenu } from './ExportMenu';
 import { SearchProgress } from './SearchProgress';
 import { CaptchaAlert } from './CaptchaAlert';
@@ -761,6 +762,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <IdeasTab
                       snapshot={currentSnapshot}
                       onUpdateSnapshotIdeas={handleUpdateSnapshotIdeas}
+                    />
+                  )}
+                </ErrorBoundary>
+              </div>
+
+              <div className={activeTab === 'discover' ? 'block p-2' : 'hidden'}>
+                <ErrorBoundary name="Discover Tab">
+                  {activeTab === 'discover' && (
+                    <DiscoverTab
+                      onAnalyzeIdea={(phrase) => {
+                        window.location.href = `https://www.amazon.com/s?k=${encodeURIComponent(phrase)}&i=stripbooks`;
+                      }}
                     />
                   )}
                 </ErrorBoundary>

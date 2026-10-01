@@ -12,6 +12,16 @@ import type {
   TrendsConfig,
 } from '../types';
 import { DEFAULT_FORBIDDEN_WORDS } from './forbiddenWords';
+import {
+  DEFAULT_DISCOVER_CATEGORY_SOURCES,
+  DEFAULT_DISCOVER_SEEDS,
+  DISCOVER_MAX_REQUESTS_DEFAULT,
+} from './discoverDefaults';
+
+/** Fixed number of ideas shown in the Discover tab */
+export const DISCOVER_IDEAS_SHOWN = 10;
+/** Max candidate pool size for the Discover scanner */
+export const DISCOVER_POOL_SIZE = 40;
 
 export const DEFAULT_THRESHOLDS: Thresholds = {
   demandBsr: 100000,
@@ -110,6 +120,12 @@ export const DEFAULT_SETTINGS: Settings = {
   trends: {
     geo: 'US',
     baseUrl: 'https://trends.google.com/trends/explore',
+  },
+  discover: {
+    autoRefresh: true,
+    maxRequestsPerScan: DISCOVER_MAX_REQUESTS_DEFAULT,
+    categorysources: DEFAULT_DISCOVER_CATEGORY_SOURCES,
+    seedList: DEFAULT_DISCOVER_SEEDS,
   },
 };
 

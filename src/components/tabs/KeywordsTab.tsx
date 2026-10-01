@@ -212,10 +212,10 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
   };
 
   return (
-    <div className="space-y-3 text-[13px] leading-[1.4] no-horizontal-scroll">
+    <div className="space-y-3 no-horizontal-scroll" style={{ color: 'var(--text)' }}>
       {/* Toast Notification */}
       {copyFeedback && (
-        <div className="p-1 border border-[var(--line)] bg-[var(--bg)] text-[var(--good)] text-xs">
+        <div className="p-1 border border-[var(--line)] bg-[var(--bg)]" style={{ color: 'var(--good)', fontSize: 'var(--font-small)' }}>
           {copyFeedback}
         </div>
       )}
@@ -224,72 +224,74 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
       {golden7Keywords.length > 0 && (
         <div className="border border-[var(--line)] p-2 space-y-1.5">
           <div className="flex items-center justify-between flex-wrap gap-1">
-            <span className="font-bold text-[13px]">
+            <span className="section-subheading">
               Top 7 Golden Target Keywords (KDP Slots)
             </span>
             <div className="flex items-center gap-1">
               <button
                 onClick={handleCopyGolden7}
-                className="plain-btn text-xs px-2 py-0.5"
+                className="plain-btn plain-btn-sm"
                 title="Copy all 7 keywords on separate lines"
               >
                 Copy All 7 Slots
               </button>
               <button
                 onClick={handleCopy7BackendSlots}
-                className="plain-btn text-xs px-2 py-0.5"
+                className="plain-btn plain-btn-sm"
                 title="Group into 7 lines <= 50 chars"
               >
                 &le;50-Char Format
               </button>
             </div>
           </div>
-          <table className="plain-table w-full text-xs">
-            <thead>
-              <tr>
-                <th className="w-6 text-center">#</th>
-                <th>Keyword</th>
-                <th className="w-16 text-center">Titles</th>
-                <th className="w-16 text-right">Score</th>
-                <th className="w-12 text-center">Copy</th>
-              </tr>
-            </thead>
-            <tbody>
-              {golden7Keywords.map((item, idx) => (
-                <tr key={item.keyword}>
-                  <td className="text-center font-mono">{idx + 1}</td>
-                  <td>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold truncate" title={item.keyword}>
-                        {item.keyword}
-                      </span>
-                      <TrendsLink keyword={item.keyword} geo={settings?.trends?.geo || 'US'} />
-                    </div>
-                  </td>
-                  <td className="text-center font-mono">
-                    {item.inTitlesCount}/{snapshot?.books?.length || 10}
-                  </td>
-                  <td className="text-right font-mono font-bold text-[var(--good)]">
-                    {item.totalScore}
-                  </td>
-                  <td className="text-center">
-                    <button
-                      onClick={() => copyToClipboard(item.keyword, `Copied: "${item.keyword}"`)}
-                      className="plain-btn text-[10px] px-1 py-0"
-                    >
-                      Copy
-                    </button>
-                  </td>
+          <div className="table-scroll-x">
+            <table className="plain-table table-sticky-first" style={{ minWidth: '380px' }}>
+              <thead>
+                <tr>
+                  <th className="text-center" style={{ width: '28px' }}>#</th>
+                  <th>Keyword</th>
+                  <th className="text-center" style={{ width: '64px' }}>Titles</th>
+                  <th className="text-right" style={{ width: '64px' }}>Score</th>
+                  <th className="text-center" style={{ width: '48px' }}>Copy</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {golden7Keywords.map((item, idx) => (
+                  <tr key={item.keyword}>
+                    <td className="text-center" style={{ fontFamily: 'var(--font-mono)' }}>{idx + 1}</td>
+                    <td>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold truncate" title={item.keyword}>
+                          {item.keyword}
+                        </span>
+                        <TrendsLink keyword={item.keyword} geo={settings?.trends?.geo || 'US'} />
+                      </div>
+                    </td>
+                    <td className="text-center" style={{ fontFamily: 'var(--font-mono)' }}>
+                      {item.inTitlesCount}/{snapshot?.books?.length || 10}
+                    </td>
+                    <td className="text-right font-bold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--good)' }}>
+                      {item.totalScore}
+                    </td>
+                    <td className="text-center">
+                      <button
+                        onClick={() => copyToClipboard(item.keyword, `Copied: "${item.keyword}"`)}
+                        className="plain-btn plain-btn-sm"
+                      >
+                        Copy
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* Seed Keyword Area: plain label + text input + [Find Keywords] button + checkbox */}
       <div className="border border-[var(--line)] p-2 space-y-2">
-        <label className="block text-xs font-bold uppercase text-[var(--muted)]">
+        <label className="block font-bold uppercase" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
           Seed Keyword
         </label>
         <div className="flex gap-1.5">
@@ -298,19 +300,19 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
             value={seedInput}
             onChange={(e) => setSeedInput(e.target.value)}
             placeholder="e.g. toddler coloring book"
-            className="plain-input flex-1 text-xs"
+            className="plain-input flex-1"
             onKeyDown={(e) => e.key === 'Enter' && handleFindKeywords()}
           />
           <button
             onClick={handleFindKeywords}
             disabled={isLoading || !seedInput.trim()}
-            className="plain-btn text-xs font-bold px-3 py-1"
+            className="plain-btn font-bold"
           >
             {isLoading ? 'Searching...' : 'Find Keywords'}
           </button>
         </div>
 
-        <div className="flex items-center justify-between text-xs text-[var(--muted)] flex-wrap gap-1">
+        <div className="flex items-center justify-between flex-wrap gap-1" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
           <label className="flex items-center gap-1 cursor-pointer select-none">
             <input
               type="checkbox"
@@ -326,7 +328,7 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
         {/* Progress Bar: simple progress bar */}
         {isLoading && progress && (
           <div className="space-y-1">
-            <div className="flex justify-between text-[11px] text-[var(--muted)] font-mono">
+            <div className="flex justify-between" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
               <span className="truncate max-w-[240px]">{progress.message}</span>
               <span>{Math.round((progress.current / progress.total) * 100)}%</span>
             </div>
@@ -343,19 +345,8 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
       {/* Action / Export Buttons in one wrapped row: no colors */}
       {keywords.length > 0 && (
         <div className="flex flex-wrap gap-1">
-          <button
-            onClick={handleCopy7BackendSlots}
-            className="plain-btn text-xs px-2 py-0.5"
-            title="Group into 7 lines <= 50 chars, no duplicate words"
-          >
-            Copy 7 KDP Slots
-          </button>
-          <button
-            onClick={handleCopyTop20}
-            className="plain-btn text-xs px-2 py-0.5"
-          >
-            Copy Top 20
-          </button>
+          <button onClick={handleCopy7BackendSlots} className="plain-btn plain-btn-sm" title="Group into 7 lines <= 50 chars, no duplicate words">Copy 7 KDP Slots</button>
+          <button onClick={handleCopyTop20} className="plain-btn plain-btn-sm">Copy Top 20</button>
           <button
             onClick={() => {
               const top5 = keywords.slice(0, 5).map((k) => k.keyword);
@@ -364,23 +355,13 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
                 window.open(compareUrl, '_blank', 'noopener,noreferrer');
               }
             }}
-            className="plain-btn text-xs px-2 py-0.5"
+            className="plain-btn plain-btn-sm"
             title="Compare search volume on Google Trends for top 5 keywords"
           >
             Compare Top 5
           </button>
-          <button
-            onClick={handleCopyAll}
-            className="plain-btn text-xs px-2 py-0.5"
-          >
-            Copy All ({filteredKeywords.length})
-          </button>
-          <button
-            onClick={handleCopyTsv}
-            className="plain-btn text-xs px-2 py-0.5"
-          >
-            Copy TSV
-          </button>
+          <button onClick={handleCopyAll} className="plain-btn plain-btn-sm">Copy All ({filteredKeywords.length})</button>
+          <button onClick={handleCopyTsv} className="plain-btn plain-btn-sm">Copy TSV</button>
         </div>
       )}
 
@@ -392,9 +373,9 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
             placeholder="Filter keywords..."
-            className="plain-input flex-1 text-xs"
+            className="plain-input flex-1"
           />
-          <label className="flex items-center gap-1 text-xs text-[var(--muted)] cursor-pointer select-none">
+          <label className="flex items-center gap-1 cursor-pointer select-none" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
             <input
               type="checkbox"
               checked={highOnly}
@@ -410,16 +391,16 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
       {keywords.length > 0 ? (
         <div className="border border-[var(--line)]">
           <div className="max-h-[380px] overflow-y-auto no-horizontal-scroll">
-            <table className="plain-table w-full text-xs">
+            <table className="plain-table table-sticky-first" style={{ minWidth: '420px' }}>
               <thead>
                 <tr>
-                  <th className="w-6 text-center">#</th>
+                  <th className="text-center" style={{ width: '28px' }}>#</th>
                   <th>Keyword</th>
-                  <th className="w-10 text-center" title="Lowest position in autocomplete">Pos</th>
-                  <th className="w-12 text-center" title="Present in X of top 10 titles">Titles</th>
-                  <th className="w-16 text-center" title="Average BSR of top 5 results">BSR</th>
-                  <th className="w-16 text-right">Score</th>
-                  <th className="w-12 text-center">Copy</th>
+                  <th className="text-center" style={{ width: '40px' }} title="Lowest position in autocomplete">Pos</th>
+                  <th className="text-center" style={{ width: '54px' }} title="Present in X of top 10 titles">Titles</th>
+                  <th className="text-center" style={{ width: '72px' }} title="Average BSR of top 5 results">BSR</th>
+                  <th className="text-right" style={{ width: '72px' }}>Score</th>
+                  <th className="text-center" style={{ width: '48px' }}>Copy</th>
                 </tr>
               </thead>
               <tbody>
@@ -428,48 +409,47 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
 
                   return (
                     <tr key={k.keyword}>
-                      <td className="text-center font-mono">{idx + 1}</td>
+                      <td className="text-center" style={{ fontFamily: 'var(--font-mono)' }}>{idx + 1}</td>
                       <td>
                         <div className="flex items-center gap-1">
-                          <span className="truncate max-w-[140px]" title={k.keyword}>
+                          <span className="truncate" style={{ maxWidth: '140px' }} title={k.keyword}>
                             {k.keyword}
                           </span>
                           <TrendsLink keyword={k.keyword} geo={settings?.trends?.geo || 'US'} />
                         </div>
                       </td>
-                      <td className="text-center font-mono text-[var(--muted)]">
+                      <td className="text-center" style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>
                         #{k.bestPosition}
                       </td>
-                      <td className="text-center font-mono">
+                      <td className="text-center" style={{ fontFamily: 'var(--font-mono)' }}>
                         {k.inTitlesCount}/10
                       </td>
                       <td className="text-center">
                         {isCheckingThis ? (
-                          <span className="text-[10px] text-[var(--muted)]">Wait</span>
+                          <span style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>Wait</span>
                         ) : k.avgBsr ? (
-                          <span className="font-mono text-[var(--good)]">
+                          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--good)' }}>
                             #{k.avgBsr.toLocaleString()}
                           </span>
                         ) : (
                           <button
                             onClick={() => handleCheckBsr(k)}
                             disabled={Boolean(checkingKeyword)}
-                            className="plain-btn text-[10px] px-1 py-0"
+                            className="plain-btn plain-btn-sm"
                           >
                             Check
                           </button>
                         )}
                       </td>
-                      {/* Score and label shown as plain text, colored only with status text colors */}
-                      <td className="text-right font-mono font-bold">
+                      <td className="text-right font-bold" style={{ fontFamily: 'var(--font-mono)' }}>
                         <span
-                          className={
-                            k.scoreLabel === 'high'
-                              ? 'text-[var(--good)]'
+                          style={{
+                            color: k.scoreLabel === 'high'
+                              ? 'var(--good)'
                               : k.scoreLabel === 'medium'
-                              ? 'text-[var(--warn)]'
-                              : 'text-[var(--muted)]'
-                          }
+                              ? 'var(--warn)'
+                              : 'var(--muted)',
+                          }}
                           title={k.isPartial ? 'Partial score (BSR not checked)' : 'Full score'}
                         >
                           {k.totalScore} {k.scoreLabel === 'high' ? '(High)' : k.scoreLabel === 'medium' ? '(Med)' : '(Low)'}{k.isPartial ? '*' : ''}
@@ -478,7 +458,7 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
                       <td className="text-center">
                         <button
                           onClick={() => copyToClipboard(k.keyword, `Copied: "${k.keyword}"`)}
-                          className="plain-btn text-[10px] px-1 py-0"
+                          className="plain-btn plain-btn-sm"
                         >
                           Copy
                         </button>
@@ -489,13 +469,16 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
               </tbody>
             </table>
           </div>
-          <div className="p-1.5 border-t border-[var(--line)] bg-[var(--bg)] text-[11px] text-[var(--muted)] flex justify-between items-center">
+          <div
+            className="p-1.5 border-t border-[var(--line)] bg-[var(--bg)] flex justify-between items-center"
+            style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}
+          >
             <span>* Click "Check" to fetch top 5 BSR for full score.</span>
             <span>{filteredKeywords.length} of {keywords.length} items</span>
           </div>
         </div>
       ) : (
-        <div className="border border-dashed border-[var(--line)] p-4 text-center text-[var(--muted)]">
+        <div className="border border-dashed border-[var(--line)] p-4 text-center" style={{ color: 'var(--muted)' }}>
           No keywords found yet. Click "Find Keywords" above.
         </div>
       )}
@@ -503,8 +486,8 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
       {/* Top 10 Title Word Frequency: plain bordered tables */}
       <div className="border border-[var(--line)] p-2 space-y-2">
         <div>
-          <div className="font-bold text-xs">Top 10 Title Word Frequency</div>
-          <div className="text-[11px] text-[var(--muted)]">
+          <div className="section-subheading">Top 10 Title Word Frequency</div>
+          <div style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
             High-frequency words across {titleAnalysis.totalTitlesAnalyzed} titles
           </div>
         </div>
@@ -513,28 +496,29 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
           {/* Unigrams */}
           <div className="border border-[var(--line)] p-1.5 space-y-1">
             <div className="flex items-center justify-between border-b border-[var(--line)] pb-1">
-              <span className="font-bold text-xs">Top Words</span>
+              <span className="font-bold" style={{ fontSize: 'var(--font-small)' }}>Top Words</span>
               <button
                 onClick={() => handleCopyTitleWords(titleAnalysis.unigrams, 'unigram words')}
-                className="plain-link text-xs"
+                className="plain-link"
+                style={{ fontSize: 'var(--font-small)' }}
               >
                 Copy
               </button>
             </div>
-            <div className="max-h-[140px] overflow-y-auto space-y-0.5 text-xs">
+            <div className="max-h-[140px] overflow-y-auto space-y-0.5" style={{ fontSize: 'var(--font-small)' }}>
               {titleAnalysis.unigrams.length > 0 ? (
                 titleAnalysis.unigrams.slice(0, 15).map((u) => (
                   <div key={u.word} className="flex justify-between items-center">
-                    <span className="truncate max-w-[100px]" title={u.word}>
+                    <span className="truncate" style={{ maxWidth: '100px' }} title={u.word}>
                       {u.word}
                     </span>
-                    <span className="font-mono text-[var(--muted)]">
+                    <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>
                       {u.inTitlesCount}/10
                     </span>
                   </div>
                 ))
               ) : (
-                <div className="text-[var(--muted)]">None found</div>
+                <div style={{ color: 'var(--muted)' }}>None found</div>
               )}
             </div>
           </div>
@@ -542,28 +526,29 @@ export const KeywordsTab: React.FC<KeywordsTabProps> = ({
           {/* Bigrams */}
           <div className="border border-[var(--line)] p-1.5 space-y-1">
             <div className="flex items-center justify-between border-b border-[var(--line)] pb-1">
-              <span className="font-bold text-xs">2-Word Phrases</span>
+              <span className="font-bold" style={{ fontSize: 'var(--font-small)' }}>2-Word Phrases</span>
               <button
                 onClick={() => handleCopyTitleWords(titleAnalysis.bigrams, 'bigram phrases')}
-                className="plain-link text-xs"
+                className="plain-link"
+                style={{ fontSize: 'var(--font-small)' }}
               >
                 Copy
               </button>
             </div>
-            <div className="max-h-[140px] overflow-y-auto space-y-0.5 text-xs">
+            <div className="max-h-[140px] overflow-y-auto space-y-0.5" style={{ fontSize: 'var(--font-small)' }}>
               {titleAnalysis.bigrams.length > 0 ? (
                 titleAnalysis.bigrams.slice(0, 15).map((b) => (
                   <div key={b.word} className="flex justify-between items-center">
-                    <span className="truncate max-w-[100px]" title={b.word}>
+                    <span className="truncate" style={{ maxWidth: '100px' }} title={b.word}>
                       {b.word}
                     </span>
-                    <span className="font-mono text-[var(--muted)]">
+                    <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>
                       {b.inTitlesCount}/10
                     </span>
                   </div>
                 ))
               ) : (
-                <div className="text-[var(--muted)]">None found</div>
+                <div style={{ color: 'var(--muted)' }}>None found</div>
               )}
             </div>
           </div>

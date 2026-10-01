@@ -102,12 +102,12 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
   };
 
   return (
-    <div className="space-y-3 text-[13px] leading-[1.4] no-horizontal-scroll">
+    <div className="space-y-3 no-horizontal-scroll" style={{ color: 'var(--text)' }}>
       {/* Floating Toast Notification (prevents layout shift) */}
       {toastMessage && (
         <div
-          className="fixed top-2 right-2 z-50 px-2 py-1 text-xs border"
-          style={{ background: 'var(--bg)', color: 'var(--text)', borderColor: 'var(--line)', borderRadius: '2px' }}
+          className="fixed top-2 right-2 z-50 px-2 py-1 border"
+          style={{ background: 'var(--bg)', color: 'var(--text)', borderColor: 'var(--line)', borderRadius: '2px', fontSize: 'var(--font-small)' }}
         >
           {toastMessage}
         </div>
@@ -118,10 +118,10 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
         <div className="border border-[var(--line)] p-2 space-y-1.5">
           <div className="flex items-center justify-between flex-wrap gap-1">
             <div>
-              <div className="font-bold text-[13px]">
+              <div className="section-subheading">
                 Top 3 KDP Category Picks &amp; Beat-Seller Targets
               </div>
-              <div className="text-[11px] text-[var(--muted)]">
+              <div style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
                 Target picks to maximize visibility and win the #1 Best Seller badge.
               </div>
             </div>
@@ -133,7 +133,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
               }
               defaultLabel="Copy Top 3 Paths"
               copiedLabel="Copied Top 3!"
-              className="plain-btn text-xs px-2 py-0.5"
+              className="plain-btn plain-btn-sm"
               title="Copy all 3 category paths formatted for KDP metadata"
             />
           </div>
@@ -147,20 +147,20 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
                 <div className="flex items-start justify-between gap-1.5">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-bold text-xs">
+                      <span className="font-bold" style={{ fontSize: 'var(--font-small)' }}>
                         [{badgeLabel || `#${idx + 1}`}] {decodeHtmlEntities(category.name)}
                       </span>
                       {category.salesOpportunityLevel === 'high' ? (
-                        <span className="text-[11px] font-bold text-[var(--good)]">
+                        <span className="font-bold" style={{ fontSize: 'var(--font-small)', color: 'var(--good)' }}>
                           (High Opportunity)
                         </span>
                       ) : (
-                        <span className="text-[11px] text-[var(--muted)]">
+                        <span style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
                           (Moderate)
                         </span>
                       )}
                       {category.bestSellerTargetBsr && (
-                        <span className="text-[11px] font-mono text-[var(--warn)]">
+                        <span style={{ fontSize: 'var(--font-small)', fontFamily: 'var(--font-mono)', color: 'var(--warn)' }}>
                           #1 BSR Target: ~#{category.bestSellerTargetBsr.toLocaleString()}
                           {category.dailySalesForNo1 ? ` (~${category.dailySalesForNo1}/day)` : ''}
                         </span>
@@ -168,7 +168,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
                     </div>
 
                     {category.path && (
-                      <div className="text-[11px] font-mono text-[var(--muted)] mt-1 flex items-start justify-between gap-1.5">
+                      <div className="mt-1 flex items-start justify-between gap-1.5" style={{ fontSize: 'var(--font-small)', fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>
                         <span
                           className="whitespace-normal break-words flex-1 leading-snug"
                           title={formatCleanCategoryPath(category.path)}
@@ -179,18 +179,18 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
                           text={() => formatCleanCategoryPath(category.path || category.name)}
                           defaultLabel="Copy"
                           copiedLabel="Copied!"
-                          className="plain-btn text-[10px] px-1.5 py-0.5 shrink-0"
+                          className="plain-btn plain-btn-sm shrink-0"
                           title="Copy KDP category path"
                         />
                       </div>
                     )}
 
                     {strategy && (
-                      <div className="text-[11px] text-[var(--good)] mt-0.5">
+                      <div className="mt-0.5" style={{ fontSize: 'var(--font-small)', color: 'var(--good)' }}>
                         Target strategy: {decodeHtmlEntities(strategy)}
                       </div>
                     )}
-                    <div className="text-[11px] text-[var(--muted)] mt-0.5">
+                    <div className="mt-0.5" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
                       {decodeHtmlEntities(reason)}
                     </div>
                   </div>
@@ -208,7 +208,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
 
       {/* Header & Export Row */}
       <div className="flex items-center justify-between flex-wrap gap-1">
-        <span className="font-bold text-xs">
+        <span className="section-subheading">
           Niche Categories ({categories.length})
         </span>
         {categories.length > 0 && (
@@ -221,7 +221,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
               }
               defaultLabel="Copy Paths"
               copiedLabel="Copied All!"
-              className="plain-btn text-xs px-2 py-0.5"
+              className="plain-btn plain-btn-sm"
               title="Copy all category paths"
             />
             <CopyButton
@@ -252,7 +252,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
               }}
               defaultLabel="Copy TSV"
               copiedLabel="Copied TSV!"
-              className="plain-btn text-xs px-2 py-0.5"
+              className="plain-btn plain-btn-sm"
               title="Copy categories table as TSV for spreadsheet pasting"
             />
           </div>
@@ -263,15 +263,15 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
       {categories.length > 0 ? (
         <div className="border border-[var(--line)]">
           <div className="max-h-[380px] overflow-y-auto overflow-x-auto w-full box-border">
-            <table className="plain-table text-xs min-w-[560px] w-full">
+            <table className="plain-table table-sticky-first" style={{ minWidth: '560px' }}>
               <thead>
                 <tr>
-                  <th className="min-w-[220px] text-left">Category &amp; KDP Path</th>
-                  <th className="w-20 min-w-[75px] text-center" title="Target BSR to win #1 Best Seller badge">#1 Target</th>
-                  <th className="w-14 min-w-[55px] text-center" title="Number of top 10 books in this category">Books</th>
-                  <th className="w-14 min-w-[50px] text-center" title="Best rank among top 10 books">Best</th>
-                  <th className="w-20 min-w-[70px] text-center">Difficulty</th>
-                  <th className="w-20 min-w-[75px] text-center">Action</th>
+                  <th className="text-left" style={{ minWidth: '220px' }}>Category &amp; KDP Path</th>
+                  <th className="text-center" style={{ width: '80px', minWidth: '75px' }} title="Target BSR to win #1 Best Seller badge">#1 Target</th>
+                  <th className="text-center" style={{ width: '56px', minWidth: '55px' }} title="Number of top 10 books in this category">Books</th>
+                  <th className="text-center" style={{ width: '56px', minWidth: '50px' }} title="Best rank among top 10 books">Best</th>
+                  <th className="text-center" style={{ width: '80px', minWidth: '70px' }}>Difficulty</th>
+                  <th className="text-center" style={{ width: '80px', minWidth: '75px' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -280,56 +280,61 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
 
                   return (
                     <tr key={c.url || c.name || `cat-${idx}`}>
-                      <td className="min-w-[220px] py-1.5 px-2">
+                      <td className="py-1.5 px-2" style={{ minWidth: '220px' }}>
                         <div
-                          className="font-bold text-xs whitespace-normal leading-tight"
+                          className="font-bold whitespace-normal leading-tight"
                           title={decodeHtmlEntities(c.name)}
                         >
                           {decodeHtmlEntities(c.name)}
                         </div>
                         {c.path && (
                           <div
-                            className="text-[10px] text-[var(--muted)] font-mono whitespace-normal break-words mt-0.5 leading-snug"
+                            className="whitespace-normal break-words mt-0.5 leading-snug"
+                            style={{ fontSize: 'var(--font-small)', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}
                             title={formatCleanCategoryPath(c.path)}
                           >
                             {formatCleanCategoryPath(c.path)}
                           </div>
                         )}
                         {c.difficultyText && (
-                          <div className="text-[10px] text-[var(--muted)] whitespace-normal mt-0.5" title={c.difficultyText}>
+                          <div
+                            className="whitespace-normal mt-0.5"
+                            style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}
+                            title={c.difficultyText}
+                          >
                             {c.bsrAtTop20 ? `Top 20: BSR #${c.bsrAtTop20.toLocaleString()}` : ''}
                           </div>
                         )}
                       </td>
 
-                      <td className="text-center font-mono whitespace-nowrap px-1.5">
+                      <td className="text-center whitespace-nowrap px-1.5" style={{ fontFamily: 'var(--font-mono)' }}>
                         {c.bestSellerTargetBsr ? (
-                          <span className="text-[var(--warn)] font-bold">
+                          <span className="font-bold" style={{ color: 'var(--warn)' }}>
                             #{c.bestSellerTargetBsr.toLocaleString()}
                           </span>
                         ) : (
-                          <span className="text-[var(--muted)]">-</span>
+                          <span style={{ color: 'var(--muted)' }}>-</span>
                         )}
                       </td>
 
-                      <td className="text-center font-mono font-bold whitespace-nowrap px-1">
+                      <td className="text-center font-bold whitespace-nowrap px-1" style={{ fontFamily: 'var(--font-mono)' }}>
                         {c.bookCount}/10
                       </td>
 
-                      <td className="text-center font-mono whitespace-nowrap px-1">
+                      <td className="text-center whitespace-nowrap px-1" style={{ fontFamily: 'var(--font-mono)' }}>
                         #{c.bestRankAmongTopBooks}
                       </td>
 
                       <td className="text-center whitespace-nowrap px-1.5">
                         {isCheckingThis ? (
-                          <span className="text-[10px] text-[var(--muted)]">Wait</span>
+                          <span style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>Wait</span>
                         ) : c.difficulty ? (
                           <DifficultyBadge difficulty={c.difficulty} size="sm" />
                         ) : (
                           <button
                             onClick={() => handleCheckDifficulty(c)}
                             disabled={Boolean(checkingUrl) || !c.url}
-                            className="plain-btn text-[10px] px-1 py-0"
+                            className="plain-btn plain-btn-sm"
                             title="Check Top 20 BSR requirement"
                           >
                             Check
@@ -343,7 +348,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
                             text={() => formatCleanCategoryPath(c.path || c.name)}
                             defaultLabel="Copy"
                             copiedLabel="Copied!"
-                            className="plain-btn text-[10px] px-1 py-0"
+                            className="plain-btn plain-btn-sm"
                             title="Copy KDP category path"
                           />
                           {c.url && (
@@ -351,7 +356,8 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
                               href={c.url.startsWith('http') ? c.url : `https://www.amazon.com${c.url}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="plain-link text-[10px]"
+                              className="plain-link"
+                              style={{ fontSize: 'var(--font-small)' }}
                               title="Open Best Sellers page"
                             >
                               Link
@@ -367,13 +373,13 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
           </div>
         </div>
       ) : (
-        <div className="border border-dashed border-[var(--line)] p-4 text-center text-[var(--muted)]">
+        <div className="border border-dashed border-[var(--line)] p-4 text-center" style={{ color: 'var(--muted)' }}>
           No category ranks detected yet. Category data is extracted from competitor pages as they scan.
         </div>
       )}
 
       {/* Guidance Note */}
-      <div className="border border-[var(--line)] p-2 text-xs text-[var(--muted)]">
+      <div className="border border-[var(--line)] p-2" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
         <strong>Publishing Tip:</strong> KDP allows you to select up to 3 categories.
         Use a mix of one broader and one or two specific sub-categories.
       </div>

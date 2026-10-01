@@ -7,6 +7,9 @@ import { refreshWatchlist } from '../services/tracker';
 import { generateBookIdeas, testGeminiApiKey } from '../services/aiIdeas';
 import { DEFAULT_TRACKER_CONFIG } from '../config/defaults';
 import { migrateStorage } from '../storage';
+import { runDiscoverScan, triggerScanIfStale, releaseDiscoverLock } from '../services/discoverScanner';
+import { DISCOVER_ALARM_NAME } from '../config/discoverDefaults';
+import { setTrackerBadge } from '../services/tracker';
 import type { ExtensionMessage } from '../types';
 
 export default defineBackground(() => {
@@ -114,6 +117,43 @@ export default defineBackground(() => {
     }
   };
 
+  // Executes a Discover scan with offscreen DOM parsing available
+  const runDiscoverRefresh = async (forceRefresh: boolean = false) => {
+    try {
+      await ensureOffscreenDocument();
+      const result = await runDiscoverScan({
+        forceRefresh,
+        onProgress: (p) => {
+          broadcastToTabs({
+            type: 'DISCOVER_SCAN_PROGRESS',
+            requestsUsed: p.requestsUsed,
+            total: p.total,
+            message: p.message,
+          });
+        },
+      });
+      broadcastToTabs({
+        type: 'DISCOVER_SCAN_COMPLETE',
+        scanStatus: result.scanStatus,
+        requestsUsed: result.requestsUsed,
+        top10Count: result.top10.length,
+      });
+      if (result.captchaUrl) {
+        setTrackerBadge('!');
+        broadcastToTabs({
+          type: 'DISCOVER_SCAN_CAPTCHA',
+          url: result.captchaUrl,
+        });
+      }
+      return result;
+    } catch (err) {
+      console.warn('[KDP Discover] Scan error:', err);
+      await releaseDiscoverLock();
+    } finally {
+      await closeOffscreenDocument();
+    }
+  };
+
   // Message dispatcher
   chrome.runtime.onMessage.addListener(
     (
@@ -200,6 +240,12 @@ export default defineBackground(() => {
           }
           return true;
 
+        case 'DISCOVER_SCAN_START':
+          runDiscoverRefresh(message.forceRefresh ?? false).then((res) => {
+            sendResponse({ success: true, requestsUsed: res?.requestsUsed ?? 0 });
+          });
+          return true;
+
         default:
           break;
       }
@@ -207,11 +253,15 @@ export default defineBackground(() => {
     }
   );
 
-  // Daily alarm setup for watchlist monitoring
+  // Daily alarm setup for watchlist monitoring and discover scan
   chrome.alarms.onAlarm.addListener((alarm: chrome.alarms.Alarm) => {
     if (alarm.name === DEFAULT_TRACKER_CONFIG.alarmName) {
       console.log('[KDP Background] Daily watchlist sync triggered.');
       runTrackerRefresh(false);
+    }
+    if (alarm.name === DISCOVER_ALARM_NAME) {
+      console.log('[KDP Background] Daily Discover scan triggered.');
+      runDiscoverRefresh(false);
     }
   });
 
@@ -222,6 +272,11 @@ export default defineBackground(() => {
         chrome.alarms.create(DEFAULT_TRACKER_CONFIG.alarmName, {
           periodInMinutes: DEFAULT_TRACKER_CONFIG.periodMinutes,
         });
+      }
+    });
+    chrome.alarms.get(DISCOVER_ALARM_NAME, (alarm) => {
+      if (!alarm) {
+        chrome.alarms.create(DISCOVER_ALARM_NAME, { periodInMinutes: 1440 });
       }
     });
   });
@@ -236,6 +291,13 @@ export default defineBackground(() => {
         });
       }
     });
+    chrome.alarms.get(DISCOVER_ALARM_NAME, (alarm) => {
+      if (!alarm) {
+        chrome.alarms.create(DISCOVER_ALARM_NAME, { periodInMinutes: 1440 });
+      }
+    });
     runTrackerRefresh(false);
+    // Catch-up: start discover scan if data is stale
+    triggerScanIfStale().catch(console.warn);
   });
 });

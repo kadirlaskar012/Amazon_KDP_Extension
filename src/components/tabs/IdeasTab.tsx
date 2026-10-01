@@ -175,10 +175,10 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
   });
 
   return (
-    <div className="space-y-3 text-[13px] leading-[1.4] no-horizontal-scroll">
+    <div className="space-y-3 no-horizontal-scroll" style={{ color: 'var(--text)' }}>
       {/* Sub-tab Navigation: simple row of text buttons separated by | */}
       <div className="flex items-center justify-between border-b border-[var(--line)] pb-1.5 flex-wrap gap-1">
-        <div className="flex items-center gap-1.5 text-xs">
+        <div className="flex items-center gap-1.5" style={{ fontSize: 'var(--font-small)' }}>
           <button
             onClick={() => setActiveSubTab('generated')}
             className={`cursor-pointer ${
@@ -203,7 +203,7 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
         </div>
 
         {activeSubTab === 'generated' && tokenUsage && (
-          <span className="text-[11px] text-[var(--muted)] font-mono">
+          <span style={{ fontSize: 'var(--font-small)', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
             {tokenUsage.input_tokens || 0} in / {tokenUsage.output_tokens || 0} out tokens
           </span>
         )}
@@ -214,18 +214,18 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
           {/* Top Control Card */}
           <div className="border border-[var(--line)] p-2 space-y-2">
             <div className="flex items-center justify-between flex-wrap gap-1">
-              <span className="font-bold text-xs">
+              <span className="section-subheading">
                 KDP Book Idea Generator (Google Gemini AI)
               </span>
-              <span className="text-[11px] text-[var(--muted)] font-mono">
+              <span style={{ fontSize: 'var(--font-small)', color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
                 Model: {settings?.geminiModel || 'gemini-flash-latest'}
               </span>
             </div>
 
             {/* Data Feeds status */}
-            <div className="border border-[var(--line)] p-1.5 text-xs text-[var(--muted)] space-y-0.5">
-              <div className="font-bold text-[11px] uppercase">Research Data Feeds:</div>
-              <div className="flex flex-wrap gap-2 text-[11px]">
+            <div className="border border-[var(--line)] p-1.5 space-y-0.5" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
+              <div className="font-bold uppercase">Research Data Feeds:</div>
+              <div className="flex flex-wrap gap-2">
                 <span>Books: {hasBooks ? 'Yes' : 'No'}</span>
                 <span>|</span>
                 <span>Keywords: {hasKeywords ? 'Yes' : 'No'}</span>
@@ -240,7 +240,7 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
 
             {/* Custom User Constraints */}
             <div>
-              <label htmlFor="userNotes" className="block text-xs font-bold text-[var(--muted)] mb-0.5">
+              <label htmlFor="userNotes" className="block font-bold mb-0.5" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
                 Constraints &amp; Style (Optional)
               </label>
               <textarea
@@ -249,7 +249,7 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
                 placeholder="e.g., Bold illustrations, 8.5x11 format, ages 1-3..."
                 value={userNotes}
                 onChange={(e) => setUserNotes(e.target.value)}
-                className="plain-input w-full text-xs"
+                className="plain-input w-full"
               />
             </div>
 
@@ -264,7 +264,7 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
               <button
                 onClick={() => handleGenerate()}
                 disabled={isGenerating || !hasBooks}
-                className="plain-btn text-xs font-bold px-3 py-1"
+                className="plain-btn font-bold"
               >
                 {isGenerating
                   ? 'Analyzing & Generating 10 Ideas...'
@@ -277,40 +277,30 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
 
           {/* Error Banner with Retry & Raw Response */}
           {errorMessage && (
-            <div className="border border-[var(--line)] p-2 space-y-1.5 text-xs">
-              <div className="text-[var(--bad)] font-medium">{errorMessage}</div>
+            <div className="border border-[var(--line)] p-2 space-y-1.5" style={{ fontSize: 'var(--font-small)' }}>
+              <div className="font-medium" style={{ color: 'var(--bad)' }}>{errorMessage}</div>
               <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => handleGenerate()}
-                  className="plain-btn text-xs px-2 py-0.5"
-                >
-                  Retry Request
-                </button>
+                <button onClick={() => handleGenerate()} className="plain-btn plain-btn-sm">Retry Request</button>
                 {rawResponse && (
-                  <button
-                    onClick={() => setShowRaw(!showRaw)}
-                    className="plain-btn text-xs px-2 py-0.5"
-                  >
+                  <button onClick={() => setShowRaw(!showRaw)} className="plain-btn plain-btn-sm">
                     {showRaw ? 'Hide Raw' : 'Show Raw'}
                   </button>
                 )}
               </div>
               {showRaw && rawResponse && (
-                <pre className="p-2 border border-[var(--line)] text-xs font-mono overflow-x-auto max-h-48 whitespace-pre-wrap">
+                <pre className="p-2 border border-[var(--line)] overflow-x-auto max-h-48 whitespace-pre-wrap" style={{ fontSize: 'var(--font-small)', fontFamily: 'var(--font-mono)' }}>
                   {rawResponse}
                 </pre>
               )}
             </div>
           )}
 
-          {/* Market Overview Notes from Gemini */}
           {marketNotes && (
-            <div className="border border-[var(--line)] p-2 text-xs">
+            <div className="border border-[var(--line)] p-2" style={{ fontSize: 'var(--font-small)' }}>
               <strong>Market Observation:</strong> {marketNotes}
             </div>
           )}
 
-          {/* Refinement Toolbar if ideas are present */}
           {ideas.length > 0 && (
             <div className="border border-[var(--line)] p-1.5 flex items-center gap-1.5">
               <input
@@ -323,12 +313,12 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
                     handleGenerate(refineInstruction);
                   }
                 }}
-                className="plain-input flex-1 text-xs"
+                className="plain-input flex-1"
               />
               <button
                 onClick={() => handleGenerate(refineInstruction)}
                 disabled={isGenerating || !refineInstruction.trim()}
-                className="plain-btn text-xs font-bold px-2 py-1"
+                className="plain-btn font-bold"
               >
                 Refine
               </button>
@@ -349,7 +339,7 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
                 />
               ))}
 
-              <div className="p-2 border border-[var(--line)] text-center text-[11px] text-[var(--muted)]">
+              <div className="p-2 border border-[var(--line)] text-center" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
                 Score is a rule-based estimate from the data shown, not a guarantee of sales.
               </div>
             </div>
@@ -369,7 +359,7 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
             placeholder="Filter saved ideas..."
             value={savedSearchQuery}
             onChange={(e) => setSavedSearchQuery(e.target.value)}
-            className="plain-input w-full text-xs"
+            className="plain-input w-full"
           />
 
           {filteredSaved.length > 0 ? (
@@ -385,7 +375,7 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
               ))}
             </div>
           ) : (
-            <div className="border border-dashed border-[var(--line)] p-4 text-center text-[var(--muted)]">
+            <div className="border border-dashed border-[var(--line)] p-4 text-center" style={{ color: 'var(--muted)' }}>
               Your Saved Ideas library is empty.
             </div>
           )}

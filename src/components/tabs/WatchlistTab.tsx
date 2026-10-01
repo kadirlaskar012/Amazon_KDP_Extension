@@ -123,8 +123,8 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className="fixed bottom-3 right-3 z-50 px-2 py-1 text-xs border"
-          style={{ background: 'var(--bg)', color: 'var(--text)', borderColor: 'var(--line)', borderRadius: '2px' }}
+          className="fixed bottom-3 right-3 z-50 px-2 py-1 border"
+          style={{ background: 'var(--bg)', color: 'var(--text)', borderColor: 'var(--line)', borderRadius: '2px', fontSize: 'var(--font-small)' }}
         >
           {toastMessage}
         </div>
@@ -134,7 +134,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
       <div className="flex items-center justify-between gap-2 pb-1 border-b" style={{ borderColor: 'var(--line)' }}>
         <div>
           <span className="font-bold">Tracked Books ({watchlist.length}/50)</span>
-          <span className="ml-2 text-xs" style={{ color: 'var(--muted)' }}>
+          <span className="ml-2" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
             Daily automated BSR, price, and review tracking
           </span>
         </div>
@@ -173,7 +173,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
 
       {/* Progress status */}
       {isRefreshing && refreshProgress && (
-        <div className="text-xs" style={{ color: 'var(--muted)' }}>
+        <div style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
           Checking item {refreshProgress.current} of {refreshProgress.total}...
         </div>
       )}
@@ -208,13 +208,13 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
                       onClick={() => setExpandedAsin(isExpanded ? null : item.asin)}
                       className="cursor-pointer"
                     >
-                      <td className="text-center text-xs" style={{ color: 'var(--muted)' }}>
+                      <td className="text-center" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
                         {isExpanded ? '▼' : '►'}
                       </td>
                       <td className="max-w-[140px] truncate font-medium" title={item.title}>
                         {item.title}
                       </td>
-                      <td className="font-mono text-xs" style={{ color: 'var(--muted)' }}>
+                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
                         {item.asin}
                       </td>
                       <td className="text-right font-mono font-medium">
@@ -226,7 +226,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
                       <td className="text-right">
                         {item.price ? `$${item.price.toFixed(2)}` : '—'}
                       </td>
-                      <td className="text-right text-xs">
+                      <td className="text-right">
                         {latestPoint?.reviewCount !== undefined ? latestPoint.reviewCount.toLocaleString() : '—'}
                       </td>
                       <td className="text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
@@ -291,7 +291,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({ onCaptchaEncountered
           style={{ borderColor: 'var(--line)', borderRadius: '2px', color: 'var(--muted)' }}
         >
           <div className="font-bold" style={{ color: 'var(--text)' }}>Watchlist is empty</div>
-          <p className="mt-1 text-xs">
+          <p className="mt-1" style={{ fontSize: 'var(--font-small)' }}>
             Click "Watch" on any book in the Books tab to track daily BSR and pricing history.
           </p>
         </div>

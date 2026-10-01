@@ -11,7 +11,8 @@ export type TabId =
   | 'seasonality'
   | 'reviews'
   | 'ideas'
-  | 'watchlist';
+  | 'watchlist'
+  | 'discover';
 
 interface TabsProps {
   activeTab: TabId;
@@ -21,6 +22,7 @@ interface TabsProps {
 
 export const Tabs: React.FC<TabsProps> = ({ activeTab, onTabChange, booksCount }) => {
   const tabs: { id: TabId; label: string }[] = [
+    { id: 'discover', label: 'Top 10' },
     { id: 'overview', label: 'Overview' },
     { id: 'books', label: booksCount > 0 ? `Books (${booksCount})` : 'Books' },
     { id: 'keywords', label: 'Keywords' },
