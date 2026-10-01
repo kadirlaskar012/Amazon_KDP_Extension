@@ -356,6 +356,8 @@ export interface Settings {
   theme?: 'light' | 'dark' | 'system';
   sidebarPosition?: 'right' | 'left';
   sidebarDefaultOpen?: boolean;
+  sidebarWidth?: number; // 380, 440, 520 (default 440)
+  textSize?: 'normal' | 'large' | 'extra-large'; // 'normal' (16px base / 14px small), 'large' (+2px), 'extra-large' (+4px)
   pauseAllFetching?: boolean;
   maxFetchesPerSearch?: number;
   cacheDurationHours?: number;

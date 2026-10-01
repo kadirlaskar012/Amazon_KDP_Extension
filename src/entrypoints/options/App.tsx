@@ -255,11 +255,14 @@ export const App: React.FC = () => {
 
   return (
     <div
-      className={`min-h-screen text-[13px] leading-[1.4] ${settings.theme === 'dark' ? 'dark' : ''}`}
+      className={`min-h-screen leading-[1.5] ${
+        settings.textSize === 'large' ? 'text-size-large' : settings.textSize === 'extra-large' ? 'text-size-extra-large' : ''
+      } ${settings.theme === 'dark' ? 'dark' : ''}`}
       style={{
         background: 'var(--bg)',
         color: 'var(--text)',
         fontFamily: 'system-ui, Arial, sans-serif',
+        fontSize: 'var(--font-base-size)',
       }}
     >
       <input
@@ -366,7 +369,7 @@ export const App: React.FC = () => {
 
               <div>
                 <label className="block font-medium mb-1">Sidebar Default Position</label>
-                <div className="flex gap-4 text-xs">
+                <div className="flex gap-4" style={{ fontSize: 'var(--font-small)' }}>
                   <label className="flex items-center gap-1 cursor-pointer">
                     <input
                       type="radio"
@@ -385,6 +388,43 @@ export const App: React.FC = () => {
                     />
                     <span>Left Side</span>
                   </label>
+                </div>
+              </div>
+
+              <hr style={{ borderColor: 'var(--line)', margin: '12px 0' }} />
+
+              <div>
+                <label className="block font-medium mb-1">Text Size</label>
+                <select
+                  value={settings.textSize || 'normal'}
+                  onChange={(e) => updateSettings((s) => ({ ...s, textSize: e.target.value as any }))}
+                  className="plain-select w-64"
+                >
+                  <option value="normal">Normal (16px base)</option>
+                  <option value="large">Large (18px base)</option>
+                  <option value="extra-large">Extra-large (20px base)</option>
+                </select>
+                <div className="mt-0.5" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
+                  Controls the base font size in the sidebar and popup. Minimum size is always 14px.
+                </div>
+              </div>
+
+              <hr style={{ borderColor: 'var(--line)', margin: '12px 0' }} />
+
+              <div>
+                <label className="block font-medium mb-1">Sidebar Default Width</label>
+                <select
+                  value={settings.sidebarWidth || 440}
+                  onChange={(e) => updateSettings((s) => ({ ...s, sidebarWidth: Number(e.target.value) }))}
+                  className="plain-select w-64"
+                >
+                  <option value={360}>Narrow (360px)</option>
+                  <option value={440}>Medium (440px) — Default</option>
+                  <option value={520}>Wide (520px)</option>
+                  <option value={600}>Extra-wide (600px)</option>
+                </select>
+                <div className="mt-0.5" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
+                  You can also drag the sidebar's edge to resize it at any time. The dragged width is remembered per session.
                 </div>
               </div>
             </div>

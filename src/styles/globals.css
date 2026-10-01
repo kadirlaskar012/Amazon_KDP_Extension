@@ -2,7 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   TYPE SCALE & SIDEBAR WIDTH — single source of truth
+   ============================================================ */
 :root {
+  /* Colors */
   --bg: #ffffff;
   --text: #111111;
   --muted: #555555;
@@ -17,7 +21,21 @@
   --row-hover: #f9f9f9;
   --table-head-bg: #f3f3f3;
   --row-highlight: #f4faf5;
+
+  /* Font-family */
   --font-base: system-ui, Arial, sans-serif;
+  --font-mono: ui-monospace, Consolas, monospace;
+
+  /* ── TYPE SCALE (Normal = default) ── */
+  --font-title: 20px;      /* KDP Niche Finder header, Niche Score line */
+  --font-heading: 18px;    /* Section titles like "Key Metrics", "Score Breakdown" */
+  --font-base-size: 16px;  /* Body text, table cells, labels, inputs */
+  --font-small: 14px;      /* Muted notes, helper text, rate-limit text, footnotes */
+  --font-button: 15px;     /* Buttons, tab labels */
+  --line-height: 1.5;
+
+  /* Sidebar width (default, can be overridden by JS) */
+  --sidebar-width: 440px;
 }
 
 .dark {
@@ -37,30 +55,53 @@
   --row-highlight: #1f2a21;
 }
 
-/* Plain HTML utilitarian resets */
+/* ── TEXT SIZE VARIANTS (applied at root via JS / settings) ── */
+.text-size-large {
+  --font-title: 22px;
+  --font-heading: 20px;
+  --font-base-size: 18px;
+  --font-small: 16px;
+  --font-button: 17px;
+}
+
+.text-size-extra-large {
+  --font-title: 24px;
+  --font-heading: 22px;
+  --font-base-size: 20px;
+  --font-small: 18px;
+  --font-button: 19px;
+}
+
+/* ============================================================
+   BASE RESET
+   ============================================================ */
 body, button, input, select, textarea, table {
   font-family: var(--font-base);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--font-base-size);
+  line-height: var(--line-height);
   color: var(--text);
 }
 
-/* Plain utilitarian button */
+/* ============================================================
+   PLAIN UTILITARIAN BUTTON
+   ============================================================ */
 .plain-btn {
   background-color: var(--btn-bg);
   border: 1px solid var(--btn-border);
   color: var(--btn-text, var(--text));
-  padding: 2px 8px;
+  padding: 4px 10px;
+  min-height: 32px;
   border-radius: 0;
   cursor: pointer;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--font-button);
+  line-height: var(--line-height);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
   box-shadow: none !important;
   transition: none !important;
+  white-space: nowrap;
 }
 .plain-btn:hover {
   background-color: var(--row-hover);
@@ -70,15 +111,25 @@ body, button, input, select, textarea, table {
   cursor: not-allowed;
 }
 
-/* Plain inputs and selects */
+/* compact variant for tight spaces (used in header row, small actions) */
+.plain-btn-sm {
+  padding: 2px 6px;
+  min-height: 26px;
+  font-size: var(--font-small);
+}
+
+/* ============================================================
+   PLAIN INPUTS / SELECTS
+   ============================================================ */
 .plain-input, .plain-select, .plain-textarea {
   background-color: var(--bg);
   border: 1px solid var(--line);
   color: var(--text);
-  padding: 3px 6px;
+  padding: 4px 8px;
+  min-height: 32px;
   border-radius: 0;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--font-base-size);
+  line-height: var(--line-height);
   box-shadow: none !important;
 }
 
@@ -87,31 +138,61 @@ body, button, input, select, textarea, table {
   outline-offset: 1px;
 }
 
-/* Plain utilitarian table */
+/* Checkboxes / radios — minimum touch target */
+input[type="checkbox"], input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--text);
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   PLAIN UTILITARIAN TABLE
+   ============================================================ */
 .plain-table {
   width: 100%;
   border-collapse: collapse;
   border: 1px solid var(--line);
-  font-size: 12px;
+  font-size: var(--font-base-size);
 }
 .plain-table th {
   background-color: var(--table-head-bg);
   border: 1px solid var(--line);
-  padding: 4px 6px;
+  padding: 6px 8px;
   text-align: left;
   font-weight: bold;
   color: var(--text);
+  white-space: nowrap;
 }
 .plain-table td {
   border: 1px solid var(--line);
-  padding: 4px 6px;
+  padding: 6px 8px;
   color: var(--text);
 }
 .plain-table tr:hover td {
   background-color: var(--row-hover);
 }
 
-/* Plain link */
+/* ── Sticky first column for wide tables that scroll ── */
+.table-scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.table-sticky-first th:first-child,
+.table-sticky-first td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background-color: var(--bg);
+}
+.table-sticky-first th:first-child {
+  background-color: var(--table-head-bg);
+}
+
+/* ============================================================
+   PLAIN LINK
+   ============================================================ */
 a, .plain-link {
   color: var(--link);
   text-decoration: underline;
@@ -121,10 +202,12 @@ a:hover, .plain-link:hover {
   text-decoration: underline;
 }
 
-/* Native scrollbars - vertical only, no horizontal */
+/* ============================================================
+   SCROLLBARS
+   ============================================================ */
 ::-webkit-scrollbar {
   width: 6px;
-  height: 0px;
+  height: 4px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg);
@@ -133,11 +216,15 @@ a:hover, .plain-link:hover {
   background: var(--line);
   border-radius: 0px;
 }
+
+/* hide X scrollbar on main sidebar */
 .no-horizontal-scroll {
   overflow-x: hidden !important;
 }
 
-/* Quick search preset chips - Option A: Horizontally scrollable row */
+/* ============================================================
+   QUICK SEARCH PRESET CHIPS — horizontally scrollable row
+   ============================================================ */
 .quick-chips-wrapper {
   position: relative;
   width: 100%;
@@ -152,7 +239,7 @@ a:hover, .plain-link:hover {
   right: 0;
   top: 0;
   bottom: 0;
-  width: 24px;
+  width: 28px;
   pointer-events: none;
   background: linear-gradient(to right, transparent, var(--bg));
   z-index: 2;
@@ -164,16 +251,87 @@ a:hover, .plain-link:hover {
   flex-wrap: nowrap !important;
   gap: 8px !important;
   padding-bottom: 4px !important;
-  padding-right: 24px !important;
+  padding-right: 28px !important;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box !important;
+  align-items: center;
+  font-size: var(--font-small);
   scrollbar-width: none !important; /* Firefox */
   -ms-overflow-style: none !important; /* IE / Edge */
 }
 
 .quick-chips-container::-webkit-scrollbar {
-  display: none !important; /* Chrome / Safari / Edge */
+  display: none !important;
   width: 0 !important;
   height: 0 !important;
+}
+
+/* ============================================================
+   TAB NAVIGATION
+   ============================================================ */
+.tab-btn {
+  font-size: var(--font-button);
+  padding: 6px 10px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  white-space: nowrap;
+  line-height: var(--line-height);
+}
+.tab-btn:hover {
+  color: var(--text);
+}
+.tab-btn.active,
+.tab-btn[aria-selected="true"] {
+  font-weight: bold;
+  color: var(--text);
+  border-bottom-color: var(--text);
+}
+
+/* ============================================================
+   SECTION HEADINGS
+   ============================================================ */
+.section-heading {
+  font-size: var(--font-heading);
+  font-weight: bold;
+  color: var(--text);
+}
+.section-subheading {
+  font-size: var(--font-base-size);
+  font-weight: bold;
+  color: var(--text);
+}
+.text-small {
+  font-size: var(--font-small);
+}
+.text-muted {
+  color: var(--muted);
+}
+
+/* ============================================================
+   MONTH GRID for Seasonality tab
+   ============================================================ */
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 6px;
+}
+
+/* ============================================================
+   DRAG HANDLE for sidebar resize
+   ============================================================ */
+.sidebar-drag-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 1000;
+}
+.sidebar-drag-handle:hover,
+.sidebar-drag-handle.dragging {
+  background-color: var(--line);
 }

@@ -20,15 +20,15 @@ export const FactorBars: React.FC<FactorBarsProps> = ({ breakdown }) => {
 
   return (
     <div className="space-y-1">
-      <div className="font-bold text-xs text-[var(--text)]">
+      <div className="section-subheading">
         Score Breakdown (5 Factors)
       </div>
       <table className="plain-table">
         <thead>
           <tr>
             <th>Factor</th>
-            <th style={{ width: '50px', textAlign: 'right' }}>Points</th>
-            <th style={{ width: '45px', textAlign: 'right' }}>Max</th>
+            <th style={{ width: '60px', textAlign: 'right' }}>Points</th>
+            <th style={{ width: '50px', textAlign: 'right' }}>Max</th>
             <th>Explanation</th>
           </tr>
         </thead>
@@ -36,9 +36,9 @@ export const FactorBars: React.FC<FactorBarsProps> = ({ breakdown }) => {
           {factors.map((f) => (
             <tr key={f.name}>
               <td className="font-bold">{f.name}</td>
-              <td className="text-right font-mono font-semibold">{f.points}</td>
-              <td className="text-right font-mono text-[var(--muted)]">{f.maxPoints}</td>
-              <td className="text-[11px] text-[var(--muted)]">{f.explanation}</td>
+              <td className="text-right font-semibold" style={{ fontFamily: 'var(--font-mono)' }}>{f.points}</td>
+              <td className="text-right" style={{ fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>{f.maxPoints}</td>
+              <td style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>{f.explanation}</td>
             </tr>
           ))}
         </tbody>

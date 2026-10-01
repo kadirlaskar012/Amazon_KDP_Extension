@@ -1,11 +1,10 @@
 // src/components/tabs/OverviewTab.tsx
 // Plain HTML utilitarian Overview tab
+// NOTE: Seasonality block has been moved to the dedicated SeasonalityTab.
 import React, { useMemo } from 'react';
 import type { Book, Settings, NicheScore, KeywordItem } from '../../types';
 import { ScoreGauge } from '../ScoreGauge';
 import { FactorBars } from '../FactorBars';
-import { SeasonalityPredictor } from '../SeasonalityPredictor';
-import { analyzeSeasonality } from '../../services/seasonality';
 import { isOpportunity } from '../../services/weakCompetitor';
 import { estimateNicheRevenue } from '../../services/salesEstimator';
 
@@ -64,43 +63,33 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   // 5. Opportunity books count
   const opportunityCount = top10.filter((b) => isOpportunity(b, settings.thresholds)).length;
 
-  // 6. Seasonality & Holiday Trend Analysis
-  const seasonalityReport = useMemo(() => {
-    return analyzeSeasonality({
-      query,
-      books,
-      keywords,
-      geo: settings.trends?.geo || 'US',
-    });
-  }, [query, books, keywords, settings.trends?.geo]);
-
   return (
-    <div className="p-2 space-y-2.5 text-xs text-[var(--text)]">
-      {/* 1. Score Readout: plain text, colored with status text color only */}
+    <div className="p-2 space-y-2.5" style={{ color: 'var(--text)' }}>
+      {/* 1. Score Readout */}
       <div className="p-2 border border-[var(--line)] bg-[var(--bg)]">
         <ScoreGauge score={score} query={query} date={date} />
-        <div className="text-[11px] text-[var(--muted)] mt-1 pt-1 border-t border-[var(--line)]">
+        <div
+          className="mt-1 pt-1 border-t border-[var(--line)]"
+          style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}
+        >
           Score is a rule-based estimate from the data shown, not a guarantee of sales.
         </div>
       </div>
 
-      {/* 2. Seasonality & Holiday Trend Predictor */}
-      <SeasonalityPredictor report={seasonalityReport} />
-
-      {/* 3. Verdict: one plain line of text in a box with 1px solid #cccccc border, no background color */}
+      {/* 2. Verdict */}
       {score?.verdict && (
-        <div className="p-2 border border-[var(--line)] text-xs font-medium">
+        <div className="p-2 border border-[var(--line)] font-medium">
           {score.verdict}
         </div>
       )}
 
-      {/* 4. Warnings box if data is weak */}
+      {/* 3. Warnings box if data is weak */}
       {score?.warnings && score.warnings.length > 0 && (
         <div className="p-2 border border-[var(--line)] space-y-1">
-          <div className="font-bold text-[var(--warn)]">
+          <div className="font-bold" style={{ color: 'var(--warn)' }}>
             Data Quality Notice
           </div>
-          <ul className="list-disc list-inside space-y-0.5 text-[11px] text-[var(--muted)]">
+          <ul className="list-disc list-inside space-y-0.5" style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
             {score.warnings.map((w, idx) => (
               <li key={idx}>{w}</li>
             ))}
@@ -108,11 +97,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
       )}
 
-      {/* 5. Stat Cards replaced with a simple 2-column table (Label | Value) */}
+      {/* 4. Key Metrics table */}
       <div className="space-y-1">
-        <div className="font-bold text-xs">
-          Niche Key Metrics (Top 10)
-        </div>
+        <div className="section-subheading">Niche Key Metrics (Top 10)</div>
         <table className="plain-table">
           <thead>
             <tr>
@@ -123,19 +110,19 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           <tbody>
             <tr>
               <td>Avg BSR (Top 10)</td>
-              <td className="text-right font-mono font-bold">
+              <td className="text-right font-bold" style={{ fontFamily: 'var(--font-mono)' }}>
                 {avgBsr !== null ? `#${avgBsr.toLocaleString()}` : 'N/A'}
               </td>
             </tr>
             <tr>
               <td>Median Reviews</td>
-              <td className="text-right font-mono">
+              <td className="text-right" style={{ fontFamily: 'var(--font-mono)' }}>
                 {medianReviews !== null ? medianReviews.toLocaleString() : 'N/A'}
               </td>
             </tr>
             <tr>
               <td>Avg Price</td>
-              <td className="text-right font-mono">
+              <td className="text-right" style={{ fontFamily: 'var(--font-mono)' }}>
                 {avgPrice !== null ? `$${avgPrice.toFixed(2)}` : 'N/A'}
               </td>
             </tr>
@@ -148,16 +135,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   Opportunities (Top 10)
                 </button>
               </td>
-              <td className="text-right font-mono font-bold text-[var(--good)]">
+              <td className="text-right font-bold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--good)' }}>
                 {opportunityCount} / {top10.length}
               </td>
             </tr>
             <tr>
               <td>
                 Estimated niche monthly revenue{' '}
-                <span className="text-[10px] text-[var(--muted)]">(rough estimate)</span>
+                <span style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>(rough estimate)</span>
               </td>
-              <td className="text-right font-mono font-bold text-[var(--good)]">
+              <td className="text-right font-bold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--good)' }}>
                 ~${nicheRev.totalMonthlyRoyalty.value.toLocaleString()}/mo
               </td>
             </tr>

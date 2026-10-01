@@ -1,6 +1,6 @@
 // src/components/BsrChart.tsx
 // Plain utilitarian LineChart for BSR history with log scale toggle and review count overlay
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -25,6 +25,8 @@ export const BsrChart: React.FC<BsrChartProps> = ({
 }) => {
   const [useLogScale, setUseLogScale] = useState<boolean>(false);
   const [showReviewsLine, setShowReviewsLine] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isReady, setIsReady] = useState<boolean>(false);
 
   // Format chart data points
   const chartData = useMemo(() => {
@@ -43,6 +45,40 @@ export const BsrChart: React.FC<BsrChartProps> = ({
         };
       });
   }, [history]);
+
+  // Ensure chart only measures and renders when the parent container has positive dimensions
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const checkSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          setIsReady(true);
+          return true;
+        }
+      }
+      return false;
+    };
+
+    if (checkSize()) return;
+
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      const observer = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+            setIsReady(true);
+            observer.disconnect();
+          }
+        }
+      });
+      observer.observe(containerRef.current);
+      return () => observer.disconnect();
+    } else {
+      const timer = setTimeout(() => setIsReady(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   if (chartData.length === 0) {
     return (
@@ -86,10 +122,26 @@ export const BsrChart: React.FC<BsrChartProps> = ({
         </div>
       </div>
 
-      {/* Chart Canvas */}
-      <div style={{ width: '100%', height }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 8, right: 10, left: -15, bottom: 0 }}>
+      {/* Chart Canvas with explicit CSS height and layout safety fallback */}
+      <div
+        ref={containerRef}
+        style={{ width: '100%', height: `${height}px`, minHeight: `${height}px` }}
+        className="relative w-full overflow-hidden"
+      >
+        {!isReady ? (
+          <div
+            style={{ width: '100%', height: `${height}px` }}
+            className="flex items-center justify-center text-xs text-[var(--muted)]"
+          />
+        ) : (
+          <ResponsiveContainer
+            width="100%"
+            height={height}
+            minWidth={200}
+            minHeight={height}
+            initialDimension={{ width: 340, height }}
+          >
+            <LineChart data={chartData} margin={{ top: 8, right: 10, left: -15, bottom: 0 }}>
             <CartesianGrid strokeDasharray="2 2" stroke="#cccccc" opacity={0.5} />
             <XAxis
               dataKey="displayDate"
@@ -159,6 +211,7 @@ export const BsrChart: React.FC<BsrChartProps> = ({
             )}
           </LineChart>
         </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

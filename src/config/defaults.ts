@@ -87,6 +87,8 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   sidebarPosition: 'right',
   sidebarDefaultOpen: true,
+  sidebarWidth: 440,
+  textSize: 'normal',
   pauseAllFetching: false,
   maxFetchesPerSearch: 20,
   cacheDurationHours: 24,

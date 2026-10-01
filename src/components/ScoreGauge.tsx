@@ -35,10 +35,13 @@ export const ScoreGauge: React.FC<ScoreGaugeProps> = ({ score, query, date }) =>
 
   return (
     <div className="space-y-0.5">
-      <div className={`font-bold text-sm ${colorStyle}`}>
+      <div
+        className={`font-bold ${colorStyle}`}
+        style={{ fontSize: 'var(--font-title)' }}
+      >
         Niche Score: {label === 'insufficient' ? 'N/A' : `${total} / 100`} ({labelText})
       </div>
-      <div className="text-xs text-[var(--muted)]">
+      <div style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
         Based on {booksAnalyzed} books | search: {query || 'Books'} | {formattedDate}
       </div>
     </div>

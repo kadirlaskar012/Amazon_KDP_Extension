@@ -10,6 +10,22 @@ interface SearchProgressProps {
   onRefresh: () => void;
 }
 
+/**
+ * Formats `currentAsin` for display in the fetch status line.
+ * Accepts a raw ASIN (10 alpha-numeric chars) and returns a short display like "(B0XY123456)".
+ * Guards against accidentally printing raw epoch timestamps or any value that is purely numeric
+ * (which would look like "1577156145" and confuse users).
+ *
+ * @param currentAsin - The ASIN currently being fetched, or undefined
+ */
+export function formatFetchHint(currentAsin: string | undefined): string {
+  if (!currentAsin) return '';
+  // A valid ASIN is 10 chars, starts with a letter (B or similar). Reject pure numbers.
+  const isRawTimestamp = /^\d{8,}$/.test(currentAsin.trim());
+  if (isRawTimestamp) return ''; // swallow: never print raw timestamps
+  return ` (${currentAsin.toUpperCase().slice(0, 10)})`;
+}
+
 export const SearchProgress: React.FC<SearchProgressProps> = ({
   status,
   onPause,
@@ -24,32 +40,36 @@ export const SearchProgress: React.FC<SearchProgressProps> = ({
     return null;
   }
 
+  const fetchHint = formatFetchHint(currentAsin);
+
   const statusText = isComplete
     ? `Fetched ${total}/${total} details`
     : isRunning
-    ? `Fetched ${current}/${total} details${currentAsin ? ` (${currentAsin})` : ''}`
+    ? `Fetched ${current}/${total} details${fetchHint}`
     : isPaused
     ? `Paused (${current}/${total})`
     : `Ready (${total} books)`;
 
   return (
-    <div className="px-2.5 py-1.5 border-b border-[var(--line)] bg-[var(--bg)] text-xs space-y-1">
-      <div className="flex items-center justify-between gap-2">
+    <div className="px-2.5 py-1.5 border-b border-[var(--line)] bg-[var(--bg)] space-y-1"
+      style={{ fontSize: 'var(--font-small)' }}
+    >
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <span className="font-medium text-[var(--text)]">
           {statusText}
         </span>
         <div className="flex items-center gap-1.5 shrink-0">
           {isRunning && !isPaused && (
-            <button onClick={onPause} className="plain-btn" title="Pause fetch">
+            <button onClick={onPause} className="plain-btn plain-btn-sm" title="Pause fetch">
               Pause
             </button>
           )}
           {isPaused && (
-            <button onClick={onResume} className="plain-btn" title="Resume fetch">
+            <button onClick={onResume} className="plain-btn plain-btn-sm" title="Resume fetch">
               Resume
             </button>
           )}
-          <button onClick={onRefresh} className="plain-btn" title="Refresh/rescan search">
+          <button onClick={onRefresh} className="plain-btn plain-btn-sm" title="Refresh/rescan search">
             Refresh
           </button>
         </div>
@@ -63,7 +83,7 @@ export const SearchProgress: React.FC<SearchProgressProps> = ({
         />
       </div>
 
-      <div className="text-[11px] text-[var(--muted)]">
+      <div style={{ fontSize: 'var(--font-small)', color: 'var(--muted)' }}>
         Rate limit: 1 req / 2-3s
       </div>
     </div>

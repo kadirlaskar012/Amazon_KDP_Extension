@@ -7,6 +7,7 @@ import { BooksTab } from './tabs/BooksTab';
 import { KeywordsTab } from './tabs/KeywordsTab';
 import { CategoriesTab } from './tabs/CategoriesTab';
 import { SpecsTab } from './tabs/SpecsTab';
+import { SeasonalityTab } from './tabs/SeasonalityTab';
 import { ReviewsTab } from './tabs/ReviewsTab';
 import { WatchlistTab } from './tabs/WatchlistTab';
 import { IdeasTab } from './tabs/IdeasTab';
@@ -111,10 +112,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       const saved = localStorage.getItem('kdp_sidebar_width');
       if (saved) {
         const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed >= 380 && parsed <= 900) return parsed;
+        if (!isNaN(parsed) && parsed >= 360 && parsed <= 900) return parsed;
       }
     }
-    return 380;
+    // Default from DEFAULT_SETTINGS.sidebarWidth (440) — localStorage takes priority
+    return 440;
   });
   const [isResizing, setIsResizing] = useState(false);
 
@@ -353,8 +355,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className={isDarkMode ? 'dark' : ''}>
       <aside
-        style={{ width: `${sidebarWidth}px`, maxWidth: '100vw' }}
-        className={`fixed top-0 bottom-0 bg-[var(--bg)] text-[var(--text)] flex flex-col z-[999999] text-[13px] leading-[1.4] select-text no-horizontal-scroll ${
+        style={{ width: `${sidebarWidth}px`, maxWidth: '100vw', '--sidebar-width': `${sidebarWidth}px` } as React.CSSProperties}
+        className={`fixed top-0 bottom-0 bg-[var(--bg)] text-[var(--text)] flex flex-col z-[999999] select-text no-horizontal-scroll ${
+          settings.textSize === 'large' ? 'text-size-large' : settings.textSize === 'extra-large' ? 'text-size-extra-large' : ''
+        } ${
           isLeft ? 'left-0 border-r border-[var(--line)]' : 'right-0 border-l border-[var(--line)]'
         }`}
       >
@@ -394,7 +398,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onChange={handleSelectSnapshot}
                 defaultValue=""
                 title="Past search history"
-                className="plain-select text-[11px] py-0.5 px-1 max-w-[85px]"
+                className="plain-select"
+                style={{ minWidth: '110px', maxWidth: '160px', fontSize: 'var(--font-small)' }}
               >
                 <option value="" disabled>
                   History ({snapshots.length})
@@ -718,6 +723,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </ErrorBoundary>
               </div>
 
+              <div className={activeTab === 'seasonality' ? 'block' : 'hidden'}>
+                <ErrorBoundary name="Seasonality Tab">
+                  {activeTab === 'seasonality' && (
+                    <SeasonalityTab
+                      initialQuery={query}
+                      snapshot={currentSnapshot}
+                      settings={settings}
+                    />
+                  )}
+                </ErrorBoundary>
+              </div>
+
               <div className={activeTab === 'reviews' ? 'block p-2' : 'hidden'}>
                 <ErrorBoundary name="Reviews Tab">
                   <ReviewsTab
@@ -730,18 +747,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               <div className={activeTab === 'watchlist' ? 'block p-2' : 'hidden'}>
                 <ErrorBoundary name="Watchlist Tab">
-                  <WatchlistTab
-                    onCaptchaEncountered={() => onPauseQueue()}
-                  />
+                  {activeTab === 'watchlist' && (
+                    <WatchlistTab
+                      onCaptchaEncountered={() => onPauseQueue()}
+                    />
+                  )}
                 </ErrorBoundary>
               </div>
 
               <div className={activeTab === 'ideas' ? 'block p-2' : 'hidden'}>
                 <ErrorBoundary name="AI Ideas Tab">
-                  <IdeasTab
-                    snapshot={currentSnapshot}
-                    onUpdateSnapshotIdeas={handleUpdateSnapshotIdeas}
-                  />
+                  {activeTab === 'ideas' && (
+                    <IdeasTab
+                      snapshot={currentSnapshot}
+                      onUpdateSnapshotIdeas={handleUpdateSnapshotIdeas}
+                    />
+                  )}
                 </ErrorBoundary>
               </div>
             </div>
@@ -750,11 +771,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Health Check diagnostic banner */}
         {healthReport && (
-          <div className="px-2 py-1 bg-[var(--table-head-bg)] border-t border-[var(--line)] text-[11px] flex items-center justify-between text-[var(--text)]">
+          <div
+            className="px-2 py-1 bg-[var(--table-head-bg)] border-t border-[var(--line)] flex items-center justify-between text-[var(--text)]"
+            style={{ fontSize: 'var(--font-small)' }}
+          >
             <span>{healthReport}</span>
             <button
               onClick={() => setHealthReport(null)}
-              className="plain-btn text-[10px] px-1 py-0 ml-1"
+              className="plain-btn plain-btn-sm ml-1"
             >
               ✕
             </button>
@@ -762,7 +786,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
 
         {/* Footer: One plain line: "KDP Niche Finder | [Health] | Score: 89/100" */}
-        <footer className="px-2 py-1 border-t border-[var(--line)] bg-[var(--bg)] text-[11px] text-[var(--muted)] flex items-center justify-between shrink-0">
+        <footer
+          className="px-2 py-1 border-t border-[var(--line)] bg-[var(--bg)] text-[var(--muted)] flex items-center justify-between shrink-0"
+          style={{ fontSize: 'var(--font-small)' }}
+        >
           <div className="flex items-center gap-1.5">
             <span className="font-bold text-[var(--text)]">KDP Niche Finder</span>
             <span>|</span>
@@ -803,7 +830,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }
               }}
               title="Test if Amazon selectors match current page"
-              className="plain-btn text-[10px] px-1.5 py-0.5"
+              className="plain-btn plain-btn-sm"
             >
               Health
             </button>

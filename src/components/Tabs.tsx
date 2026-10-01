@@ -8,6 +8,7 @@ export type TabId =
   | 'keywords'
   | 'categories'
   | 'specs'
+  | 'seasonality'
   | 'reviews'
   | 'ideas'
   | 'watchlist';
@@ -25,25 +26,29 @@ export const Tabs: React.FC<TabsProps> = ({ activeTab, onTabChange, booksCount }
     { id: 'keywords', label: 'Keywords' },
     { id: 'categories', label: 'Categories' },
     { id: 'specs', label: 'Specs' },
+    { id: 'seasonality', label: 'Seasonality' },
     { id: 'reviews', label: 'Reviews' },
     { id: 'ideas', label: 'Ideas' },
     { id: 'watchlist', label: 'Watchlist' },
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2.5 py-1.5 border-b border-[var(--line)] bg-[var(--bg)] text-xs select-none">
+    <div
+      className="flex flex-wrap items-center gap-x-1 gap-y-0.5 px-2 py-1 border-b border-[var(--line)] bg-[var(--bg)] select-none"
+      role="tablist"
+    >
       {tabs.map((tab, idx) => {
         const isActive = activeTab === tab.id;
         return (
           <React.Fragment key={tab.id}>
-            {idx > 0 && <span className="text-[var(--line)]">|</span>}
+            {idx > 0 && (
+              <span style={{ color: 'var(--line)', fontSize: 'var(--font-small)' }}>|</span>
+            )}
             <button
+              role="tab"
+              aria-selected={isActive}
               onClick={() => onTabChange(tab.id)}
-              className={`py-0.5 cursor-pointer text-xs ${
-                isActive
-                  ? 'font-bold text-[var(--text)] border-b-2 border-[var(--text)]'
-                  : 'text-[var(--muted)] hover:text-[var(--text)]'
-              }`}
+              className={`tab-btn ${isActive ? 'active' : ''}`}
             >
               {tab.label}
             </button>

@@ -196,20 +196,22 @@ export const App: React.FC = () => {
 
   return (
     <div
-      className={`w-[400px] min-h-[500px] max-h-[580px] flex flex-col text-[13px] leading-[1.4] select-text no-horizontal-scroll ${
+      className={`w-[400px] min-h-[500px] max-h-[580px] flex flex-col select-text no-horizontal-scroll ${
         isDarkMode ? 'dark' : ''
       }`}
       style={{
         background: 'var(--bg)',
         color: 'var(--text)',
         fontFamily: 'system-ui, Arial, sans-serif',
+        fontSize: 'var(--font-base-size)',
+        lineHeight: 'var(--line-height)',
       }}
     >
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          className="fixed top-2 right-2 z-50 px-2 py-1 text-xs border"
-          style={{ background: 'var(--bg)', color: 'var(--text)', borderColor: 'var(--line)', borderRadius: '2px' }}
+          className="fixed top-2 right-2 z-50 px-2 py-1 border"
+          style={{ background: 'var(--bg)', color: 'var(--text)', borderColor: 'var(--line)', borderRadius: '2px', fontSize: 'var(--font-small)' }}
         >
           {toastMessage}
         </div>
@@ -220,7 +222,7 @@ export const App: React.FC = () => {
         className="px-2 py-1.5 border-b flex items-center justify-between shrink-0"
         style={{ borderColor: 'var(--line)' }}
       >
-        <div className="font-bold text-[14px]">KDP Niche Finder</div>
+        <div className="font-bold" style={{ fontSize: 'var(--font-heading)' }}>KDP Niche Finder</div>
 
         <div className="flex items-center gap-1">
           <button

@@ -2,12 +2,13 @@
 // AI Book Idea Generator tab: builds prompt payloads, calls Google Gemini via background,
 // displays structured idea cards, supports iterative refinement, and manages saved ideas.
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { SearchSnapshot, BookIdea, AiIdeasResponse, Settings } from '../../types';
 import { buildPromptPayload } from '../../services/aiPrompt';
 import { IdeaCard } from '../IdeaCard';
 import { getSavedIdeas, saveIdea, removeSavedIdea } from '../../storage/ideas';
 import { getSettings } from '../../storage/settings';
+import { extractAllGeminiKeys } from '../../services/aiIdeas';
 
 interface IdeasTabProps {
   snapshot?: SearchSnapshot | null;
@@ -28,13 +29,19 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
   const [tokenUsage, setTokenUsage] = useState<{ input_tokens?: number; output_tokens?: number } | null>(null);
   const [savedSearchQuery, setSavedSearchQuery] = useState<string>('');
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [isLoadingSettings, setIsLoadingSettings] = useState<boolean>(true);
 
-  // Load saved ideas and settings
+  // Load saved ideas and settings asynchronously
   const loadSaved = async () => {
-    const list = await getSavedIdeas();
-    setSavedIdeas(list);
-    const s = await getSettings();
-    setSettings(s);
+    try {
+      const [list, s] = await Promise.all([getSavedIdeas(), getSettings()]);
+      setSavedIdeas(list);
+      setSettings(s);
+    } catch (err) {
+      console.warn('[IdeasTab] Failed to load settings or saved ideas:', err);
+    } finally {
+      setIsLoadingSettings(false);
+    }
   };
 
   useEffect(() => {
@@ -43,6 +50,16 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
       setIdeas(snapshot.ideas);
     }
   }, [snapshot]);
+
+  // Determine whether an API key is configured without racing storage loading
+  const hasConfiguredKey = useMemo(() => {
+    if (isLoadingSettings || !settings) return true; // While storage is reading, avoid false negative warning
+    const keys = extractAllGeminiKeys({
+      geminiApiKey: settings.geminiApiKey,
+      geminiApiKeys: settings.geminiApiKeys,
+    });
+    return keys.length > 0;
+  }, [isLoadingSettings, settings]);
 
   // Data availability checks
   const hasBooks = Boolean(snapshot?.books && snapshot.books.length > 0);
@@ -58,6 +75,24 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
     setShowRaw(false);
 
     try {
+      // Ensure settings are available before evaluating API key presence
+      let currentSettings = settings;
+      if (!currentSettings) {
+        currentSettings = await getSettings();
+        setSettings(currentSettings);
+      }
+
+      const keys = extractAllGeminiKeys({
+        geminiApiKey: currentSettings?.geminiApiKey,
+        geminiApiKeys: currentSettings?.geminiApiKeys,
+      });
+
+      if (keys.length === 0) {
+        setErrorMessage('Please add your Google Gemini API key in Options or Sidebar Settings to generate AI book ideas.');
+        setIsGenerating(false);
+        return;
+      }
+
       let promptText = buildPromptPayload(snapshot, userNotes);
       if (refineText && refineText.trim()) {
         promptText += `\n\n=== REFINEMENT INSTRUCTION ===\nRefine the previously generated ideas with this specific direction: "${refineText.trim()}". Return updated, high-value ideas conforming strictly to the required JSON schema.`;
@@ -98,7 +133,7 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
         onUpdateSnapshotIdeas(generated);
       }
     } catch (err: any) {
-      console.error('[IdeasTab] Generation error:', err);
+      console.warn('[IdeasTab] Generation notice:', err?.message || err);
       setErrorMessage(err.message || 'Error occurred while contacting AI service.');
     } finally {
       setIsGenerating(false);
@@ -221,7 +256,7 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
             {/* Action Row */}
             <div className="flex items-center justify-between gap-1 flex-wrap">
               <div className="text-xs text-[var(--warn)]">
-                {!(settings?.geminiApiKey || (settings?.geminiApiKeys && settings.geminiApiKeys.length > 0)) && (
+                {!isLoadingSettings && !hasConfiguredKey && (
                   <span>Add Gemini API key in Settings to generate</span>
                 )}
               </div>
