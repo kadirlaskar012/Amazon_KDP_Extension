@@ -88,6 +88,7 @@ export interface SearchSnapshot {
   specs?: SpecsSummary;
   reviewGap?: ReviewGapAnalysis;
   ideas?: BookIdea[];
+  seasonality?: SeasonalityReport;
 }
 
 export interface KeywordWeights {
@@ -436,6 +437,35 @@ export interface AiIdeasResponse {
 export interface TrendsConfig {
   geo: string;
   baseUrl: string;
+}
+
+export type SeasonalityType =
+  | 'evergreen'
+  | 'holiday_spike'
+  | 'seasonal_wave'
+  | 'annual_event';
+
+export type DemandIntensity = 'Low' | 'Med' | 'High' | 'Peak';
+
+export interface MonthDemand {
+  month: string; // 'Jan', 'Feb', ...
+  monthIndex: number; // 0-11
+  intensity: DemandIntensity;
+  score: number; // 0-100 relative index
+}
+
+export interface SeasonalityReport {
+  type: SeasonalityType;
+  typeLabel: string;
+  primaryEvent?: string;
+  peakMonths: string;
+  recommendedLaunchWindow: string;
+  launchUrgency: 'optimal_now' | 'preparation' | 'late' | 'anytime';
+  urgencyAdvice: string;
+  evergreenScore: number; // 0 - 100
+  monthlyHeatmap: MonthDemand[];
+  trendsUrl: string;
+  signalsDetected: string[];
 }
 
 export interface ExportSettings {

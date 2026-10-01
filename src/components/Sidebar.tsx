@@ -671,6 +671,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     books={books}
                     score={currentScore}
                     settings={settings}
+                    keywords={currentSnapshot?.keywords}
                     onGoToBooks={() => setActiveTab('books')}
                   />
                 </ErrorBoundary>

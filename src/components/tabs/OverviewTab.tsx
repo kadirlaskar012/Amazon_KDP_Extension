@@ -1,9 +1,11 @@
 // src/components/tabs/OverviewTab.tsx
 // Plain HTML utilitarian Overview tab
-import React from 'react';
-import type { Book, Settings, NicheScore } from '../../types';
+import React, { useMemo } from 'react';
+import type { Book, Settings, NicheScore, KeywordItem } from '../../types';
 import { ScoreGauge } from '../ScoreGauge';
 import { FactorBars } from '../FactorBars';
+import { SeasonalityPredictor } from '../SeasonalityPredictor';
+import { analyzeSeasonality } from '../../services/seasonality';
 import { isOpportunity } from '../../services/weakCompetitor';
 import { estimateNicheRevenue } from '../../services/salesEstimator';
 
@@ -13,6 +15,7 @@ interface OverviewTabProps {
   score?: NicheScore;
   settings: Settings;
   date?: number;
+  keywords?: KeywordItem[];
   onGoToBooks: () => void;
 }
 
@@ -22,6 +25,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   score,
   settings,
   date,
+  keywords = [],
   onGoToBooks,
 }) => {
   const top10 = books.slice(0, 10);
@@ -60,6 +64,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   // 5. Opportunity books count
   const opportunityCount = top10.filter((b) => isOpportunity(b, settings.thresholds)).length;
 
+  // 6. Seasonality & Holiday Trend Analysis
+  const seasonalityReport = useMemo(() => {
+    return analyzeSeasonality({
+      query,
+      books,
+      keywords,
+      geo: settings.trends?.geo || 'US',
+    });
+  }, [query, books, keywords, settings.trends?.geo]);
+
   return (
     <div className="p-2 space-y-2.5 text-xs text-[var(--text)]">
       {/* 1. Score Readout: plain text, colored with status text color only */}
@@ -70,14 +84,17 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
       </div>
 
-      {/* 2. Verdict: one plain line of text in a box with 1px solid #cccccc border, no background color */}
+      {/* 2. Seasonality & Holiday Trend Predictor */}
+      <SeasonalityPredictor report={seasonalityReport} />
+
+      {/* 3. Verdict: one plain line of text in a box with 1px solid #cccccc border, no background color */}
       {score?.verdict && (
         <div className="p-2 border border-[var(--line)] text-xs font-medium">
           {score.verdict}
         </div>
       )}
 
-      {/* 3. Warnings box if data is weak */}
+      {/* 4. Warnings box if data is weak */}
       {score?.warnings && score.warnings.length > 0 && (
         <div className="p-2 border border-[var(--line)] space-y-1">
           <div className="font-bold text-[var(--warn)]">
@@ -91,7 +108,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
       )}
 
-      {/* 4. Stat Cards replaced with a simple 2-column table (Label | Value) */}
+      {/* 5. Stat Cards replaced with a simple 2-column table (Label | Value) */}
       <div className="space-y-1">
         <div className="font-bold text-xs">
           Niche Key Metrics (Top 10)
