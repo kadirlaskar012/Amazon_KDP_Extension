@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react';
 import type { SearchSnapshot, CategoryStat, Settings } from '../../types';
 import { analyzeCategories, getRecommendedCategoryPicks, checkCategoryDifficultyLive } from '../../services/categoryAnalysis';
 import { DifficultyBadge } from '../DifficultyBadge';
+import { CopyButton } from '../CopyButton';
+import { decodeHtmlEntities, formatCleanCategoryPath } from '../../utils/htmlEntities';
 
 interface CategoriesTabProps {
   snapshot?: SearchSnapshot | null;
@@ -32,7 +34,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
 
   const [categories, setCategories] = useState<CategoryStat[]>(initialCategories);
   const [checkingUrl, setCheckingUrl] = useState<string | null>(null);
-  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Sync if snapshot changes
   React.useEffect(() => {
@@ -52,15 +54,15 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
     return getRecommendedCategoryPicks(categories, 3);
   }, [categories]);
 
-  const showCopyToast = (msg: string) => {
-    setCopyFeedback(msg);
-    setTimeout(() => setCopyFeedback(null), 2500);
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 2500);
   };
 
   // Handle checking difficulty for a category
   const handleCheckDifficulty = async (cat: CategoryStat) => {
     if (!cat.url) {
-      showCopyToast('No category link available to check.');
+      showToast('No category link available to check.');
       return;
     }
     if (checkingUrl) return;
@@ -86,68 +88,28 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
       if (onUpdateSnapshotCategories) {
         onUpdateSnapshotCategories(updatedList);
       }
-      showCopyToast(`Updated difficulty for ${cat.name}`);
+      showToast(`Updated difficulty for ${cat.name}`);
     } catch (err: any) {
       if (err.message === 'CAPTCHA_DETECTED') {
         if (onCaptchaEncountered) onCaptchaEncountered(cat.url);
       } else {
         console.warn('[CategoriesTab] Failed checking difficulty:', err);
-        showCopyToast('Could not fetch category page.');
+        showToast('Could not fetch category page.');
       }
     } finally {
       setCheckingUrl(null);
     }
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    showCopyToast(label);
-  };
-
-  const handleCopyTop3KdpPaths = () => {
-    if (recommendedPicks.length === 0) return;
-    const text = recommendedPicks
-      .map((p, i) => `${i + 1}. ${p.category.path || p.category.name}`)
-      .join('\n');
-    copyToClipboard(text, 'Copied Top 3 KDP Category Paths');
-  };
-
-  const handleCopyTsv = () => {
-    if (categories.length === 0) return;
-    const headers = [
-      'Category Name',
-      'KDP Category Path',
-      'Books in Top 10',
-      'Best Rank',
-      'Average Rank',
-      'Sales Opportunity',
-      'Target #1 BSR',
-      'Difficulty',
-      'Category URL',
-    ];
-
-    const rows = categories.map((c) => [
-      c.name,
-      c.path || c.name,
-      c.bookCount,
-      `#${c.bestRankAmongTopBooks}`,
-      `#${c.avgRank}`,
-      c.salesOpportunityLevel ? c.salesOpportunityLevel.toUpperCase() : 'N/A',
-      c.bestSellerTargetBsr ? `#${c.bestSellerTargetBsr.toLocaleString()}` : 'N/A',
-      c.difficulty || 'Unchecked',
-      c.url,
-    ]);
-
-    const tsv = [headers.join('\t'), ...rows.map((r) => r.join('\t'))].join('\n');
-    copyToClipboard(tsv, 'Copied categories table as TSV');
-  };
-
   return (
     <div className="space-y-3 text-[13px] leading-[1.4] no-horizontal-scroll">
-      {/* Toast Notification */}
-      {copyFeedback && (
-        <div className="p-1 border border-[var(--line)] bg-[var(--bg)] text-[var(--good)] text-xs">
-          {copyFeedback}
+      {/* Floating Toast Notification (prevents layout shift) */}
+      {toastMessage && (
+        <div
+          className="fixed top-2 right-2 z-50 px-2 py-1 text-xs border"
+          style={{ background: 'var(--bg)', color: 'var(--text)', borderColor: 'var(--line)', borderRadius: '2px' }}
+        >
+          {toastMessage}
         </div>
       )}
 
@@ -163,26 +125,30 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
                 Target picks to maximize visibility and win the #1 Best Seller badge.
               </div>
             </div>
-            <button
-              onClick={handleCopyTop3KdpPaths}
+            <CopyButton
+              text={() =>
+                recommendedPicks
+                  .map((p, i) => `${i + 1}. ${formatCleanCategoryPath(p.category.path || p.category.name)}`)
+                  .join('\n')
+              }
+              defaultLabel="Copy Top 3 Paths"
+              copiedLabel="Copied Top 3!"
               className="plain-btn text-xs px-2 py-0.5"
               title="Copy all 3 category paths formatted for KDP metadata"
-            >
-              Copy Top 3 Paths
-            </button>
+            />
           </div>
 
           <div className="space-y-1.5">
             {recommendedPicks.map(({ category, reason, badgeLabel, strategy }, idx) => (
               <div
-                key={category.name}
-                className="border border-[var(--line)] p-1.5 space-y-1 bg-[var(--bg)]"
+                key={category.url || category.name || `pick-${idx}`}
+                className="border border-[var(--line)] p-2 space-y-1 bg-[var(--bg)]"
               >
-                <div className="flex items-start justify-between gap-1">
+                <div className="flex items-start justify-between gap-1.5">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="font-bold text-xs">
-                        [{badgeLabel || `#${idx + 1}`}] {category.name}
+                        [{badgeLabel || `#${idx + 1}`}] {decodeHtmlEntities(category.name)}
                       </span>
                       {category.salesOpportunityLevel === 'high' ? (
                         <span className="text-[11px] font-bold text-[var(--good)]">
@@ -202,29 +168,37 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
                     </div>
 
                     {category.path && (
-                      <div className="text-[11px] font-mono text-[var(--muted)] mt-0.5 flex items-center justify-between gap-1">
-                        <span className="truncate" title={category.path}>
-                          Path: {category.path}
-                        </span>
-                        <button
-                          onClick={() => copyToClipboard(category.path || category.name, 'Copied KDP Category Path')}
-                          className="plain-btn text-[10px] px-1 py-0 shrink-0"
+                      <div className="text-[11px] font-mono text-[var(--muted)] mt-1 flex items-start justify-between gap-1.5">
+                        <span
+                          className="whitespace-normal break-words flex-1 leading-snug"
+                          title={formatCleanCategoryPath(category.path)}
                         >
-                          Copy
-                        </button>
+                          Path: {formatCleanCategoryPath(category.path)}
+                        </span>
+                        <CopyButton
+                          text={() => formatCleanCategoryPath(category.path || category.name)}
+                          defaultLabel="Copy"
+                          copiedLabel="Copied!"
+                          className="plain-btn text-[10px] px-1.5 py-0.5 shrink-0"
+                          title="Copy KDP category path"
+                        />
                       </div>
                     )}
 
                     {strategy && (
-                      <div className="text-[11px] text-[var(--good)]">
-                        Target strategy: {strategy}
+                      <div className="text-[11px] text-[var(--good)] mt-0.5">
+                        Target strategy: {decodeHtmlEntities(strategy)}
                       </div>
                     )}
-                    <div className="text-[11px] text-[var(--muted)]">{reason}</div>
+                    <div className="text-[11px] text-[var(--muted)] mt-0.5">
+                      {decodeHtmlEntities(reason)}
+                    </div>
                   </div>
-                  <div className="shrink-0">
-                    <DifficultyBadge difficulty={category.difficulty} size="sm" />
-                  </div>
+                  {category.difficulty ? (
+                    <div className="shrink-0">
+                      <DifficultyBadge difficulty={category.difficulty} size="sm" />
+                    </div>
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -239,60 +213,96 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
         </span>
         {categories.length > 0 && (
           <div className="flex items-center gap-1">
-            <button
-              onClick={handleCopyTop3KdpPaths}
+            <CopyButton
+              text={() =>
+                categories
+                  .map((c, i) => `${i + 1}. ${formatCleanCategoryPath(c.path || c.name)}`)
+                  .join('\n')
+              }
+              defaultLabel="Copy Paths"
+              copiedLabel="Copied All!"
               className="plain-btn text-xs px-2 py-0.5"
-            >
-              Copy Paths
-            </button>
-            <button
-              onClick={handleCopyTsv}
+              title="Copy all category paths"
+            />
+            <CopyButton
+              text={() => {
+                const headers = [
+                  'Category Name',
+                  'KDP Category Path',
+                  'Books in Top 10',
+                  'Best Rank',
+                  'Average Rank',
+                  'Sales Opportunity',
+                  'Target #1 BSR',
+                  'Difficulty',
+                  'Category URL',
+                ];
+                const rows = categories.map((c) => [
+                  decodeHtmlEntities(c.name),
+                  formatCleanCategoryPath(c.path || c.name),
+                  c.bookCount,
+                  `#${c.bestRankAmongTopBooks}`,
+                  `#${c.avgRank}`,
+                  c.salesOpportunityLevel ? c.salesOpportunityLevel.toUpperCase() : 'N/A',
+                  c.bestSellerTargetBsr ? `#${c.bestSellerTargetBsr.toLocaleString()}` : 'N/A',
+                  c.difficulty || 'Unchecked',
+                  c.url,
+                ]);
+                return [headers.join('\t'), ...rows.map((r) => r.join('\t'))].join('\n');
+              }}
+              defaultLabel="Copy TSV"
+              copiedLabel="Copied TSV!"
               className="plain-btn text-xs px-2 py-0.5"
-            >
-              Copy TSV
-            </button>
+              title="Copy categories table as TSV for spreadsheet pasting"
+            />
           </div>
         )}
       </div>
 
-      {/* Categories Table */}
+      {/* Categories Table: Horizontally scrollable with clean text wrapping and generous column widths */}
       {categories.length > 0 ? (
         <div className="border border-[var(--line)]">
-          <div className="max-h-[380px] overflow-y-auto no-horizontal-scroll">
-            <table className="plain-table w-full text-xs">
+          <div className="max-h-[380px] overflow-y-auto overflow-x-auto w-full box-border">
+            <table className="plain-table text-xs min-w-[560px] w-full">
               <thead>
                 <tr>
-                  <th>Category &amp; KDP Path</th>
-                  <th className="w-16 text-center" title="Target BSR to win #1 Best Seller badge">#1 Target</th>
-                  <th className="w-10 text-center" title="Number of top 10 books in this category">Books</th>
-                  <th className="w-10 text-center" title="Best rank among top 10 books">Best</th>
-                  <th className="w-16 text-center">Difficulty</th>
-                  <th className="w-14 text-center">Action</th>
+                  <th className="min-w-[220px] text-left">Category &amp; KDP Path</th>
+                  <th className="w-20 min-w-[75px] text-center" title="Target BSR to win #1 Best Seller badge">#1 Target</th>
+                  <th className="w-14 min-w-[55px] text-center" title="Number of top 10 books in this category">Books</th>
+                  <th className="w-14 min-w-[50px] text-center" title="Best rank among top 10 books">Best</th>
+                  <th className="w-20 min-w-[70px] text-center">Difficulty</th>
+                  <th className="w-20 min-w-[75px] text-center">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {categories.map((c) => {
+                {categories.map((c, idx) => {
                   const isCheckingThis = checkingUrl === c.url;
 
                   return (
-                    <tr key={c.name}>
-                      <td className="max-w-[160px]">
-                        <div className="font-bold truncate" title={c.name}>
-                          {c.name}
+                    <tr key={c.url || c.name || `cat-${idx}`}>
+                      <td className="min-w-[220px] py-1.5 px-2">
+                        <div
+                          className="font-bold text-xs whitespace-normal leading-tight"
+                          title={decodeHtmlEntities(c.name)}
+                        >
+                          {decodeHtmlEntities(c.name)}
                         </div>
                         {c.path && (
-                          <div className="text-[10px] text-[var(--muted)] font-mono truncate" title={c.path}>
-                            {c.path}
+                          <div
+                            className="text-[10px] text-[var(--muted)] font-mono whitespace-normal break-words mt-0.5 leading-snug"
+                            title={formatCleanCategoryPath(c.path)}
+                          >
+                            {formatCleanCategoryPath(c.path)}
                           </div>
                         )}
                         {c.difficultyText && (
-                          <div className="text-[10px] text-[var(--muted)] truncate" title={c.difficultyText}>
+                          <div className="text-[10px] text-[var(--muted)] whitespace-normal mt-0.5" title={c.difficultyText}>
                             {c.bsrAtTop20 ? `Top 20: BSR #${c.bsrAtTop20.toLocaleString()}` : ''}
                           </div>
                         )}
                       </td>
 
-                      <td className="text-center font-mono">
+                      <td className="text-center font-mono whitespace-nowrap px-1.5">
                         {c.bestSellerTargetBsr ? (
                           <span className="text-[var(--warn)] font-bold">
                             #{c.bestSellerTargetBsr.toLocaleString()}
@@ -302,15 +312,15 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
                         )}
                       </td>
 
-                      <td className="text-center font-mono font-bold">
+                      <td className="text-center font-mono font-bold whitespace-nowrap px-1">
                         {c.bookCount}/10
                       </td>
 
-                      <td className="text-center font-mono">
+                      <td className="text-center font-mono whitespace-nowrap px-1">
                         #{c.bestRankAmongTopBooks}
                       </td>
 
-                      <td className="text-center">
+                      <td className="text-center whitespace-nowrap px-1.5">
                         {isCheckingThis ? (
                           <span className="text-[10px] text-[var(--muted)]">Wait</span>
                         ) : c.difficulty ? (
@@ -327,15 +337,15 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
                         )}
                       </td>
 
-                      <td className="text-center">
+                      <td className="text-center whitespace-nowrap px-1.5">
                         <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => copyToClipboard(c.path || c.name, 'Copied KDP Category Path')}
+                          <CopyButton
+                            text={() => formatCleanCategoryPath(c.path || c.name)}
+                            defaultLabel="Copy"
+                            copiedLabel="Copied!"
                             className="plain-btn text-[10px] px-1 py-0"
                             title="Copy KDP category path"
-                          >
-                            Copy
-                          </button>
+                          />
                           {c.url && (
                             <a
                               href={c.url.startsWith('http') ? c.url : `https://www.amazon.com${c.url}`}

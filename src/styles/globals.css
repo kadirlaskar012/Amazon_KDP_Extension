@@ -136,3 +136,44 @@ a:hover, .plain-link:hover {
 .no-horizontal-scroll {
   overflow-x: hidden !important;
 }
+
+/* Quick search preset chips - Option A: Horizontally scrollable row */
+.quick-chips-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.quick-chips-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--bg));
+  z-index: 2;
+}
+
+.quick-chips-container {
+  display: flex !important;
+  overflow-x: auto !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  padding-bottom: 4px !important;
+  padding-right: 24px !important;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box !important;
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE / Edge */
+}
+
+.quick-chips-container::-webkit-scrollbar {
+  display: none !important; /* Chrome / Safari / Edge */
+  width: 0 !important;
+  height: 0 !important;
+}

@@ -214,7 +214,7 @@ export const App: React.FC = () => {
           ...imported,
           geminiApiKey: imported.geminiApiKey || prev.geminiApiKey,
           geminiApiKeys: imported.geminiApiKeys || prev.geminiApiKeys,
-          geminiModel: imported.geminiModel || prev.geminiModel || 'gemini-2.0-flash',
+          geminiModel: imported.geminiModel || prev.geminiModel || 'gemini-flash-latest',
         }));
         alert('Settings successfully imported.');
       } catch (err: any) {
@@ -828,24 +828,31 @@ export const App: React.FC = () => {
                     geminiApiKeys: allKeys || [primaryKey],
                   }))
                 }
-                model={settings.geminiModel || 'gemini-2.0-flash'}
+                model={settings.geminiModel || 'gemini-flash-latest'}
               />
 
               <hr style={{ borderColor: 'var(--line)', margin: '12px 0' }} />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-medium mb-1">Gemini Model</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-medium">Gemini Model</label>
+                    <span className="text-[11px] text-[var(--muted)]">
+                      (Recommended: Latest, Auto-Updates)
+                    </span>
+                  </div>
                   <select
-                    value={settings.geminiModel || 'gemini-2.0-flash'}
+                    value={settings.geminiModel || 'gemini-flash-latest'}
                     onChange={(e) => updateSettings((s) => ({ ...s, geminiModel: e.target.value }))}
                     className="plain-select w-full font-mono text-xs"
                   >
-                    <option value="gemini-2.0-flash">gemini-2.0-flash (Recommended: Ultra-Fast)</option>
-                    <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite (Fastest)</option>
-                    <option value="gemini-1.5-pro">gemini-1.5-pro (Deep Reasoning)</option>
-                    <option value="gemini-1.5-flash">gemini-1.5-flash (High-Speed)</option>
+                    <option value="gemini-flash-latest">gemini-flash-latest (Recommended, auto-updates)</option>
+                    <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite</option>
+                    <option value="gemini-2.5-flash">gemini-2.5-flash (shuts down Oct 16, 2026 — avoid)</option>
                   </select>
+                  <p className="text-[11px] text-[var(--muted)] mt-1">
+                    Gemini model names change periodically — if you see a 404 error, switch to gemini-flash-latest.
+                  </p>
                 </div>
                 <div>
                   <label className="block font-medium mb-1">Max Tokens</label>

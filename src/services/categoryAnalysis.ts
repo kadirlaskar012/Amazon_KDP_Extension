@@ -4,12 +4,13 @@
 import type { Book, CategoryStat, CategoryDifficulty, CategoryDifficultyThresholds } from '../types';
 import { GENERIC_CATEGORIES } from '../config/stopwords';
 import { DEFAULT_CATEGORY_DIFFICULTY } from '../config/defaults';
+import { decodeHtmlEntities, formatCleanCategoryPath } from '../utils/htmlEntities';
 
 /**
  * Normalizes category name for consistency and deduplication
  */
 export function normalizeCategoryName(name: string): string {
-  return name.replace(/\s+/g, ' ').trim();
+  return decodeHtmlEntities(name).replace(/\s+/g, ' ').trim();
 }
 
 /**
@@ -28,17 +29,15 @@ export function isGenericCategory(name: string, customGenericList?: Set<string>)
 }
 
 /**
- * Formats a clean KDP breadcrumb category hierarchy
- * (e.g., Books > Children's Books > Activities, Crafts & Games > Coloring Books)
- */
-/**
  * Formats a clean KDP breadcrumb category hierarchy conforming to Amazon KDP's 3-level selector:
  * (e.g., Books > Children's Books > Activities, Crafts & Games > Activity Books > Coloring Books)
  */
 export function formatKdpCategoryPath(name: string): string {
-  const clean = name.replace(/\s+/g, ' ').trim();
-  if (clean.includes(' > ')) {
-    return clean.startsWith('Books > ') ? clean : `Books > ${clean}`;
+  const decoded = decodeHtmlEntities(name);
+  const clean = decoded.replace(/\s+/g, ' ').trim();
+  if (clean.includes(' > ') || clean.includes('>')) {
+    const formatted = clean.startsWith('Books > ') ? clean : `Books > ${clean}`;
+    return formatCleanCategoryPath(formatted);
   }
 
   const lower = clean.toLowerCase();
@@ -284,8 +283,8 @@ export function analyzeCategories(
         if (!existing.url && cr.url) {
           existing.url = cr.url;
         }
-        if (!existing.fullPath && cr.category && cr.category.includes(' > ')) {
-          existing.fullPath = cr.category;
+        if (!existing.fullPath && cr.category && (cr.category.includes(' > ') || cr.category.includes('>'))) {
+          existing.fullPath = formatCleanCategoryPath(cr.category);
         }
       } else {
         categoryMap.set(lowerKey, {
@@ -295,7 +294,7 @@ export function analyzeCategories(
           ranks: [cr.rank],
           minRank: cr.rank,
           bestBsrOverall: book.bsrOverall || null,
-          fullPath: cr.category && cr.category.includes(' > ') ? cr.category : undefined,
+          fullPath: cr.category && (cr.category.includes(' > ') || cr.category.includes('>')) ? formatCleanCategoryPath(cr.category) : undefined,
         });
       }
     }
@@ -310,7 +309,8 @@ export function analyzeCategories(
     const sum = entry.ranks.reduce((a, b) => a + b, 0);
     const avgRank = Math.round(sum / entry.ranks.length);
     const isGeneric = isGenericCategory(entry.name, customGenericList);
-    const path = entry.fullPath ? (entry.fullPath.startsWith('Books > ') ? entry.fullPath : `Books > ${entry.fullPath}`) : formatKdpCategoryPath(entry.name);
+    const rawPath = entry.fullPath ? (entry.fullPath.startsWith('Books > ') ? entry.fullPath : `Books > ${entry.fullPath}`) : formatKdpCategoryPath(entry.name);
+    const path = formatCleanCategoryPath(rawPath);
 
     // Calculate #1 Best Seller target BSR and estimated daily sales
     let bestSellerTargetBsr: number | null = null;

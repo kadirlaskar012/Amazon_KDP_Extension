@@ -183,7 +183,7 @@ export const IdeasTab: React.FC<IdeasTabProps> = ({ snapshot, onUpdateSnapshotId
                 KDP Book Idea Generator (Google Gemini AI)
               </span>
               <span className="text-[11px] text-[var(--muted)] font-mono">
-                Model: {settings?.geminiModel || 'gemini-2.0-flash'}
+                Model: {settings?.geminiModel || 'gemini-flash-latest'}
               </span>
             </div>
 

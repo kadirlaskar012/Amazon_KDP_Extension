@@ -49,9 +49,9 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
     // Set test api key in storage
     mockStorage['kdp_settings'] = {
       geminiApiKey: secretApiKey,
-      geminiModel: 'gemini-2.0-flash',
+      geminiModel: 'gemini-flash-latest',
       ai: {
-        model: 'gemini-2.0-flash',
+        model: 'gemini-flash-latest',
         maxTokens: 4000,
         temperature: 0.7,
         ideasCount: 10,
@@ -194,7 +194,7 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
       const firstCall = fetchSpy.mock.calls[0];
       expect(firstCall).toBeDefined();
       const [url, options] = firstCall!;
-      expect(url).toContain('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent');
+      expect(url).toContain('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent');
       expect(url).toContain(`key=${secretApiKey}`);
       expect((options as any)?.headers?.['Content-Type']).toBe('application/json');
 
@@ -238,14 +238,46 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
       );
     });
 
+    it('automatically recovers and falls back to gemini-flash-latest when a model returns 404', async () => {
+      const fetchSpy = vi.fn()
+        // First call with deprecated model returns 404
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          text: async () => 'models/gemini-old-model is not found',
+        })
+        // Second call with gemini-flash-latest succeeds
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            candidates: [
+              {
+                content: { parts: [{ text: JSON.stringify(validSampleJson) }] },
+                finishReason: 'STOP',
+              },
+            ],
+          }),
+        });
+      vi.stubGlobal('fetch', fetchSpy);
+
+      const result = await generateBookIdeas('Sample prompt', undefined, {
+        geminiApiKey: secretApiKey,
+        geminiModel: 'gemini-old-model',
+      });
+      expect(result.ideas.length).toBe(1);
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      expect(fetchSpy.mock.calls[1]![0]).toContain('gemini-flash-latest:generateContent');
+    });
+
     it('automatically fails over to backup API key when primary key encounters 429 quota exhaustion', async () => {
       const backupKey = 'AIzaSy_BACKUP_KEY_22222';
       mockStorage['kdp_settings'] = {
         geminiApiKey: secretApiKey,
         geminiApiKeys: [secretApiKey, backupKey],
-        geminiModel: 'gemini-2.0-flash',
+        geminiModel: 'gemini-flash-latest',
         ai: {
-          model: 'gemini-2.0-flash',
+          model: 'gemini-flash-latest',
           maxTokens: 4000,
           temperature: 0.7,
           ideasCount: 10,
@@ -296,9 +328,9 @@ describe('AI Book Idea Generator (Module J - aiIdeas.ts & aiPrompt.ts)', () => {
       mockStorage['kdp_settings'] = {
         geminiApiKey: secretApiKey,
         geminiApiKeys: [secretApiKey, backupKey],
-        geminiModel: 'gemini-2.0-flash',
+        geminiModel: 'gemini-flash-latest',
         ai: {
-          model: 'gemini-2.0-flash',
+          model: 'gemini-flash-latest',
           maxTokens: 4000,
           temperature: 0.7,
           ideasCount: 10,

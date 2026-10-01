@@ -8,11 +8,16 @@ const SETTINGS_KEY = 'kdp_settings';
  * Normalizes and validates Gemini model names, automatically migrating deprecated/invalid models
  */
 export function normalizeGeminiModel(model?: string): string {
-  if (!model) return 'gemini-2.0-flash';
+  if (!model) return 'gemini-flash-latest';
   const clean = model.replace(/^models\//, '').trim();
-  // Automatically migrate invalid or deprecated 2.5 placeholders to latest official model
-  if (clean === 'gemini-2.5-flash' || clean === 'gemini-2.5-pro' || !clean) {
-    return 'gemini-2.0-flash';
+  // Automatically migrate deprecated legacy models (e.g. shutdown 2.0 series) to gemini-flash-latest
+  if (
+    clean.startsWith('gemini-2.0') ||
+    clean.startsWith('gemini-1.') ||
+    clean === 'gemini-2.5-pro' ||
+    !clean
+  ) {
+    return 'gemini-flash-latest';
   }
   return clean;
 }

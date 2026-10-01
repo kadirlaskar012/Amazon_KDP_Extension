@@ -1,5 +1,5 @@
 // src/services/aiIdeas.ts
-// Service for communicating with the Google Gemini API (latest official models: gemini-2.0-flash, gemini-2.0-flash-lite, gemini-1.5-pro, gemini-1.5-flash),
+// Service for communicating with the Google Gemini API (latest official models: gemini-flash-latest, gemini-3.1-flash-lite, gemini-2.5-flash),
 // parsing structured JSON responses, multi-key automatic failover, and validating generated KDP book ideas.
 
 import type { BookIdea, AiIdeasResponse, Settings } from '../types';
@@ -138,7 +138,7 @@ export function validateIdeaResponseShape(data: any): { notes?: string; ideas: B
  */
 export async function testGeminiApiKey(
   apiKeyOrKeys?: string | string[],
-  model: string = 'gemini-2.0-flash'
+  model: string = 'gemini-flash-latest'
 ): Promise<{ success: boolean; message: string }> {
   let keysToTest: string[] = [];
 
@@ -180,10 +180,10 @@ export async function testGeminiApiKey(
         return { ok: true, status: res.status };
       }
 
-      // If 404 on model, test fallback to gemini-1.5-flash
-      if (res.status === 404 && targetModel !== 'gemini-1.5-flash') {
+      // If 404 on model, test fallback to gemini-flash-latest
+      if (res.status === 404 && targetModel !== 'gemini-flash-latest') {
         const fallbackRes = await fetch(
-          `${GEMINI_BASE_URL}/gemini-1.5-flash:generateContent?key=${encodeURIComponent(key.trim())}`,
+          `${GEMINI_BASE_URL}/gemini-flash-latest:generateContent?key=${encodeURIComponent(key.trim())}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -194,7 +194,7 @@ export async function testGeminiApiKey(
           }
         );
         if (fallbackRes.ok) {
-          cleanModel = 'gemini-1.5-flash';
+          cleanModel = 'gemini-flash-latest';
           return { ok: true, status: fallbackRes.status };
         }
       }
@@ -341,10 +341,10 @@ export async function generateBookIdeas(
           res.status === 404 &&
           (errBody.includes('not found') || errBody.includes('no longer available'));
 
-        // If model returned 404, fallback to gemini-1.5-flash and retry this key!
-        if (isModel404 && model !== 'gemini-1.5-flash') {
-          console.warn(`[Gemini AI] Model ${model} returned 404. Falling back to gemini-1.5-flash...`);
-          model = 'gemini-1.5-flash';
+        // If model returned 404, fallback to gemini-flash-latest and retry this key!
+        if (isModel404 && model !== 'gemini-flash-latest') {
+          console.warn(`[Gemini AI] Model ${model} returned 404. Falling back to gemini-flash-latest...`);
+          model = 'gemini-flash-latest';
           keyIdx--; // retry with same key
           continue;
         }

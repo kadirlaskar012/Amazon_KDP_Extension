@@ -7,13 +7,16 @@ interface DifficultyBadgeProps {
   difficulty?: CategoryDifficulty | null;
   size?: 'sm' | 'md';
   className?: string;
+  showUnchecked?: boolean;
 }
 
 export const DifficultyBadge: React.FC<DifficultyBadgeProps> = ({
   difficulty,
   className = '',
+  showUnchecked = false,
 }) => {
   if (!difficulty) {
+    if (!showUnchecked) return null;
     return <span className={`text-[var(--muted)] ${className}`}>Unchecked</span>;
   }
 

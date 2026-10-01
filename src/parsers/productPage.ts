@@ -1,5 +1,6 @@
 import type { CategoryRank } from '../types';
 import { CAPTCHA_DETECTION } from '../config';
+import { decodeHtmlEntities } from '../utils/htmlEntities';
 
 export interface ParsedProductDetails {
   isCaptcha: boolean;
@@ -121,13 +122,10 @@ export function parseCategoryRanksFromString(html: string): CategoryRank[] {
   const seen = new Set<string>();
 
   const addCategory = (rank: number, rawName: string, url?: string) => {
-    let clean = rawName
+    let clean = decodeHtmlEntities(rawName)
       .replace(/^in\s+/i, '')
       .replace(/\(see top 100.*\)/i, '')
       .replace(/<[^>]+>/g, '')
-      .replace(/&amp;/g, '&')
-      .replace(/&#39;/g, "'")
-      .replace(/&quot;/g, '"')
       .replace(/[\n\r\t]+/g, ' ')
       .trim();
     clean = clean.replace(/\s*in\s+books\s*$/i, '').trim();
@@ -268,7 +266,7 @@ export function parseCategoryRanks(doc: Document | Element): CategoryRank[] {
   const seen = new Set<string>();
 
   const addCategory = (rank: number, name: string, url?: string) => {
-    let clean = name.replace(/^in\s+/i, '').replace(/\(see top 100.*\)/i, '').replace(/[\n\r\t]+/g, ' ').trim();
+    let clean = decodeHtmlEntities(name).replace(/^in\s+/i, '').replace(/\(see top 100.*\)/i, '').replace(/[\n\r\t]+/g, ' ').trim();
     clean = clean.replace(/\s*in\s+books\s*$/i, '').trim();
     if (!clean || isNaN(rank) || rank <= 0) return;
     const lower = clean.toLowerCase();

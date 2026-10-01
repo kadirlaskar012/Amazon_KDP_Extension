@@ -98,7 +98,7 @@ Scans customer reviews to extract:
 
 ## 🤖 Module J: AI Book Idea Generator (Google Gemini API)
 
-The extension includes a built-in KDP Book Idea Generator powered by Google's Gemini GenerateContent API (latest default: `gemini-2.0-flash`). Supports **multiple API keys** with automatic seamless failover on quota limits (429 / RESOURCE_EXHAUSTED).
+The extension includes a built-in KDP Book Idea Generator powered by Google's Gemini GenerateContent API (latest default: `gemini-flash-latest`). Supports **multiple API keys** with automatic seamless failover on quota limits (429 / RESOURCE_EXHAUSTED).
 
 ### How to Get a Free Google Gemini API Key & Setup:
 1. Visit [Google AI Studio](https://aistudio.google.com/app/apikey).
@@ -106,7 +106,7 @@ The extension includes a built-in KDP Book Idea Generator powered by Google's Ge
 3. In Chrome, right-click the extension icon and choose **Options** (or click the Settings tab in the sidebar).
 4. Navigate to the **AI Book Generator** section.
 5. Paste your key in the **Google Gemini API Key** field (add backup keys with **+ Add Backup API Key**). Click **Test All Keys** to verify connectivity.
-6. Choose your preferred model (default: `gemini-2.0-flash`, with options for `gemini-2.0-flash-lite`, `gemini-1.5-pro`, `gemini-1.5-flash`).
+6. Choose your preferred model (default: `gemini-flash-latest`, with options for `gemini-3.1-flash-lite`, `gemini-2.5-flash`).
 
 ### How It Works:
 - Runs directly from the **background service worker** (`background.ts`) via message passing.

@@ -262,18 +262,20 @@ export const App: React.FC = () => {
           </button>
         </form>
 
-        <div className="flex items-center gap-1.5 flex-wrap text-xs">
-          <span style={{ color: 'var(--muted)' }}>Quick:</span>
-          {popularNiches.map((n) => (
-            <button
-              key={n.q}
-              onClick={() => handleSearchAmazon(n.q)}
-              className="plain-link text-xs"
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-            >
-              {n.label}
-            </button>
-          ))}
+        <div className="quick-chips-wrapper">
+          <div className="quick-chips-container items-center text-xs">
+            <span className="shrink-0" style={{ color: 'var(--muted)' }}>Quick:</span>
+            {popularNiches.map((n) => (
+              <button
+                key={n.q}
+                onClick={() => handleSearchAmazon(n.q)}
+                className="plain-link text-xs shrink-0 whitespace-nowrap"
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+              >
+                {n.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -17,7 +17,7 @@ export const ApiKeyField: React.FC<ApiKeyFieldProps> = ({
   apiKey,
   apiKeys = [],
   onChange,
-  model = 'gemini-2.0-flash',
+  model = 'gemini-flash-latest',
   className = '',
 }) => {
   const getInitialKeys = (): string[] => {

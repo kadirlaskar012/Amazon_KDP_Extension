@@ -70,7 +70,7 @@ export const DEFAULT_ROYALTY_RATE = 0.6;
 export const DEFAULT_SETTINGS: Settings = {
   geminiApiKey: '',
   geminiApiKeys: [],
-  geminiModel: 'gemini-2.0-flash',
+  geminiModel: 'gemini-flash-latest',
   weights: DEFAULT_SCORE_WEIGHTS,
   thresholds: DEFAULT_THRESHOLDS,
   keywordWeights: DEFAULT_KEYWORD_WEIGHTS,
@@ -91,7 +91,7 @@ export const DEFAULT_SETTINGS: Settings = {
   maxFetchesPerSearch: 20,
   cacheDurationHours: 24,
   ai: {
-    model: 'gemini-2.0-flash',
+    model: 'gemini-flash-latest',
     maxTokens: 4000,
     temperature: 0.7,
     ideasCount: 10,
@@ -137,7 +137,7 @@ export const DEFAULT_TREND_CONFIG = {
 };
 
 export const DEFAULT_AI_SETTINGS: AiSettings = {
-  model: 'gemini-2.0-flash',
+  model: 'gemini-flash-latest',
   maxTokens: 4000,
   temperature: 0.7,
   ideasCount: 10,

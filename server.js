@@ -63,8 +63,20 @@ const server = http.createServer((req, res) => {
     return serveFile(res, extFilePath);
   }
 
+  // Route: /chunks/* -> files inside .output/chrome-mv3/chunks
+  if (pathname.startsWith('/chunks/')) {
+    const chunkPath = path.join(__dirname, '.output', 'chrome-mv3', pathname);
+    if (fs.existsSync(chunkPath)) {
+      return serveFile(res, chunkPath);
+    }
+  }
+
   // Route: /assets/* -> static files
   if (pathname.startsWith('/assets/')) {
+    const extAssetPath = path.join(__dirname, '.output', 'chrome-mv3', pathname);
+    if (fs.existsSync(extAssetPath)) {
+      return serveFile(res, extAssetPath);
+    }
     const assetPath = path.join(__dirname, pathname);
     if (fs.existsSync(assetPath)) {
       return serveFile(res, assetPath);
