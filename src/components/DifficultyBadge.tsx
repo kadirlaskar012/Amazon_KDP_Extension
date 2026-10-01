@@ -1,6 +1,5 @@
 // src/components/DifficultyBadge.tsx
-// Visual badge displaying Category Difficulty (Easy, Medium, Hard)
-
+// Plain text difficulty indicator (status color only, no badge fill)
 import React from 'react';
 import type { CategoryDifficulty } from '../types';
 
@@ -12,45 +11,18 @@ interface DifficultyBadgeProps {
 
 export const DifficultyBadge: React.FC<DifficultyBadgeProps> = ({
   difficulty,
-  size = 'sm',
   className = '',
 }) => {
-  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-xs font-semibold' : 'px-3 py-1 text-sm font-semibold';
-
   if (!difficulty) {
-    return (
-      <span
-        className={`inline-flex items-center rounded-full bg-slate-800/80 text-slate-400 border border-slate-700/60 ${sizeClasses} ${className}`}
-      >
-        Unchecked
-      </span>
-    );
+    return <span className={`text-[var(--muted)] ${className}`}>Unchecked</span>;
   }
 
   switch (difficulty) {
     case 'easy':
-      return (
-        <span
-          className={`inline-flex items-center rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium ${sizeClasses} ${className}`}
-        >
-          Easy
-        </span>
-      );
+      return <span className={`text-[var(--good)] font-bold ${className}`}>Easy</span>;
     case 'medium':
-      return (
-        <span
-          className={`inline-flex items-center rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-medium ${sizeClasses} ${className}`}
-        >
-          Medium
-        </span>
-      );
+      return <span className={`text-[var(--warn)] font-bold ${className}`}>Medium</span>;
     case 'hard':
-      return (
-        <span
-          className={`inline-flex items-center rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30 font-medium ${sizeClasses} ${className}`}
-        >
-          Hard
-        </span>
-      );
+      return <span className={`text-[var(--bad)] font-bold ${className}`}>Hard</span>;
   }
 };

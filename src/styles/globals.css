@@ -3,47 +3,136 @@
 @tailwind utilities;
 
 :root {
-  --kdp-bg: #ffffff;
-  --kdp-fg: #0f172a;
-  --kdp-card: #f8fafc;
-  --kdp-border: #e2e8f0;
+  --bg: #ffffff;
+  --text: #111111;
+  --muted: #555555;
+  --line: #cccccc;
+  --link: #0645ad;
+  --btn-bg: #f3f3f3;
+  --btn-border: #999999;
+  --btn-text: #111111;
+  --good: #1a7f37;
+  --warn: #9a6700;
+  --bad: #b42318;
+  --row-hover: #f9f9f9;
+  --table-head-bg: #f3f3f3;
+  --row-highlight: #f4faf5;
+  --font-base: system-ui, Arial, sans-serif;
 }
 
 .dark {
-  --kdp-bg: #0f172a;
-  --kdp-fg: #f8fafc;
-  --kdp-card: #1e293b;
-  --kdp-border: #334155;
+  --bg: #1a1a1a;
+  --text: #eeeeee;
+  --muted: #aaaaaa;
+  --line: #444444;
+  --link: #58a6ff;
+  --btn-bg: #2a2a2a;
+  --btn-border: #666666;
+  --btn-text: #eeeeee;
+  --good: #3fb950;
+  --warn: #d29922;
+  --bad: #f85149;
+  --row-hover: #222222;
+  --table-head-bg: #2a2a2a;
+  --row-highlight: #1f2a21;
 }
 
-/* Custom scrollbars for compact extension tables - vertical only */
+/* Plain HTML utilitarian resets */
+body, button, input, select, textarea, table {
+  font-family: var(--font-base);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+/* Plain utilitarian button */
+.plain-btn {
+  background-color: var(--btn-bg);
+  border: 1px solid var(--btn-border);
+  color: var(--btn-text, var(--text));
+  padding: 2px 8px;
+  border-radius: 0;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-shadow: none !important;
+  transition: none !important;
+}
+.plain-btn:hover {
+  background-color: var(--row-hover);
+}
+.plain-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Plain inputs and selects */
+.plain-input, .plain-select, .plain-textarea {
+  background-color: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 3px 6px;
+  border-radius: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  box-shadow: none !important;
+}
+
+.plain-input:focus, .plain-select:focus, .plain-textarea:focus, .plain-btn:focus-visible {
+  outline: 2px solid var(--text) !important;
+  outline-offset: 1px;
+}
+
+/* Plain utilitarian table */
+.plain-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--line);
+  font-size: 12px;
+}
+.plain-table th {
+  background-color: var(--table-head-bg);
+  border: 1px solid var(--line);
+  padding: 4px 6px;
+  text-align: left;
+  font-weight: bold;
+  color: var(--text);
+}
+.plain-table td {
+  border: 1px solid var(--line);
+  padding: 4px 6px;
+  color: var(--text);
+}
+.plain-table tr:hover td {
+  background-color: var(--row-hover);
+}
+
+/* Plain link */
+a, .plain-link {
+  color: var(--link);
+  text-decoration: underline;
+}
+a:hover, .plain-link:hover {
+  color: var(--link);
+  text-decoration: underline;
+}
+
+/* Native scrollbars - vertical only, no horizontal */
 ::-webkit-scrollbar {
   width: 6px;
-  height: 0px; /* Hide horizontal scrollbar */
+  height: 0px;
 }
-
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--bg);
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.4);
-  border-radius: 3px;
+  background: var(--line);
+  border-radius: 0px;
 }
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.7);
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* Global utility to prevent unwanted horizontal scrolling */
 .no-horizontal-scroll {
   overflow-x: hidden !important;
 }

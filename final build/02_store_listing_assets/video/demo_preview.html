@@ -2,70 +2,133 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>KDP Niche Finder - Extension Demo</title>
+  <title>KDP Niche Finder - Extension Demo (Plain Utilitarian)</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    body { background: #0f172a; color: #f8fafc; display: flex; height: 100vh; overflow: hidden; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, Arial, sans-serif; font-size: 13px; line-height: 1.4; }
+    body { background: #f0f0f0; color: #111111; display: flex; height: 100vh; overflow: hidden; }
     
     /* Left simulated Amazon content */
-    .amazon-sim { flex: 1; padding: 24px; overflow-y: auto; background: #f3f4f6; color: #111827; }
-    .amazon-header { background: #131921; color: white; padding: 12px 20px; display: flex; align-items: center; gap: 16px; border-radius: 8px; margin-bottom: 20px; }
-    .amazon-search { flex: 1; background: white; color: #111; padding: 8px 14px; border-radius: 4px; font-weight: 500; border: 2px solid #febd69; }
-    .amazon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
-    .book-card { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .book-thumb { height: 180px; background: linear-gradient(135deg, #cbd5e1, #94a3b8); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #334155; font-weight: 600; text-align: center; padding: 8px; margin-bottom: 12px; }
-    .book-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; color: #007185; }
-    .book-price { font-size: 16px; font-weight: 700; color: #b12704; }
+    .amazon-sim { flex: 1; padding: 16px; overflow-y: auto; background: #ffffff; color: #111111; border-right: 1px solid #cccccc; }
+    .amazon-header { background: #232f3e; color: white; padding: 8px 14px; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .amazon-search { flex: 1; background: white; color: #111; padding: 6px 10px; font-weight: 500; border: 1px solid #febd69; }
+    .amazon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .book-card { background: white; border: 1px solid #cccccc; padding: 10px; }
+    .book-thumb { height: 160px; background: #e5e5e5; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #444; font-weight: 500; text-align: center; padding: 6px; margin-bottom: 8px; }
+    .book-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #0645ad; }
+    .book-price { font-size: 14px; font-weight: bold; color: #111111; }
 
     /* Right Extension Sidebar (Exact 380px) */
-    .sidebar { width: 380px; background: #0f172a; border-left: 1px solid #1e293b; display: flex; flex-direction: column; box-shadow: -4px 0 25px rgba(0,0,0,0.6); }
-    .sidebar-header { padding: 12px 16px; background: linear-gradient(90deg, #0f172a, #1e1b4b 60%, #0f172a); border-bottom: 1px solid #1e293b; display: flex; align-items: center; justify-content: space-between; }
-    .sidebar-logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .tabs-nav { display: flex; background: #0b0f19; padding: 6px; gap: 6px; border-bottom: 1px solid #1e293b; }
-    .tab-btn { flex: 1; padding: 8px 10px; border-radius: 8px; background: #1e293b; border: 1px solid #334155; color: #cbd5e1; font-weight: 700; font-size: 12px; cursor: pointer; text-align: center; transition: all 0.2s; }
-    .tab-btn.active { background: linear-gradient(135deg, #2563eb, #4f46e5); color: white; border-color: #6366f1; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35); }
+    .sidebar { width: 380px; background: #ffffff; color: #111111; border-left: 1px solid #cccccc; display: flex; flex-direction: column; overflow: hidden; }
+    
+    .plain-btn {
+      background: #f3f3f3;
+      border: 1px solid #999999;
+      color: #111111;
+      padding: 2px 8px;
+      font-size: 12px;
+      border-radius: 2px;
+      cursor: pointer;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .plain-btn:hover {
+      background: #e5e5e5;
+    }
+    .plain-select {
+      background: #ffffff;
+      border: 1px solid #999999;
+      color: #111111;
+      padding: 1px 4px;
+      font-size: 12px;
+      border-radius: 2px;
+    }
+    .plain-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .plain-table th, .plain-table td {
+      border: 1px solid #cccccc;
+      padding: 4px 6px;
+      text-align: left;
+    }
+    .plain-table th {
+      background: #f3f3f3;
+      font-weight: bold;
+    }
+    .plain-table tr:hover {
+      background: #f9f9f9;
+    }
 
-    .tab-content { flex: 1; overflow-y: auto; padding: 14px; }
+    .sidebar-header {
+      padding: 6px 8px;
+      border-bottom: 1px solid #cccccc;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .fetch-status {
+      padding: 4px 8px;
+      border-bottom: 1px solid #cccccc;
+      background: #fafafa;
+      font-size: 12px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #e0e0e0;
+      border-radius: 1px;
+      overflow: hidden;
+      margin: 4px 0;
+    }
+    .progress-fill {
+      width: 100%;
+      height: 100%;
+      background: #111111;
+    }
+
+    .tabs-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 4px 8px;
+      border-bottom: 1px solid #cccccc;
+      font-size: 12px;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 2px 4px;
+      cursor: pointer;
+      color: #111111;
+    }
+    .tab-btn.active {
+      font-weight: bold;
+      border-bottom: 2px solid #111111;
+    }
+
+    .tab-content { flex: 1; overflow-y: auto; padding: 8px; }
     .hidden { display: none !important; }
 
-    /* Score Gauge Component */
-    .gauge-card { background: radial-gradient(circle at top, rgba(16, 185, 129, 0.12), #111827 70%); border-radius: 16px; padding: 20px; text-align: center; border: 1px solid rgba(16, 185, 129, 0.25); margin-bottom: 14px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
-    .gauge-circle { width: 130px; height: 130px; border-radius: 50%; border: 7px solid #10b981; margin: 0 auto 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(16, 185, 129, 0.35); background: radial-gradient(circle, rgba(16, 185, 129, 0.08), transparent 70%); }
-    .gauge-score { font-size: 40px; font-weight: 900; background: linear-gradient(135deg, #34d399, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .gauge-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #10b981; letter-spacing: 0.5px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); padding: 3px 10px; border-radius: 9999px; }
-    .gauge-sub { font-size: 11px; color: #94a3b8; margin-top: 8px; }
+    /* Verdict Box */
+    .verdict-box {
+      border: 1px solid #cccccc;
+      border-radius: 2px;
+      padding: 6px 8px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
 
-    /* Stat Cards */
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-    .stat-card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 12px; transition: transform 0.2s; }
-    .stat-card:hover { transform: translateY(-2px); }
-    .stat-card.blue { border-color: rgba(59, 130, 246, 0.3); background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), #111827); }
-    .stat-card.purple { border-color: rgba(168, 85, 247, 0.3); background: linear-gradient(135deg, rgba(168, 85, 247, 0.08), #111827); }
-    .stat-card.emerald { border-color: rgba(16, 185, 129, 0.3); background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), #111827); }
-    .stat-card.amber { border-color: rgba(245, 158, 11, 0.3); background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), #111827); }
-    .stat-title { font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.3px; }
-    .stat-val { font-size: 19px; font-weight: 800; color: #f8fafc; margin-top: 4px; font-family: monospace; }
-    .stat-badge { font-size: 9px; background: rgba(56, 189, 248, 0.2); color: #38bdf8; padding: 1px 6px; border-radius: 4px; margin-left: 4px; font-weight: 700; }
-
-    /* Factor Bars */
-    .factor-item { margin-bottom: 12px; }
-    .factor-header { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; margin-bottom: 4px; }
-    .factor-bar { height: 7px; background: #1e293b; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
-    .factor-fill { height: 100%; border-radius: 6px; width: 0; transition: width 1s ease-in-out; }
-    .factor-fill.demand { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
-    .factor-fill.gap { background: linear-gradient(90deg, #8b5cf6, #6366f1); }
-    .factor-fill.weak { background: linear-gradient(90deg, #f59e0b, #ef4444); }
-    .factor-exp { font-size: 10px; color: #94a3b8; margin-top: 3px; }
-
-    /* Books Table */
-    .filter-bar { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
-    .filter-input { flex: 1; background: #1e293b; border: 1px solid #334155; color: white; padding: 7px 12px; border-radius: 8px; font-size: 12px; }
-    .table-container { overflow-x: auto; background: #111827; border: 1px solid #1f2937; border-radius: 10px; max-height: 480px; }
-    table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; }
-    th { background: #090d16; padding: 9px 12px; font-weight: 700; color: #94a3b8; border-bottom: 1px solid #1f2937; position: sticky; top: 0; }
-    td { padding: 9px 12px; border-bottom: 1px solid #1f2937; white-space: nowrap; }
-    tr.opportunity { background: rgba(16, 185, 129, 0.08); }
-    .badge-opp { background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(245, 158, 11, 0.25)); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; padding: 3px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+    .footer {
+      padding: 4px 8px;
+      border-top: 1px solid #cccccc;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
   </style>
 </head>
 <body>
@@ -73,195 +136,353 @@
   <!-- Left: Amazon Search Mockup -->
   <div class="amazon-sim">
     <div class="amazon-header">
-      <span style="font-size: 20px; font-weight: bold; color: #febd69;">amazon</span>
+      <span style="font-size: 18px; font-weight: bold; color: #febd69;">amazon</span>
       <div class="amazon-search">Books: toddler coloring book</div>
       <span style="font-size: 12px; color: #ddd;">Deliver to New York 10001</span>
     </div>
 
     <div class="amazon-grid">
       <div class="book-card">
-        <div class="book-thumb">Toddler Coloring Book: 100 Simple Animals</div>
-        <div class="book-title">Toddler Coloring Book: Big & Easy Lines for Kids</div>
+        <div class="book-thumb">Toddler Coloring Book: 100 Animals</div>
+        <div class="book-title">Toddler Coloring Book: Big Lines for Kids</div>
         <div class="book-price">$6.99</div>
-        <div style="font-size: 11px; color: #666; margin-top: 4px;">BSR: 8,420 | 18 Reviews</div>
+        <div style="font-size: 11px; color: #555; margin-top: 4px;">BSR: #8,420 | 18 Reviews</div>
       </div>
       <div class="book-card">
-        <div class="book-thumb">First Fun Coloring for Ages 1-3</div>
-        <div class="book-title">My First Big Book of Coloring Things That Go</div>
+        <div class="book-thumb">First Fun Coloring Ages 1-3</div>
+        <div class="book-title">My First Big Book of Animals</div>
         <div class="book-price">$7.49</div>
-        <div style="font-size: 11px; color: #666; margin-top: 4px;">BSR: 14,200 | 25 Reviews</div>
+        <div style="font-size: 11px; color: #555; margin-top: 4px;">BSR: #14,200 | 25 Reviews</div>
       </div>
       <div class="book-card">
         <div class="book-thumb">Preschool Scissor & Color</div>
-        <div class="book-title">Fun Animals Coloring for Preschoolers</div>
+        <div class="book-title">Fun Animals Coloring for Preschool</div>
         <div class="book-price">$8.99</div>
-        <div style="font-size: 11px; color: #666; margin-top: 4px;">BSR: 22,500 | 14 Reviews</div>
+        <div style="font-size: 11px; color: #555; margin-top: 4px;">BSR: #22,500 | 14 Reviews</div>
       </div>
       <div class="book-card">
         <div class="book-thumb">ABC Letters & Animals</div>
         <div class="book-title">Alphabet Coloring Book for Toddlers</div>
         <div class="book-price">$6.99</div>
-        <div style="font-size: 11px; color: #666; margin-top: 4px;">BSR: 19,100 | 48 Reviews</div>
+        <div style="font-size: 11px; color: #555; margin-top: 4px;">BSR: #19,100 | 48 Reviews</div>
       </div>
     </div>
   </div>
 
-  <!-- Right: KDP Niche Finder Sidebar -->
+  <!-- Right: Plain Utilitarian KDP Niche Finder Sidebar -->
   <div class="sidebar">
+    <!-- Header: Single plain line -->
     <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <span style="color: #22c55e;">✦</span> KDP Niche Finder
+      <span style="font-weight: bold; font-size: 14px;">KDP Niche Finder</span>
+      <div style="display: flex; gap: 4px; align-items: center;">
+        <button class="plain-btn">Export</button>
+        <select class="plain-select">
+          <option>History (1)</option>
+        </select>
+        <button class="plain-btn">Dark</button>
+        <button class="plain-btn">Settings</button>
+        <button class="plain-btn">×</button>
       </div>
-      <div style="font-size: 11px; background: #334155; padding: 2px 8px; border-radius: 4px; color: #38bdf8;">v1.0.0</div>
     </div>
 
+    <!-- Fetch status: Plain line with 6px progress bar -->
+    <div class="fetch-status">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span>Fetched 16/16 details</span>
+        <button class="plain-btn" style="padding: 1px 6px;">Refresh</button>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill"></div>
+      </div>
+      <div style="color: #555; font-size: 11px;">Rate limit: 1 req / 2-3s</div>
+    </div>
+
+    <!-- Tabs: Single row of text tabs separated by | -->
     <div class="tabs-nav">
       <button class="tab-btn active" id="btn-overview" onclick="switchTab('overview')">Overview</button>
-      <button class="tab-btn" id="btn-books" onclick="switchTab('books')">Books (10)</button>
+      <span>|</span>
+      <button class="tab-btn" id="btn-books" onclick="switchTab('books')">Books (16)</button>
+      <span>|</span>
+      <button class="tab-btn" id="btn-keywords" onclick="switchTab('keywords')">Keywords</button>
+      <span>|</span>
+      <button class="tab-btn" onclick="alert('Categories tab')">Categories</button>
+      <span>|</span>
+      <button class="tab-btn" onclick="alert('Specs tab')">Specs</button>
+      <span>|</span>
+      <button class="tab-btn" onclick="alert('Reviews tab')">Reviews</button>
+      <span>|</span>
+      <button class="tab-btn" onclick="alert('Ideas tab')">Ideas</button>
+      <span>|</span>
+      <button class="tab-btn" onclick="alert('Watchlist tab')">Watchlist</button>
     </div>
 
     <!-- OVERVIEW TAB -->
     <div class="tab-content" id="tab-overview">
-      <div class="gauge-card">
-        <div class="gauge-circle">
-          <div class="gauge-score">86</div>
-          <div class="gauge-label">Good Opportunity</div>
+      <div style="margin-bottom: 8px;">
+        <div style="font-size: 15px; font-weight: bold; color: #1a7f37;">
+          Niche Score: 89 / 100 (Good)
         </div>
-        <div class="gauge-sub">Based on 10 books | search: toddler coloring book</div>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat-card blue">
-          <div class="stat-title">Avg BSR (Top 10)</div>
-          <div class="stat-val" style="color: #60a5fa;">#16,055</div>
-        </div>
-        <div class="stat-card amber">
-          <div class="stat-title">Opportunities</div>
-          <div class="stat-val" style="color: #fbbf24;">4 / 10</div>
-        </div>
-        <div class="stat-card purple">
-          <div class="stat-title">Median Reviews</div>
-          <div class="stat-val" style="color: #c084fc;">22</div>
-        </div>
-        <div class="stat-card emerald">
-          <div class="stat-title">Est. Monthly Royalty <span class="stat-badge">rough</span></div>
-          <div class="stat-val" style="color: #34d399;">$4,120</div>
+        <div style="color: #555; font-size: 11px; margin-top: 2px;">
+          Based on 10 books | search: toddler coloring book | 10/1/2026
         </div>
       </div>
 
-      <!-- Factor progress bars -->
-      <div style="margin-top: 10px;">
-        <div class="factor-item">
-          <div class="factor-header"><span>Demand</span><span>35 / 35 pts</span></div>
-          <div class="factor-bar"><div class="factor-fill demand" style="width: 100%;"></div></div>
-          <div class="factor-exp">10 of 10 books have BSR under 100,000</div>
-        </div>
-        <div class="factor-item">
-          <div class="factor-header"><span>Competition Gap</span><span>24 / 30 pts</span></div>
-          <div class="factor-bar"><div class="factor-fill gap" style="width: 80%;"></div></div>
-          <div class="factor-exp">8 of 10 books have under 50 reviews</div>
-        </div>
-        <div class="factor-item">
-          <div class="factor-header"><span>Weak Competitors</span><span>15 / 15 pts</span></div>
-          <div class="factor-bar"><div class="factor-fill weak" style="width: 100%;"></div></div>
-          <div class="factor-exp">4 weak competitors identified in top 10</div>
-        </div>
-        <div class="factor-item">
-          <div class="factor-header"><span>Profit Potential</span><span>9 / 10 pts</span></div>
-          <div class="factor-bar"><div class="factor-fill" style="width: 90%;"></div></div>
-          <div class="factor-exp">Median royalty per sale is $2.85</div>
-        </div>
-        <div class="factor-item">
-          <div class="factor-header"><span>New Entrant Friendly</span><span>8 / 10 pts</span></div>
-          <div class="factor-bar"><div class="factor-fill" style="width: 80%;"></div></div>
-          <div class="factor-exp">25% published in last 12 months</div>
-        </div>
+      <!-- Stat Table: 2-column -->
+      <table class="plain-table" style="margin-bottom: 8px;">
+        <tbody>
+          <tr>
+            <td style="font-weight: 500; width: 55%;">Avg BSR (Top 10)</td>
+            <td style="font-weight: bold; font-family: monospace;">#16,055</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 500;">Median Reviews</td>
+            <td style="font-weight: bold; font-family: monospace;">22</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 500;">Avg Price</td>
+            <td style="font-weight: bold; font-family: monospace;">$7.61</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 500;">Opportunities</td>
+            <td style="font-weight: bold; font-family: monospace; color: #1a7f37;">4 / 10</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 500;">Est. Monthly Royalty</td>
+            <td style="font-weight: bold; font-family: monospace;">$4,120 <span style="font-weight: normal; color: #555; font-size: 11px;">(rough est.)</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Factor breakdown table -->
+      <table class="plain-table" style="margin-bottom: 8px;">
+        <thead>
+          <tr>
+            <th>Factor</th>
+            <th style="text-align: right;">Points</th>
+            <th style="text-align: right;">Max</th>
+            <th>Explanation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight: 500;">Demand</td>
+            <td style="text-align: right; font-family: monospace;">35</td>
+            <td style="text-align: right; font-family: monospace;">35</td>
+            <td style="color: #555; font-size: 11px;">10 of 10 books have BSR &lt; 100,000</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 500;">Competition Gap</td>
+            <td style="text-align: right; font-family: monospace;">24</td>
+            <td style="text-align: right; font-family: monospace;">30</td>
+            <td style="color: #555; font-size: 11px;">8 of 10 books have under 50 reviews</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 500;">Weak Competitors</td>
+            <td style="text-align: right; font-family: monospace;">15</td>
+            <td style="text-align: right; font-family: monospace;">15</td>
+            <td style="color: #555; font-size: 11px;">4 weak competitors identified</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 500;">Profit Potential</td>
+            <td style="text-align: right; font-family: monospace;">9</td>
+            <td style="text-align: right; font-family: monospace;">10</td>
+            <td style="color: #555; font-size: 11px;">Median royalty per sale is $2.85</td>
+          </tr>
+          <tr>
+            <td style="font-weight: 500;">New Entrant Friendly</td>
+            <td style="text-align: right; font-family: monospace;">8</td>
+            <td style="text-align: right; font-family: monospace;">10</td>
+            <td style="color: #555; font-size: 11px;">25% published in last 12 months</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Verdict Box -->
+      <div class="verdict-box">
+        <strong>Verdict:</strong> Strong customer demand with low competitor review counts. High niche potential.
       </div>
 
-      <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; border-radius: 8px; padding: 12px; margin-top: 14px; font-size: 11px; line-height: 1.5; color: #86efac;">
-        <strong>Verdict:</strong> Demand is strong and competition is weak. High potential for quick ranking!
+      <div style="font-size: 11px; color: #555; margin-top: 8px;">
+        Score is a rule-based estimate from the data shown, not a guarantee of sales.
       </div>
     </div>
 
     <!-- BOOKS TAB -->
     <div class="tab-content hidden" id="tab-books">
-      <div class="filter-bar">
-        <input type="text" class="filter-input" placeholder="Filter title..." id="title-filter" oninput="filterBooks()">
-        <button style="background: #334155; border: 1px solid #475569; color: white; padding: 5px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Copy TSV</button>
+      <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px;">
+        <button class="plain-btn">Copy 7 KDP Slots</button>
+        <button class="plain-btn">Copy Top 20</button>
+        <button class="plain-btn">Compare Top 5</button>
+        <button class="plain-btn">Copy TSV</button>
       </div>
 
-      <div class="table-container">
-        <table>
+      <div style="overflow-x: auto; border: 1px solid #cccccc; border-radius: 2px;">
+        <table class="plain-table">
           <thead>
             <tr>
               <th>#</th>
               <th>Title</th>
-              <th>Price</th>
-              <th>BSR</th>
-              <th>Reviews</th>
-              <th>Sales/mo</th>
-              <th>Royalty/mo</th>
-              <th>Flag</th>
+              <th style="text-align: right;">BSR</th>
+              <th style="text-align: right;">Price</th>
+              <th style="text-align: right;">Rev</th>
+              <th>Status</th>
             </tr>
           </thead>
-          <tbody id="books-tbody">
-            <tr class="opportunity">
+          <tbody>
+            <tr style="background: #f4faf5;">
               <td>1</td>
-              <td>Toddler Coloring Book: Big Lines</td>
-              <td>$6.99</td>
-              <td>8,420</td>
-              <td>18</td>
-              <td>350</td>
-              <td>$997</td>
-              <td><span class="badge-opp">★ Opportunity</span></td>
+              <td style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Toddler Coloring Book: Big Lines">Toddler Coloring Book: Big Lines</td>
+              <td style="text-align: right; font-family: monospace;">#8,420</td>
+              <td style="text-align: right;">$6.99</td>
+              <td style="text-align: right;">18</td>
+              <td style="color: #1a7f37; font-weight: bold;">Opportunity</td>
             </tr>
-            <tr class="opportunity">
+            <tr style="background: #f4faf5;">
               <td>2</td>
-              <td>My First Big Book of Animals</td>
-              <td>$7.49</td>
-              <td>14,200</td>
-              <td>25</td>
-              <td>350</td>
-              <td>$1,120</td>
-              <td><span class="badge-opp">★ Opportunity</span></td>
+              <td style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="My First Big Book of Animals">My First Big Book of Animals</td>
+              <td style="text-align: right; font-family: monospace;">#14,200</td>
+              <td style="text-align: right;">$7.49</td>
+              <td style="text-align: right;">25</td>
+              <td style="color: #1a7f37; font-weight: bold;">Opportunity</td>
             </tr>
             <tr>
               <td>3</td>
-              <td>Fun Animals Preschool Coloring</td>
-              <td>$8.99</td>
-              <td>22,500</td>
-              <td>142</td>
-              <td>80</td>
-              <td>$328</td>
+              <td style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Fun Animals Preschool Coloring">Fun Animals Preschool Coloring</td>
+              <td style="text-align: right; font-family: monospace;">#22,500</td>
+              <td style="text-align: right;">$8.99</td>
+              <td style="text-align: right;">142</td>
               <td>—</td>
             </tr>
-            <tr class="opportunity">
+            <tr style="background: #f4faf5;">
               <td>4</td>
-              <td>Alphabet Toddler Color & Trace</td>
-              <td>$6.99</td>
-              <td>19,100</td>
-              <td>14</td>
-              <td>350</td>
-              <td>$997</td>
-              <td><span class="badge-opp">★ Opportunity</span></td>
+              <td style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Alphabet Toddler Color & Trace">Alphabet Toddler Color & Trace</td>
+              <td style="text-align: right; font-family: monospace;">#19,100</td>
+              <td style="text-align: right;">$6.99</td>
+              <td style="text-align: right;">14</td>
+              <td style="color: #1a7f37; font-weight: bold;">Opportunity</td>
             </tr>
-            <tr class="opportunity">
+            <tr style="background: #f4faf5;">
               <td>5</td>
-              <td>Things That Go Coloring Book</td>
-              <td>$7.99</td>
-              <td>31,400</td>
-              <td>22</td>
-              <td>80</td>
-              <td>$272</td>
-              <td><span class="badge-opp">★ Opportunity</span></td>
+              <td style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Things That Go Coloring Book">Things That Go Coloring Book</td>
+              <td style="text-align: right; font-family: monospace;">#31,400</td>
+              <td style="text-align: right;">$7.99</td>
+              <td style="text-align: right;">22</td>
+              <td style="color: #1a7f37; font-weight: bold;">Opportunity</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div style="font-size: 10px; color: #64748b; margin-top: 10px; text-align: center;">
-        Estimates are rough. BSR to sales mapping is configurable in Settings.
+      <div style="font-size: 11px; color: #555; margin-top: 6px;">
+        Opportunity: Soft highlight (#f4faf5) + plain green status text.
       </div>
+    </div>
+
+    <!-- KEYWORDS TAB -->
+    <div class="tab-content hidden" id="tab-keywords">
+      <!-- Top 7 Golden Target Keywords table -->
+      <div style="margin-bottom: 8px;">
+        <div style="font-weight: bold; margin-bottom: 4px;">Top 7 Golden Target Keywords</div>
+        <table class="plain-table">
+          <thead>
+            <tr>
+              <th style="width: 20px;">#</th>
+              <th>Keyword</th>
+              <th style="text-align: right; width: 60px;">Score</th>
+              <th style="text-align: center; width: 45px;">Copy</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td style="font-weight: 500;">toddler coloring books ages 1-3</td>
+              <td style="text-align: right; font-weight: bold; font-family: monospace; color: #1a7f37;">94 (High)</td>
+              <td style="text-align: center;"><button class="plain-btn" style="padding: 0 4px; font-size: 11px;">Copy</button></td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td style="font-weight: 500;">coloring books for toddlers 2-4</td>
+              <td style="text-align: right; font-weight: bold; font-family: monospace; color: #1a7f37;">91 (High)</td>
+              <td style="text-align: center;"><button class="plain-btn" style="padding: 0 4px; font-size: 11px;">Copy</button></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td style="font-weight: 500;">big lines coloring book animals</td>
+              <td style="text-align: right; font-weight: bold; font-family: monospace; color: #1a7f37;">88 (High)</td>
+              <td style="text-align: center;"><button class="plain-btn" style="padding: 0 4px; font-size: 11px;">Copy</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Seed input area -->
+      <div style="border: 1px solid #cccccc; padding: 6px; border-radius: 2px; margin-bottom: 8px;">
+        <div style="font-weight: 500; margin-bottom: 4px;">Seed Keyword Discovery</div>
+        <div style="display: flex; gap: 4px; margin-bottom: 4px;">
+          <input type="text" value="toddler coloring book" style="flex: 1; border: 1px solid #999999; padding: 2px 6px; font-size: 12px; border-radius: 2px;" />
+          <button class="plain-btn font-medium">Find Keywords</button>
+        </div>
+        <label style="display: flex; align-items: center; gap: 4px; font-size: 11px; color: #555;">
+          <input type="checkbox" checked /> Include Alphabet Soup (a-z deep exploration)
+        </label>
+      </div>
+
+      <!-- Action buttons -->
+      <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px;">
+        <button class="plain-btn">Copy 7 KDP Slots</button>
+        <button class="plain-btn">Copy Top 20</button>
+        <button class="plain-btn">Copy All</button>
+        <button class="plain-btn">Export TSV</button>
+      </div>
+
+      <!-- Main keywords table -->
+      <div style="overflow-x: auto; border: 1px solid #cccccc; border-radius: 2px;">
+        <table class="plain-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Keyword</th>
+              <th style="text-align: right;">Pos</th>
+              <th style="text-align: right;">Titles</th>
+              <th style="text-align: right;">BSR</th>
+              <th style="text-align: right;">Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td style="font-weight: 500;">toddler coloring books ages 1-3</td>
+              <td style="text-align: right; font-family: monospace;">1</td>
+              <td style="text-align: right;">8/10</td>
+              <td style="text-align: right; font-family: monospace;">#8,420</td>
+              <td style="text-align: right; font-weight: bold; color: #1a7f37;">94 (High)</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td style="font-weight: 500;">coloring books for toddlers 2-4</td>
+              <td style="text-align: right; font-family: monospace;">2</td>
+              <td style="text-align: right;">6/10</td>
+              <td style="text-align: right; font-family: monospace;">#14,200</td>
+              <td style="text-align: right; font-weight: bold; color: #1a7f37;">91 (High)</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td style="font-weight: 500;">simple animal coloring book</td>
+              <td style="text-align: right; font-family: monospace;">4</td>
+              <td style="text-align: right;">4/10</td>
+              <td style="text-align: right; font-family: monospace;">#22,500</td>
+              <td style="text-align: right; font-weight: bold; color: #9a6700;">72 (Medium)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Footer: One plain line -->
+    <div class="footer">
+      <span>KDP Niche Finder</span>
+      <button class="plain-btn" style="padding: 1px 6px;">Health</button>
+      <span style="font-weight: 500;">Score: 89/100</span>
     </div>
   </div>
 
@@ -269,21 +490,11 @@
     function switchTab(tab) {
       document.getElementById('btn-overview').classList.toggle('active', tab === 'overview');
       document.getElementById('btn-books').classList.toggle('active', tab === 'books');
+      document.getElementById('btn-keywords').classList.toggle('active', tab === 'keywords');
       document.getElementById('tab-overview').classList.toggle('hidden', tab !== 'overview');
       document.getElementById('tab-books').classList.toggle('hidden', tab !== 'books');
+      document.getElementById('tab-keywords').classList.toggle('hidden', tab !== 'keywords');
     }
-
-    function filterBooks() {
-      const q = document.getElementById('title-filter').value.toLowerCase();
-      const rows = document.querySelectorAll('#books-tbody tr');
-      rows.forEach(r => {
-        r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
-      });
-    }
-
-    // Auto-switch tabs to demo both views
-    setTimeout(() => { switchTab('books'); }, 3000);
-    setTimeout(() => { switchTab('overview'); }, 7000);
   </script>
 </body>
 </html>

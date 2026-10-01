@@ -1,6 +1,5 @@
 // src/components/ExportMenu.tsx
-// Header dropdown menu for exporting research datasets, full packs, and JSON backups
-
+// Plain HTML utilitarian export dropdown menu
 import React, { useState, useRef, useEffect } from 'react';
 import type { SearchSnapshot, WatchlistItem, BookIdea, ExportSettings } from '../types';
 import {
@@ -17,7 +16,6 @@ import {
   exportSnapshotJson,
   parseImportSnapshotJson,
 } from '../services/exporter';
-import { Download, FileText, Upload, ChevronDown } from 'lucide-react';
 
 interface ExportMenuProps {
   snapshot?: SearchSnapshot | null;
@@ -74,7 +72,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
           buildSearchResultsCsv(snapshot!.books, query, exportSettings),
           buildExportFileName('search_results', query)
         );
-        showToast('Exported search results CSV!');
+        showToast('Exported search results CSV');
         break;
 
       case 'keywords':
@@ -83,7 +81,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
           buildKeywordsCsv(snapshot!.keywords!, exportSettings),
           buildExportFileName('keywords', query)
         );
-        showToast('Exported keywords CSV!');
+        showToast('Exported keywords CSV');
         break;
 
       case 'categories':
@@ -92,7 +90,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
           buildCategoriesCsv(snapshot!.categories!, exportSettings),
           buildExportFileName('categories', query)
         );
-        showToast('Exported categories CSV!');
+        showToast('Exported categories CSV');
         break;
 
       case 'specs':
@@ -101,7 +99,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
           buildSpecsCsv(snapshot!.specs!, exportSettings),
           buildExportFileName('specs', query)
         );
-        showToast('Exported specifications CSV!');
+        showToast('Exported specs CSV');
         break;
 
       case 'reviews':
@@ -110,16 +108,16 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
           buildReviewsCsv(snapshot!.reviewGap!, exportSettings),
           buildExportFileName('reviews', query)
         );
-        showToast('Exported review complaints CSV!');
+        showToast('Exported review complaints CSV');
         break;
 
       case 'watchlist':
         if (!hasWatchlist) return;
         downloadFile(
           buildWatchlistCsv(watchlist, exportSettings),
-          buildExportFileName('watchlist', query)
+          buildExportFileName('watchlist', 'kdp')
         );
-        showToast('Exported watchlist CSV!');
+        showToast('Exported watchlist CSV');
         break;
 
       case 'ai_ideas':
@@ -128,25 +126,27 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
           buildAiIdeasCsv(ideas, exportSettings),
           buildExportFileName('ai_ideas', query)
         );
-        showToast('Exported AI book ideas CSV!');
+        showToast('Exported AI book ideas CSV');
         break;
 
       case 'full_pack':
         if (!snapshot) return;
         downloadFile(
-          buildFullResearchPackCsv(snapshot, watchlist, ideas, exportSettings),
+          buildFullResearchPackCsv(
+            snapshot,
+            watchlist,
+            ideas,
+            exportSettings
+          ),
           buildExportFileName('full_pack', query)
         );
-        showToast('Exported complete research pack CSV!');
+        showToast('Exported Complete Research Pack CSV');
         break;
 
       case 'json_export':
         if (!snapshot) return;
         exportSnapshotJson(snapshot);
-        showToast('Exported snapshot JSON!');
-        break;
-
-      default:
+        showToast('Exported JSON snapshot');
         break;
     }
   };
@@ -162,7 +162,7 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         const imported = parseImportSnapshotJson(text);
         if (onImportSnapshot) {
           onImportSnapshot(imported);
-          showToast(`Imported snapshot "${imported.query}"!`);
+          showToast(`Imported snapshot "${imported.query}"`);
         }
       } catch (err: any) {
         alert(`Failed to import JSON snapshot: ${err?.message || 'Invalid format'}`);
@@ -175,8 +175,8 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
   return (
     <div className="relative inline-block text-left" ref={menuRef}>
       {toastMsg && (
-        <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-xl animate-fade-in">
-          ✓ {toastMsg}
+        <div className="fixed bottom-4 right-4 z-50 bg-[var(--bg)] border border-[var(--line)] px-2.5 py-1 text-xs text-[var(--good)] font-bold">
+          {toastMsg}
         </div>
       )}
 
@@ -193,30 +193,23 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         title="Export Data & Download Reports"
-        className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
+        className="plain-btn"
       >
-        <Download className="w-3.5 h-3.5 text-indigo-500" />
-        <span>Export</span>
-        <ChevronDown className="w-3 h-3 opacity-60" />
+        Export ▼
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Plain Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-1 w-60 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl py-1 z-[9999999] text-xs font-sans animate-fade-in divide-y divide-slate-800">
+        <div className="absolute right-0 mt-0.5 w-56 border border-[var(--line)] bg-[var(--bg)] text-[var(--text)] z-[9999999] text-xs font-sans divide-y divide-[var(--line)]">
           {/* Complete Pack Option */}
           <div className="p-1">
             <button
               onClick={() => handleExport('full_pack')}
               disabled={!hasBooks}
-              className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center justify-between hover:bg-indigo-600/20 text-indigo-300 hover:text-indigo-200 disabled:opacity-40 transition cursor-pointer"
+              className="w-full text-left px-2 py-1 flex items-center justify-between hover:bg-[var(--row-hover)] font-bold text-[var(--text)] disabled:opacity-40 cursor-pointer"
             >
-              <div className="flex items-center gap-2">
-                <FileText className="w-3.5 h-3.5 text-indigo-400" />
-                <span className="font-semibold">Full Research Pack (CSV)</span>
-              </div>
-              <span className="text-[9px] bg-indigo-500/20 px-1.5 py-0.5 rounded text-indigo-300 font-mono">
-                All
-              </span>
+              <span>Full Research Pack (CSV)</span>
+              <span className="text-[10px] text-[var(--muted)]">[All]</span>
             </button>
           </div>
 
@@ -225,64 +218,64 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
             <button
               onClick={() => handleExport('search_results')}
               disabled={!hasBooks}
-              className="w-full text-left px-2.5 py-1 rounded-lg flex items-center justify-between hover:bg-slate-800 text-slate-300 disabled:opacity-40 transition cursor-pointer"
+              className="w-full text-left px-2 py-1 flex items-center justify-between hover:bg-[var(--row-hover)] text-[var(--text)] disabled:opacity-40 cursor-pointer"
             >
               <span>Books & Metrics</span>
-              <span className="text-[10px] text-slate-500">{snapshot?.books?.length || 0}</span>
+              <span className="text-[10px] text-[var(--muted)]">{snapshot?.books?.length || 0}</span>
             </button>
 
             <button
               onClick={() => handleExport('keywords')}
               disabled={!hasKeywords}
-              className="w-full text-left px-2.5 py-1 rounded-lg flex items-center justify-between hover:bg-slate-800 text-slate-300 disabled:opacity-40 transition cursor-pointer"
+              className="w-full text-left px-2 py-1 flex items-center justify-between hover:bg-[var(--row-hover)] text-[var(--text)] disabled:opacity-40 cursor-pointer"
             >
               <span>Keywords</span>
-              <span className="text-[10px] text-slate-500">{snapshot?.keywords?.length || 0}</span>
+              <span className="text-[10px] text-[var(--muted)]">{snapshot?.keywords?.length || 0}</span>
             </button>
 
             <button
               onClick={() => handleExport('categories')}
               disabled={!hasCategories}
-              className="w-full text-left px-2.5 py-1 rounded-lg flex items-center justify-between hover:bg-slate-800 text-slate-300 disabled:opacity-40 transition cursor-pointer"
+              className="w-full text-left px-2 py-1 flex items-center justify-between hover:bg-[var(--row-hover)] text-[var(--text)] disabled:opacity-40 cursor-pointer"
             >
               <span>Categories</span>
-              <span className="text-[10px] text-slate-500">{snapshot?.categories?.length || 0}</span>
+              <span className="text-[10px] text-[var(--muted)]">{snapshot?.categories?.length || 0}</span>
             </button>
 
             <button
               onClick={() => handleExport('specs')}
               disabled={!hasSpecs}
-              className="w-full text-left px-2.5 py-1 rounded-lg flex items-center justify-between hover:bg-slate-800 text-slate-300 disabled:opacity-40 transition cursor-pointer"
+              className="w-full text-left px-2 py-1 flex items-center justify-between hover:bg-[var(--row-hover)] text-[var(--text)] disabled:opacity-40 cursor-pointer"
             >
               <span>Specs Summary</span>
-              <span className="text-[10px] text-slate-500">{hasSpecs ? 'Ready' : 'N/A'}</span>
+              <span className="text-[10px] text-[var(--muted)]">{hasSpecs ? 'Ready' : 'N/A'}</span>
             </button>
 
             <button
               onClick={() => handleExport('reviews')}
               disabled={!hasReviews}
-              className="w-full text-left px-2.5 py-1 rounded-lg flex items-center justify-between hover:bg-slate-800 text-slate-300 disabled:opacity-40 transition cursor-pointer"
+              className="w-full text-left px-2 py-1 flex items-center justify-between hover:bg-[var(--row-hover)] text-[var(--text)] disabled:opacity-40 cursor-pointer"
             >
               <span>Complaints & Signals</span>
-              <span className="text-[10px] text-slate-500">{snapshot?.reviewGap?.complaints?.length || 0}</span>
+              <span className="text-[10px] text-[var(--muted)]">{snapshot?.reviewGap?.complaints?.length || 0}</span>
             </button>
 
             <button
               onClick={() => handleExport('ai_ideas')}
               disabled={!hasIdeas}
-              className="w-full text-left px-2.5 py-1 rounded-lg flex items-center justify-between hover:bg-slate-800 text-slate-300 disabled:opacity-40 transition cursor-pointer"
+              className="w-full text-left px-2 py-1 flex items-center justify-between hover:bg-[var(--row-hover)] text-[var(--text)] disabled:opacity-40 cursor-pointer"
             >
               <span>AI Book Ideas</span>
-              <span className="text-[10px] text-slate-500">{ideas.length}</span>
+              <span className="text-[10px] text-[var(--muted)]">{ideas.length}</span>
             </button>
 
             <button
               onClick={() => handleExport('watchlist')}
               disabled={!hasWatchlist}
-              className="w-full text-left px-2.5 py-1 rounded-lg flex items-center justify-between hover:bg-slate-800 text-slate-300 disabled:opacity-40 transition cursor-pointer"
+              className="w-full text-left px-2 py-1 flex items-center justify-between hover:bg-[var(--row-hover)] text-[var(--text)] disabled:opacity-40 cursor-pointer"
             >
               <span>Watchlist Tracker</span>
-              <span className="text-[10px] text-slate-500">{watchlist.length}</span>
+              <span className="text-[10px] text-[var(--muted)]">{watchlist.length}</span>
             </button>
           </div>
 
@@ -291,9 +284,8 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
             <button
               onClick={() => handleExport('json_export')}
               disabled={!snapshot}
-              className="w-full text-left px-2.5 py-1 rounded-lg flex items-center gap-2 hover:bg-slate-800 text-slate-300 disabled:opacity-40 transition cursor-pointer"
+              className="w-full text-left px-2 py-1 flex items-center justify-between hover:bg-[var(--row-hover)] text-[var(--text)] disabled:opacity-40 cursor-pointer"
             >
-              <Download className="w-3 h-3 text-slate-400" />
               <span>Backup Snapshot (JSON)</span>
             </button>
 
@@ -302,9 +294,8 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
                 setIsOpen(false);
                 fileInputRef.current?.click();
               }}
-              className="w-full text-left px-2.5 py-1 rounded-lg flex items-center gap-2 hover:bg-slate-800 text-slate-300 transition cursor-pointer"
+              className="w-full text-left px-2 py-1 flex items-center justify-between hover:bg-[var(--row-hover)] text-[var(--text)] cursor-pointer"
             >
-              <Upload className="w-3 h-3 text-slate-400" />
               <span>Import Snapshot (JSON)</span>
             </button>
           </div>

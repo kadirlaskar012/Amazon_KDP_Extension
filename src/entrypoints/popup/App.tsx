@@ -1,9 +1,9 @@
 // src/entrypoints/popup/App.tsx
-// Comprehensive KDP Niche Finder Extension Popup:
-// 1. Instant Amazon Niche Launcher & Popular Tag Shortcuts
+// Plain utilitarian Extension Popup (400px width):
+// 1. Amazon Niche Search & Shortcuts
 // 2. Tracked Watchlist with BSR Trajectory Charts & CSV Export
 // 3. Saved Research Snapshots History
-// 4. Quick Tools, Cache Controls, and System Diagnostics
+// 4. Quick Tools & Diagnostics
 
 import React, { useState, useEffect, useMemo } from 'react';
 import type { WatchlistItem, SearchSnapshot, Settings } from '../../types';
@@ -12,27 +12,6 @@ import { refreshWatchlist } from '../../services/tracker';
 import { getSnapshots, getSettings, saveSettings, clearCache } from '../../storage';
 import { BsrChart } from '../../components/BsrChart';
 import { TrendArrow } from '../../components/TrendArrow';
-import { Logo } from '../../components/Logo';
-import {
-  BookMarked,
-  Settings as SettingsIcon,
-  RefreshCw,
-  ExternalLink,
-  Trash2,
-  AlertTriangle,
-  Bookmark,
-  Search,
-  History,
-  Activity,
-  Download,
-  Moon,
-  Sun,
-  Database,
-  ArrowRight,
-  Sparkles,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react';
 
 type PopupTab = 'watchlist' | 'snapshots' | 'tools';
 
@@ -82,7 +61,6 @@ export const App: React.FC = () => {
   useEffect(() => {
     loadData();
 
-    // Listen for storage changes
     const handleStorageChange = (
       changes: { [key: string]: chrome.storage.StorageChange },
       areaName: string
@@ -141,7 +119,7 @@ export const App: React.FC = () => {
     e.stopPropagation();
     await removeFromWatchlist(asin);
     await loadData();
-    showToast(`Removed ${asin} from watchlist`);
+    showToast(`Removed ${asin}`);
   };
 
   const handleRefreshNow = async () => {
@@ -150,7 +128,7 @@ export const App: React.FC = () => {
     try {
       await refreshWatchlist({ forceAll: true });
       await loadData();
-      showToast('Refreshed all tracked books!');
+      showToast('Refreshed tracked books');
     } catch (err) {
       console.warn('[Popup] Refresh error:', err);
     } finally {
@@ -185,13 +163,13 @@ export const App: React.FC = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('Exported watchlist CSV!');
+    showToast('Exported CSV');
   };
 
   const handleClearCache = async () => {
     await clearCache();
     setCacheCleared(true);
-    showToast('Product page cache cleared!');
+    showToast('Cache cleared');
     setTimeout(() => setCacheCleared(false), 3000);
   };
 
@@ -208,97 +186,90 @@ export const App: React.FC = () => {
   const hasCaptcha = watchlist.some((w) => w.lastStatus === 'captcha');
 
   const popularNiches = [
-    { label: '🎨 Coloring Books', q: 'coloring books for kids' },
-    { label: '🧩 Activity Books', q: 'activity books for toddlers' },
-    { label: '📓 Gratitude Journal', q: 'gratitude journal for women' },
-    { label: '📊 Log Books', q: 'log book record keeper' },
-    { label: '🔍 Word Search', q: 'word search puzzle book' },
-    { label: '✨ Dot Markers', q: 'dot markers activity book' },
+    { label: 'Coloring Books', q: 'coloring books for kids' },
+    { label: 'Activity Books', q: 'activity books for toddlers' },
+    { label: 'Gratitude Journal', q: 'gratitude journal for women' },
+    { label: 'Log Books', q: 'log book record keeper' },
+    { label: 'Word Search', q: 'word search puzzle book' },
+    { label: 'Dot Markers', q: 'dot markers activity book' },
   ];
 
   return (
-    <div className={`w-[450px] min-h-[560px] max-h-[600px] flex flex-col font-sans text-xs select-text no-horizontal-scroll ${isDarkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
+    <div
+      className={`w-[400px] min-h-[500px] max-h-[580px] flex flex-col text-[13px] leading-[1.4] select-text no-horizontal-scroll ${
+        isDarkMode ? 'dark' : ''
+      }`}
+      style={{
+        background: 'var(--bg)',
+        color: 'var(--text)',
+        fontFamily: 'system-ui, Arial, sans-serif',
+      }}
+    >
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-14 right-4 z-50 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xl animate-fade-in">
-          ✓ {toastMessage}
+        <div
+          className="fixed top-2 right-2 z-50 px-2 py-1 text-xs border"
+          style={{ background: 'var(--bg)', color: 'var(--text)', borderColor: 'var(--line)', borderRadius: '2px' }}
+        >
+          {toastMessage}
         </div>
       )}
 
-      {/* Header */}
-      <header className="px-3.5 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 flex items-center justify-between shrink-0 shadow-xs">
-        <div className="flex items-center gap-2.5">
-          <Logo size={32} />
-          <div>
-            <div className="font-extrabold text-slate-900 dark:text-white text-xs sm:text-sm leading-tight flex items-center gap-1.5">
-              <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-                KDP Niche Finder
-              </span>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs tracking-wider">
-                PRO
-              </span>
-            </div>
-            <div className="text-[10px] text-slate-400 font-medium">
-              Personal Amazon Publishing Intelligence
-            </div>
-          </div>
-        </div>
+      {/* Header: Single plain line */}
+      <header
+        className="px-2 py-1.5 border-b flex items-center justify-between shrink-0"
+        style={{ borderColor: 'var(--line)' }}
+      >
+        <div className="font-bold text-[14px]">KDP Niche Finder</div>
 
         <div className="flex items-center gap-1">
           <button
             onClick={toggleTheme}
-            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            className="plain-btn text-xs"
+            title="Toggle Light / Dark mode"
           >
-            {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+            {isDarkMode ? 'Light' : 'Dark'}
           </button>
 
           <button
             onClick={openSettings}
+            className="plain-btn text-xs"
             title="Open Extension Settings"
-            className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           >
-            <SettingsIcon className="w-4 h-4" />
+            Settings
           </button>
         </div>
       </header>
 
-      {/* Quick Search & Launch Bar */}
-      <div className="px-3.5 py-2.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 space-y-2 shrink-0">
+      {/* Search Input and Shortcuts */}
+      <div className="p-2 border-b space-y-1.5 shrink-0" style={{ borderColor: 'var(--line)' }}>
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSearchAmazon(searchQuery);
           }}
-          className="flex items-center gap-1.5"
+          className="flex items-center gap-1"
         >
-          <div className="relative flex-1">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search Amazon Books niche (e.g. coloring book)..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <button
-            type="submit"
-            className="shrink-0 flex items-center gap-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:from-blue-700 hover:to-indigo-700 transition cursor-pointer"
-          >
-            <span>Search</span>
-            <ArrowRight className="w-3 h-3" />
+          <input
+            type="text"
+            placeholder="Search Amazon Books niche..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="plain-input flex-1"
+          />
+          <button type="submit" className="plain-btn font-medium">
+            Search
           </button>
         </form>
 
-        {/* Popular Niche Shortcuts */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-horizontal-scroll">
-          <span className="text-[10px] text-slate-400 font-semibold shrink-0 uppercase tracking-wider">Quick:</span>
+        <div className="flex items-center gap-1.5 flex-wrap text-xs">
+          <span style={{ color: 'var(--muted)' }}>Quick:</span>
           {popularNiches.map((n) => (
             <button
               key={n.q}
               onClick={() => handleSearchAmazon(n.q)}
-              className="shrink-0 text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/40 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-300 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+              className="plain-link text-xs"
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
             >
               {n.label}
             </button>
@@ -306,358 +277,346 @@ export const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="px-3.5 pt-2 bg-slate-100 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2 shrink-0">
+      {/* Navigation Tabs: text row separated by | */}
+      <div
+        className="px-2 py-1 border-b flex items-center gap-2 text-xs shrink-0"
+        style={{ borderColor: 'var(--line)' }}
+      >
         <button
           onClick={() => setActiveTab('watchlist')}
-          className={`pb-2 px-2 text-xs font-bold border-b-2 transition flex items-center gap-1.5 cursor-pointer ${
-            activeTab === 'watchlist'
-              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-          }`}
+          className="cursor-pointer"
+          style={{
+            fontWeight: activeTab === 'watchlist' ? 'bold' : 'normal',
+            borderBottom: activeTab === 'watchlist' ? '2px solid var(--text)' : '2px solid transparent',
+            color: 'var(--text)',
+            background: 'none',
+            borderLeft: 'none',
+            borderRight: 'none',
+            borderTop: 'none',
+            padding: '2px 4px',
+          }}
         >
-          <Bookmark className="w-3.5 h-3.5" />
-          <span>Watchlist</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-            {watchlist.length}
-          </span>
+          Watchlist ({watchlist.length})
         </button>
-
+        <span style={{ color: 'var(--line)' }}>|</span>
         <button
           onClick={() => setActiveTab('snapshots')}
-          className={`pb-2 px-2 text-xs font-bold border-b-2 transition flex items-center gap-1.5 cursor-pointer ${
-            activeTab === 'snapshots'
-              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-          }`}
+          className="cursor-pointer"
+          style={{
+            fontWeight: activeTab === 'snapshots' ? 'bold' : 'normal',
+            borderBottom: activeTab === 'snapshots' ? '2px solid var(--text)' : '2px solid transparent',
+            color: 'var(--text)',
+            background: 'none',
+            borderLeft: 'none',
+            borderRight: 'none',
+            borderTop: 'none',
+            padding: '2px 4px',
+          }}
         >
-          <History className="w-3.5 h-3.5" />
-          <span>Research History</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-            {snapshots.length}
-          </span>
+          Snapshots ({snapshots.length})
         </button>
-
+        <span style={{ color: 'var(--line)' }}>|</span>
         <button
           onClick={() => setActiveTab('tools')}
-          className={`pb-2 px-2 text-xs font-bold border-b-2 transition flex items-center gap-1.5 cursor-pointer ${
-            activeTab === 'tools'
-              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-          }`}
+          className="cursor-pointer"
+          style={{
+            fontWeight: activeTab === 'tools' ? 'bold' : 'normal',
+            borderBottom: activeTab === 'tools' ? '2px solid var(--text)' : '2px solid transparent',
+            color: 'var(--text)',
+            background: 'none',
+            borderLeft: 'none',
+            borderRight: 'none',
+            borderTop: 'none',
+            padding: '2px 4px',
+          }}
         >
-          <Activity className="w-3.5 h-3.5" />
-          <span>Quick Tools</span>
+          Tools
         </button>
       </div>
 
       {/* CAPTCHA Warning Banner */}
       {hasCaptcha && (
-        <div className="m-3 p-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-2 animate-pulse shrink-0">
-          <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
-          <div>
-            <strong>Amazon verification required:</strong> Open Amazon in a tab, solve the puzzle, then click <strong>Refresh</strong>.
-          </div>
+        <div
+          className="m-2 p-1.5 text-xs border"
+          style={{ borderColor: 'var(--warn)', color: 'var(--warn)', borderRadius: '2px' }}
+        >
+          <strong>Verification Required:</strong> Open Amazon in a tab, solve the puzzle, then click Refresh.
         </div>
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 p-3.5 overflow-y-auto space-y-3">
+      <div className="flex-1 p-2 overflow-y-auto space-y-2">
         {loading ? (
-          <div className="py-16 text-center text-slate-500 animate-pulse text-xs">
+          <div className="py-8 text-center text-xs" style={{ color: 'var(--muted)' }}>
             Loading extension data...
           </div>
         ) : activeTab === 'watchlist' ? (
-          /* TAB 1: WATCHLIST & TRACKER */
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Refreshed {lastRefreshTime}
-              </span>
-
-              <div className="flex items-center gap-1.5">
+          /* TAB 1: WATCHLIST */
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs pb-1 border-b" style={{ borderColor: 'var(--line)' }}>
+              <span style={{ color: 'var(--muted)' }}>Refreshed: {lastRefreshTime}</span>
+              <div className="flex items-center gap-1">
                 {watchlist.length > 0 && (
-                  <button
-                    onClick={handleExportCsv}
-                    className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
-                    title="Export Watchlist CSV"
-                  >
-                    <Download className="w-3.5 h-3.5" />
+                  <button onClick={handleExportCsv} className="plain-btn" title="Export CSV">
+                    Export CSV
                   </button>
                 )}
-
                 <button
                   onClick={handleRefreshNow}
                   disabled={isRefreshing || watchlist.length === 0}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 font-semibold text-xs hover:bg-indigo-100 dark:hover:bg-indigo-900/50 disabled:opacity-50 transition cursor-pointer"
-                  title="Refresh All Tracked Books"
+                  className="plain-btn"
+                  title="Refresh All"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  <span>{isRefreshing ? 'Refreshing...' : 'Refresh All'}</span>
+                  {isRefreshing ? 'Checking...' : 'Refresh All'}
                 </button>
               </div>
             </div>
 
             {watchlist.length > 0 ? (
-              watchlist.map((item) => {
-                const isExpanded = expandedAsin === item.asin;
-                const trend = getTrend(item);
-                const latestPoint = item.history[item.history.length - 1];
-                const currentBsr = latestPoint ? (latestPoint.bsrOverall ?? latestPoint.bsr) : undefined;
-                const amazonUrl = `https://www.amazon.com/dp/${item.asin}`;
+              <div className="border" style={{ borderColor: 'var(--line)', borderRadius: '2px' }}>
+                <table className="plain-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '20px' }}></th>
+                      <th>Title</th>
+                      <th className="text-right">BSR</th>
+                      <th className="text-center">Trend</th>
+                      <th className="text-right">Price</th>
+                      <th className="text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {watchlist.map((item) => {
+                      const isExpanded = expandedAsin === item.asin;
+                      const trend = getTrend(item);
+                      const latestPoint = item.history[item.history.length - 1];
+                      const currentBsr = latestPoint ? (latestPoint.bsrOverall ?? latestPoint.bsr) : undefined;
+                      const amazonUrl = `https://www.amazon.com/dp/${item.asin}`;
 
-                return (
-                  <div
-                    key={item.asin}
-                    className={`rounded-xl border transition-all ${
-                      isExpanded
-                        ? 'border-indigo-400 dark:border-indigo-500/50 bg-white dark:bg-slate-900 shadow-md'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:border-slate-300 dark:hover:border-slate-700'
-                    }`}
-                  >
-                    {/* Row Header */}
-                    <div
-                      onClick={() => setExpandedAsin(isExpanded ? null : item.asin)}
-                      className="p-3 cursor-pointer flex items-center justify-between gap-2.5"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <span className="font-bold text-slate-900 dark:text-white text-xs truncate block" title={item.title}>
-                          {item.title}
-                        </span>
+                      return (
+                        <React.Fragment key={item.asin}>
+                          <tr
+                            onClick={() => setExpandedAsin(isExpanded ? null : item.asin)}
+                            className="cursor-pointer"
+                          >
+                            <td className="text-center text-xs" style={{ color: 'var(--muted)' }}>
+                              {isExpanded ? '▼' : '►'}
+                            </td>
+                            <td className="max-w-[120px] truncate font-medium" title={item.title}>
+                              {item.title}
+                            </td>
+                            <td className="text-right font-mono text-xs">
+                              {currentBsr ? `#${currentBsr.toLocaleString()}` : 'N/A'}
+                            </td>
+                            <td className="text-center">
+                              <TrendArrow trend={trend.trend} percentChange={trend.percentChange} />
+                            </td>
+                            <td className="text-right text-xs">
+                              {latestPoint?.price !== undefined ? `$${latestPoint.price.toFixed(2)}` : '—'}
+                            </td>
+                            <td className="text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                              <a
+                                href={amazonUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="plain-link mr-1.5"
+                                title="Open on Amazon"
+                              >
+                                Link
+                              </a>
+                              <button
+                                onClick={(e) => handleRemove(e, item.asin)}
+                                className="plain-link"
+                                style={{ color: 'var(--bad)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                                title="Remove"
+                              >
+                                Del
+                              </button>
+                            </td>
+                          </tr>
 
-                        <div className="mt-1 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
-                          <span className="font-mono text-slate-400">{item.asin}</span>
-                          <span>•</span>
-                          {currentBsr ? (
-                            <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                              #{currentBsr.toLocaleString()}
-                            </span>
-                          ) : (
-                            <span>BSR N/A</span>
+                          {/* Expanded detail row */}
+                          {isExpanded && (
+                            <tr>
+                              <td colSpan={6} className="p-2" style={{ background: 'var(--bg)' }}>
+                                <div className="space-y-1.5">
+                                  <table className="plain-table" style={{ width: '100%' }}>
+                                    <tbody>
+                                      <tr>
+                                        <td className="font-medium">Best BSR:</td>
+                                        <td className="font-mono" style={{ color: 'var(--good)' }}>
+                                          {trend.bestBsr ? `#${trend.bestBsr.toLocaleString()}` : 'N/A'}
+                                        </td>
+                                        <td className="font-medium">Worst BSR:</td>
+                                        <td className="font-mono" style={{ color: 'var(--bad)' }}>
+                                          {trend.worstBsr ? `#${trend.worstBsr.toLocaleString()}` : 'N/A'}
+                                        </td>
+                                        <td className="font-medium">Tracked:</td>
+                                        <td>{trend.daysTracked}d</td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                  <BsrChart history={item.history} height={130} />
+                                </div>
+                              </td>
+                            </tr>
                           )}
-                          <span>•</span>
-                          <TrendArrow trend={trend.trend} percentChange={trend.percentChange} />
-                          {latestPoint?.price !== undefined && (
-                            <>
-                              <span>•</span>
-                              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                                ${latestPoint.price.toFixed(2)}
-                              </span>
-                            </>
-                          )}
-                          {latestPoint?.reviewCount !== undefined && (
-                            <>
-                              <span>•</span>
-                              <span>{latestPoint.reviewCount.toLocaleString()} rev</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1 shrink-0">
-                        <a
-                          href={amazonUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                          title="Open on Amazon"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-
-                        <button
-                          onClick={(e) => handleRemove(e, item.asin)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                          title="Remove from Watchlist"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Expanded Chart */}
-                    {isExpanded && (
-                      <div className="px-3 pb-3 pt-1 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
-                        <div className="grid grid-cols-3 gap-1.5 text-center text-xs">
-                          <div className="rounded-lg bg-slate-50 dark:bg-slate-950 p-1.5 border border-slate-200 dark:border-slate-800">
-                            <span className="text-slate-400 block text-[10px]">Best BSR</span>
-                            <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                              {trend.bestBsr ? `#${trend.bestBsr.toLocaleString()}` : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="rounded-lg bg-slate-50 dark:bg-slate-950 p-1.5 border border-slate-200 dark:border-slate-800">
-                            <span className="text-slate-400 block text-[10px]">Worst BSR</span>
-                            <span className="font-bold text-rose-600 dark:text-rose-400 font-mono">
-                              {trend.worstBsr ? `#${trend.worstBsr.toLocaleString()}` : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="rounded-lg bg-slate-50 dark:bg-slate-950 p-1.5 border border-slate-200 dark:border-slate-800">
-                            <span className="text-slate-400 block text-[10px]">Days Tracked</span>
-                            <span className="font-bold text-indigo-600 dark:text-indigo-400 font-mono">
-                              {trend.daysTracked}d
-                            </span>
-                          </div>
-                        </div>
-
-                        <BsrChart history={item.history} height={140} />
-                      </div>
-                    )}
-                  </div>
-                );
-              })
+                        </React.Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             ) : (
-              <div className="py-12 text-center text-slate-400 space-y-2 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 p-6">
-                <Bookmark className="w-8 h-8 text-slate-400 dark:text-slate-600 mx-auto" />
-                <p className="font-bold text-slate-700 dark:text-slate-300 text-xs sm:text-sm">Your watchlist is empty</p>
-                <p className="text-xs text-slate-500 max-w-[260px] mx-auto">
-                  Search for books on Amazon, then click "Watch" inside the KDP sidebar to track BSR and prices daily.
-                </p>
+              <div className="p-4 text-center border" style={{ borderColor: 'var(--line)', borderRadius: '2px', color: 'var(--muted)' }}>
+                Watchlist is empty. Search books on Amazon and click "Watch" to begin tracking.
               </div>
             )}
           </div>
         ) : activeTab === 'snapshots' ? (
-          /* TAB 2: RESEARCH SNAPSHOTS HISTORY */
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                {snapshots.length} Saved Search Snapshots
-              </span>
+          /* TAB 2: RESEARCH HISTORY */
+          <div className="space-y-2">
+            <div className="text-xs pb-1 border-b" style={{ borderColor: 'var(--line)', color: 'var(--muted)' }}>
+              {snapshots.length} Saved Search Snapshots
             </div>
 
             {snapshots.length > 0 ? (
-              snapshots.map((snap, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-xs space-y-2 transition hover:border-slate-300 dark:hover:border-slate-700"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h5 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
-                        "{snap.query}"
-                      </h5>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">
-                        {new Date(snap.date).toLocaleString()} • {snap.books?.length || 0} books analyzed
-                      </span>
-                    </div>
+              <div className="border" style={{ borderColor: 'var(--line)', borderRadius: '2px' }}>
+                <table className="plain-table">
+                  <thead>
+                    <tr>
+                      <th>Query</th>
+                      <th>Date</th>
+                      <th className="text-right">Books</th>
+                      <th className="text-right">Score</th>
+                      <th className="text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {snapshots.map((snap, idx) => {
+                      const scoreColor = snap.scores
+                        ? snap.scores.label === 'green'
+                          ? 'var(--good)'
+                          : snap.scores.label === 'yellow'
+                          ? 'var(--warn)'
+                          : 'var(--bad)'
+                        : 'var(--muted)';
 
-                    {snap.scores && (
-                      <span
-                        className={`px-2 py-0.5 rounded-full font-bold font-mono text-xs border ${
-                          snap.scores.label === 'green'
-                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/30'
-                            : snap.scores.label === 'yellow'
-                            ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-500/30'
-                            : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-500/30'
-                        }`}
-                      >
-                        Score: {snap.scores.total}/100
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
-                    <span className="text-xs text-slate-500">
-                      Opportunities: <strong className="text-slate-800 dark:text-slate-200">{snap.books?.filter((b) => (b.opportunityReasons?.length || 0) > 0).length || 0}</strong>
-                    </span>
-
-                    <button
-                      onClick={() => handleSearchAmazon(snap.query)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                    >
-                      <span>Re-open on Amazon</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-              ))
+                      return (
+                        <tr key={idx}>
+                          <td className="font-medium max-w-[120px] truncate" title={snap.query}>
+                            {snap.query}
+                          </td>
+                          <td className="text-xs whitespace-nowrap" style={{ color: 'var(--muted)' }}>
+                            {new Date(snap.date).toLocaleDateString()}
+                          </td>
+                          <td className="text-right text-xs">
+                            {snap.books?.length || 0}
+                          </td>
+                          <td className="text-right font-bold font-mono text-xs" style={{ color: scoreColor }}>
+                            {snap.scores ? `${snap.scores.total}/100` : '—'}
+                          </td>
+                          <td className="text-center">
+                            <button
+                              onClick={() => handleSearchAmazon(snap.query)}
+                              className="plain-link text-xs"
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                            >
+                              Open
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             ) : (
-              <div className="py-12 text-center text-slate-400 space-y-2 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 p-6">
-                <History className="w-8 h-8 text-slate-400 dark:text-slate-600 mx-auto" />
-                <p className="font-bold text-slate-700 dark:text-slate-300 text-xs sm:text-sm">No research history yet</p>
-                <p className="text-xs text-slate-500 max-w-[260px] mx-auto">
-                  Perform a book search on Amazon to automatically save niche snapshots and score audits here.
-                </p>
+              <div className="p-4 text-center border" style={{ borderColor: 'var(--line)', borderRadius: '2px', color: 'var(--muted)' }}>
+                No search history yet. Search on Amazon to save niche audits.
               </div>
             )}
           </div>
         ) : (
-          /* TAB 3: QUICK TOOLS & DIAGNOSTICS */
-          <div className="space-y-3">
-            {/* Quick Actions Card */}
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 shadow-xs space-y-3">
-              <h5 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                Extension Quick Controls
-              </h5>
-
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleSearchAmazon('low content books')}
-                  className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-left hover:border-indigo-400 transition cursor-pointer"
-                >
-                  <span className="font-bold text-slate-900 dark:text-white block text-xs">Amazon Books</span>
-                  <span className="text-[10px] text-slate-500">Open main book store</span>
-                </button>
-
-                <button
-                  onClick={openSettings}
-                  className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-left hover:border-indigo-400 transition cursor-pointer"
-                >
-                  <span className="font-bold text-slate-900 dark:text-white block text-xs">Options & Settings</span>
-                  <span className="text-[10px] text-slate-500">Full configuration panel</span>
-                </button>
-              </div>
-
-              {/* Cache Controls */}
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200 block text-xs">Product Cache</span>
-                  <span className="text-[10px] text-slate-500">Stores fetched listings for speed</span>
-                </div>
-                <button
-                  onClick={handleClearCache}
-                  disabled={cacheCleared}
-                  className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-xs transition cursor-pointer flex items-center gap-1"
-                >
-                  <Database className="w-3.5 h-3.5" />
-                  <span>{cacheCleared ? 'Cleared ✓' : 'Clear Cache'}</span>
-                </button>
-              </div>
-
-              {/* AI Status */}
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200 block text-xs">Google Gemini AI</span>
-                  <span className="text-[10px] text-slate-500">Book idea generation module</span>
-                </div>
-                {(settings?.geminiApiKey || (settings?.geminiApiKeys && settings.geminiApiKeys.length > 0)) ? (
-                  <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold text-xs">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Configured {settings?.geminiApiKeys && settings.geminiApiKeys.length > 1 ? `(${settings.geminiApiKeys.length} Keys)` : ''}
-                  </span>
-                ) : (
-                  <button
-                    onClick={openSettings}
-                    className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold text-xs hover:underline cursor-pointer"
-                  >
-                    <XCircle className="w-3.5 h-3.5" /> Add API Key
-                  </button>
-                )}
-              </div>
+          /* TAB 3: TOOLS */
+          <div className="space-y-2">
+            <div className="border" style={{ borderColor: 'var(--line)', borderRadius: '2px' }}>
+              <table className="plain-table">
+                <tbody>
+                  <tr>
+                    <td className="font-medium">Amazon Book Store</td>
+                    <td className="text-right">
+                      <button
+                        onClick={() => handleSearchAmazon('low content books')}
+                        className="plain-btn"
+                      >
+                        Open Amazon Books
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="font-medium">Options & Settings</td>
+                    <td className="text-right">
+                      <button onClick={openSettings} className="plain-btn">
+                        Open Settings
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div className="font-medium">Product Cache</div>
+                      <div className="text-xs" style={{ color: 'var(--muted)' }}>Stores listing details for speed</div>
+                    </td>
+                    <td className="text-right">
+                      <button
+                        onClick={handleClearCache}
+                        disabled={cacheCleared}
+                        className="plain-btn"
+                      >
+                        {cacheCleared ? 'Cleared' : 'Clear Cache'}
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div className="font-medium">Gemini AI Status</div>
+                      <div className="text-xs" style={{ color: 'var(--muted)' }}>Niche idea generator</div>
+                    </td>
+                    <td className="text-right">
+                      {(settings?.geminiApiKey || (settings?.geminiApiKeys && settings.geminiApiKeys.length > 0)) ? (
+                        <span className="font-bold text-xs" style={{ color: 'var(--good)' }}>
+                          Configured {settings?.geminiApiKeys && settings.geminiApiKeys.length > 1 ? `(${settings.geminiApiKeys.length} keys)` : ''}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={openSettings}
+                          className="plain-link text-xs"
+                          style={{ color: 'var(--warn)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                        >
+                          Add API Key
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         )}
       </div>
 
-      {/* Footer */}
-      <footer className="px-3.5 py-2 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 text-xs text-slate-500 flex items-center justify-between shrink-0 shadow-xs">
-        <span className="font-medium text-slate-400">KDP Niche Finder • Production Ready</span>
+      {/* Footer: One plain line */}
+      <footer
+        className="px-2 py-1 border-t text-xs flex items-center justify-between shrink-0"
+        style={{ borderColor: 'var(--line)', color: 'var(--muted)' }}
+      >
+        <span>KDP Niche Finder</span>
         <button
           onClick={() => handleSearchAmazon('low content books')}
-          className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold flex items-center gap-0.5 cursor-pointer"
+          className="plain-link text-xs"
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
         >
-          <span>Open Amazon Books</span>
-          <ArrowRight className="w-3 h-3" />
+          Open Amazon Books
         </button>
       </footer>
     </div>

@@ -24,10 +24,11 @@ export const TrendArrow: React.FC<TrendArrowProps> = ({
     case 'improving':
       return (
         <span
-          className={`inline-flex items-center gap-0.5 font-semibold text-emerald-400 ${className}`}
+          className={`inline-flex items-center gap-0.5 font-bold ${className}`}
+          style={{ color: 'var(--good)' }}
           title={`BSR Improving: rank dropped by ${formattedPercent} (Sales velocity up)`}
         >
-          <span>↑</span>
+          <span>▲</span>
           {showPercent && <span className="text-[10px]">{formattedPercent}</span>}
         </span>
       );
@@ -35,10 +36,11 @@ export const TrendArrow: React.FC<TrendArrowProps> = ({
     case 'declining':
       return (
         <span
-          className={`inline-flex items-center gap-0.5 font-semibold text-rose-400 ${className}`}
+          className={`inline-flex items-center gap-0.5 font-bold ${className}`}
+          style={{ color: 'var(--bad)' }}
           title={`BSR Declining: rank rose by ${formattedPercent} (Sales velocity down)`}
         >
-          <span>↓</span>
+          <span>▼</span>
           {showPercent && <span className="text-[10px]">{formattedPercent}</span>}
         </span>
       );
@@ -46,7 +48,8 @@ export const TrendArrow: React.FC<TrendArrowProps> = ({
     case 'stable':
       return (
         <span
-          className={`inline-flex items-center gap-0.5 font-semibold text-slate-400 ${className}`}
+          className={`inline-flex items-center gap-0.5 ${className}`}
+          style={{ color: 'var(--muted)' }}
           title={`BSR Stable: changed within ±5% (${formattedPercent})`}
         >
           <span>—</span>
@@ -58,7 +61,8 @@ export const TrendArrow: React.FC<TrendArrowProps> = ({
     default:
       return (
         <span
-          className={`inline-flex items-center font-medium text-slate-500 ${className}`}
+          className={`inline-flex items-center ${className}`}
+          style={{ color: 'var(--muted)' }}
           title="Trend unknown: requires at least 2 tracking days"
         >
           <span className="text-[10px]">?</span>

@@ -22,16 +22,6 @@ import { DEFAULT_SETTINGS } from '../config/defaults';
 import { extractAllGeminiKeys } from '../services/aiIdeas';
 import { SEARCH_SELECTORS, PRODUCT_PAGE_SELECTORS, BEST_SELLERS_SELECTORS } from '../config/selectors';
 import type { KeywordItem, CategoryStat, SpecsSummary, ReviewGapAnalysis, BookIdea, WatchlistItem } from '../types';
-import { Logo } from './Logo';
-import {
-  BookMarked,
-  Moon,
-  Sun,
-  ChevronRight,
-  ChevronLeft,
-  Activity,
-  Settings as SettingsIcon,
-} from 'lucide-react';
 
 interface SidebarProps {
   initialBooks: Book[];
@@ -124,7 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         if (!isNaN(parsed) && parsed >= 380 && parsed <= 900) return parsed;
       }
     }
-    return 480;
+    return 380;
   });
   const [isResizing, setIsResizing] = useState(false);
 
@@ -177,7 +167,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
     init();
 
-    // Listen for storage changes (e.g. from Options page or other tabs)
+    // Listen for storage changes
     const handleStorageChange = (
       changes: { [key: string]: chrome.storage.StorageChange },
       areaName: string
@@ -349,19 +339,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className={isDarkMode ? 'dark' : ''}>
         <button
           onClick={() => setIsOpen(true)}
-          className={`fixed top-24 z-[999999] flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white shadow-2xl transition-all cursor-pointer font-sans text-xs font-semibold ${
-            isLeft ? 'left-0 rounded-r-xl' : 'right-0 rounded-l-xl'
+          className={`plain-btn fixed top-24 z-[999999] px-2 py-1.5 text-xs font-bold ${
+            isLeft ? 'left-0 border-l-0' : 'right-0 border-r-0'
           }`}
           title="Open KDP Niche Finder"
         >
-          {isLeft ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          <Logo size={18} />
-          <span>KDP Niche</span>
-          {books.length > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 rounded-full bg-blue-800 text-[10px]">
-              {books.length}
-            </span>
-          )}
+          {isLeft ? '►' : '◄'} KDP Niche {books.length > 0 ? `(${books.length})` : ''}
         </button>
       </div>
     );
@@ -370,9 +353,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className={isDarkMode ? 'dark' : ''}>
       <aside
-        style={{ width: `${sidebarWidth}px` }}
-        className={`fixed top-0 bottom-0 max-w-[100vw] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-2xl flex flex-col z-[999999] font-sans antialiased text-xs transition-colors select-text no-horizontal-scroll ${
-          isLeft ? 'left-0 border-r border-slate-200 dark:border-slate-800' : 'right-0 border-l border-slate-200 dark:border-slate-800'
+        style={{ width: `${sidebarWidth}px`, maxWidth: '100vw' }}
+        className={`fixed top-0 bottom-0 bg-[var(--bg)] text-[var(--text)] flex flex-col z-[999999] text-[13px] leading-[1.4] select-text no-horizontal-scroll ${
+          isLeft ? 'left-0 border-r border-[var(--line)]' : 'right-0 border-l border-[var(--line)]'
         }`}
       >
         {/* Resize border drag handle */}
@@ -382,32 +365,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
             setIsResizing(true);
           }}
           title="Drag border to resize sidebar"
-          className={`absolute top-0 bottom-0 w-2 cursor-col-resize hover:bg-blue-500/50 active:bg-blue-600 transition-colors z-[1000] flex items-center justify-center group ${
+          className={`absolute top-0 bottom-0 w-2 cursor-col-resize z-[1000] hover:bg-[var(--line)] ${
             isLeft ? 'right-0' : 'left-0'
           }`}
-        >
-          <div className="w-0.5 h-8 bg-slate-300 dark:bg-slate-700 rounded-full group-hover:bg-blue-500 transition-colors" />
-        </div>
+        />
 
-        {/* Header */}
-        <header className="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-200/80 dark:border-slate-800 bg-gradient-to-r from-white via-indigo-50/20 to-white dark:from-slate-900 dark:via-indigo-950/20 dark:to-slate-900 backdrop-blur-md shrink-0 shadow-xs">
-          <div className="flex items-center gap-2.5">
-            <Logo size={32} />
-            <div>
-              <div className="font-extrabold text-slate-900 dark:text-white text-sm leading-tight flex items-center gap-1.5">
-                <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 dark:from-indigo-400 dark:via-purple-400 dark:to-pink-400 bg-clip-text text-transparent">
-                  KDP Niche Finder
-                </span>
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-xs tracking-wider">
-                  PRO
-                </span>
-              </div>
-              <div className="text-[10px] text-slate-400 font-medium">Personal KDP Intelligence</div>
-            </div>
+        {/* Header: Single line - "KDP Niche Finder" (bold) on the left, then plain buttons: [Export] [History] [Dark] [Settings] [Close] */}
+        <header className="flex items-center justify-between px-2 py-1.5 border-b border-[var(--line)] bg-[var(--bg)] shrink-0 gap-1">
+          <div className="font-bold text-[13px] text-[var(--text)] whitespace-nowrap">
+            KDP Niche Finder
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {/* Export Menu Dropdown */}
+          <div className="flex items-center gap-1 flex-wrap justify-end">
             <ExportMenu
               snapshot={currentSnapshot}
               watchlist={watchlist}
@@ -419,55 +388,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 setQuery(imported.query || '');
               }}
             />
-            {/* History Dropdown */}
+
             {snapshots.length > 0 && (
-              <div className="relative flex items-center">
-                <select
-                  onChange={handleSelectSnapshot}
-                  defaultValue=""
-                  title="Reload a past search snapshot"
-                  className="text-[10px] py-1 px-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 max-w-[95px] truncate cursor-pointer focus:outline-none"
-                >
-                  <option value="" disabled>
-                    History ({snapshots.length})
+              <select
+                onChange={handleSelectSnapshot}
+                defaultValue=""
+                title="Past search history"
+                className="plain-select text-[11px] py-0.5 px-1 max-w-[85px]"
+              >
+                <option value="" disabled>
+                  History ({snapshots.length})
+                </option>
+                {snapshots.map((snap, i) => (
+                  <option key={i} value={i}>
+                    {snap.query} ({new Date(snap.date).toLocaleDateString()})
                   </option>
-                  {snapshots.map((snap, i) => (
-                    <option key={i} value={i}>
-                      "{snap.query}" ({new Date(snap.date).toLocaleDateString()})
-                    </option>
-                  ))}
-                </select>
-              </div>
+                ))}
+              </select>
             )}
 
             <button
               onClick={toggleTheme}
               title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="p-1 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="plain-btn text-[11px] px-1.5 py-0.5"
             >
-              {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+              {isDarkMode ? 'Light' : 'Dark'}
             </button>
 
             <button
-              onClick={() => {
-                setIsSettingsOpen((prev) => !prev);
-              }}
-              title="Open Extension Settings"
-              className={`p-1 rounded-lg transition cursor-pointer ${
-                isSettingsOpen
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
+              onClick={() => setIsSettingsOpen((prev) => !prev)}
+              title="Toggle settings drawer"
+              className={`plain-btn text-[11px] px-1.5 py-0.5 ${isSettingsOpen ? 'font-bold underline' : ''}`}
             >
-              <SettingsIcon className="w-4 h-4" />
+              Settings
             </button>
 
             <button
               onClick={() => setIsOpen(false)}
-              title="Collapse Sidebar"
-              className="p-1 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              title="Close sidebar"
+              className="plain-btn text-[11px] px-1.5 py-0.5"
             >
-              {isLeft ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              Close
             </button>
           </div>
         </header>
@@ -477,7 +438,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <CaptchaAlert url={captchaUrl} onResume={onResumeQueue} />
         )}
 
-        {/* Progress Bar & Queue Status */}
+        {/* Fetch status: "Fetched 16/16 details", 6px progress bar, rate limit text, refresh button */}
         <SearchProgress
           status={queueStatus}
           onPause={onPauseQueue}
@@ -487,33 +448,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Watchlist success toast */}
         {watchlistSuccess && (
-          <div className="mx-3 my-1 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs">
+          <div className="mx-2 my-1 p-1 text-[11px] text-[var(--good)] border border-[var(--line)]">
             {watchlistSuccess}
           </div>
         )}
 
         {isSettingsOpen ? (
-          <div className="flex-1 overflow-y-auto overflow-x-hidden p-3.5 space-y-4">
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">⚙️</span>
-                <div>
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">Settings</h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Configure research rules, trends &amp; keys</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 space-y-3">
+            <div className="flex items-center justify-between pb-1 border-b border-[var(--line)]">
+              <span className="font-bold text-[13px]">Settings</span>
+              <div className="flex items-center gap-1">
                 <button
                   onClick={handleOpenFullSettings}
-                  className="rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-300 dark:border-indigo-700/60 px-2 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 transition flex items-center gap-1 cursor-pointer"
+                  className="plain-btn text-[11px] px-2 py-0.5"
                   title="Open full options page in a browser tab"
                 >
-                  Full Page ↗
+                  Full Page
                 </button>
                 <button
                   onClick={() => setIsSettingsOpen(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                  className="plain-btn text-[11px] px-1.5 py-0.5"
                   title="Close Settings"
                 >
                   ✕
@@ -522,20 +476,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {settingsSaveMsg && (
-              <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-medium animate-fade-in flex items-center gap-2">
-                <span>✓</span>
-                <span>{settingsSaveMsg}</span>
+              <div className="p-1 text-[11px] text-[var(--good)] border border-[var(--line)]">
+                {settingsSaveMsg}
               </div>
             )}
 
             {/* Section 1: Opportunity Thresholds */}
-            <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
-              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <div className="border border-[var(--line)] p-2 space-y-2">
+              <div className="font-bold text-[11px] text-[var(--muted)] uppercase">
                 Opportunity Detection Rules
-              </h4>
-              <div className="grid grid-cols-2 gap-2.5">
+              </div>
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                  <label className="block text-[11px] text-[var(--muted)] mb-0.5">
                     Demand BSR Threshold
                   </label>
                   <input
@@ -547,11 +500,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         thresholds: { ...prev.thresholds, demandBsr: parseInt(e.target.value, 10) || 100000 },
                       }))
                     }
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1.5 text-xs text-slate-900 dark:text-white"
+                    className="plain-input w-full text-xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                  <label className="block text-[11px] text-[var(--muted)] mb-0.5">
                     Max Reviews (Weak)
                   </label>
                   <input
@@ -563,13 +516,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         thresholds: { ...prev.thresholds, weakReviewCount: parseInt(e.target.value, 10) || 30 },
                       }))
                     }
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1.5 text-xs text-slate-900 dark:text-white"
+                    className="plain-input w-full text-xs"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                  <label className="block text-[11px] text-[var(--muted)] mb-0.5">
                     Min Rating (Weak)
                   </label>
                   <input
@@ -582,11 +535,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         thresholds: { ...prev.thresholds, weakRating: parseFloat(e.target.value) || 4.0 },
                       }))
                     }
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1.5 text-xs text-slate-900 dark:text-white"
+                    className="plain-input w-full text-xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                  <label className="block text-[11px] text-[var(--muted)] mb-0.5">
                     Google Trends Geo
                   </label>
                   <select
@@ -600,7 +553,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         },
                       }))
                     }
-                    className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-1.5 text-xs text-slate-900 dark:text-white cursor-pointer"
+                    className="plain-select w-full text-xs"
                   >
                     <option value="US">US (United States)</option>
                     <option value="GB">GB (United Kingdom)</option>
@@ -618,21 +571,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {/* Section 2: AI Gemini Key */}
-            <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+            <div className="border border-[var(--line)] p-2 space-y-1.5">
               <div className="flex items-center justify-between">
-                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span className="font-bold text-[11px] text-[var(--muted)] uppercase">
                   Google Gemini API Keys
-                </h4>
+                </span>
                 <button
                   type="button"
                   onClick={handleOpenFullSettings}
-                  className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer font-medium"
+                  className="plain-link text-[11px]"
                 >
-                  Manage Keys ↗
+                  Manage Keys
                 </button>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                Enter 1 or multiple keys (comma or line-separated). If an API key hits daily quota limit (429), it automatically fails over to the next key.
+              <p className="text-[11px] text-[var(--muted)]">
+                Enter 1 or multiple keys (comma or line-separated). Automatic failover on quota limit.
               </p>
               <textarea
                 rows={2}
@@ -651,26 +604,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     geminiApiKeys: extracted,
                   }));
                 }}
-                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2.5 py-1.5 text-xs font-mono text-slate-900 dark:text-white resize-y"
+                className="plain-input w-full font-mono text-xs"
               />
               {tempSettings.geminiApiKeys && tempSettings.geminiApiKeys.length > 1 && (
-                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                  <span>✓</span>
-                  <span>{tempSettings.geminiApiKeys.length} API keys configured with automatic quota failover</span>
+                <div className="text-[10px] text-[var(--good)]">
+                  {tempSettings.geminiApiKeys.length} API keys configured with automatic quota failover
                 </div>
               )}
             </div>
 
             {/* Section 3: Scraping & Cache */}
-            <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
-              <h4 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <div className="border border-[var(--line)] p-2 space-y-1.5">
+              <div className="font-bold text-[11px] text-[var(--muted)] uppercase">
                 Cache &amp; Storage
-              </h4>
+              </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-600 dark:text-slate-400">Scraped product details cache</span>
+                <span className="text-[var(--muted)]">Scraped product details cache</span>
                 <button
                   onClick={handleClearScrapedCache}
-                  className="rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer"
+                  className="plain-btn text-[11px] px-2 py-0.5"
                 >
                   Clear Cache
                 </button>
@@ -678,23 +630,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between pt-1">
               <button
                 onClick={handleResetDefaults}
-                className="rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+                className="plain-btn text-[11px] px-2 py-1"
               >
                 Reset Defaults
               </button>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setIsSettingsOpen(false)}
-                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition cursor-pointer"
+                  className="plain-btn text-[11px] px-2 py-1"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveSettings}
-                  className="rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-1.5 text-xs font-bold shadow-xs transition cursor-pointer"
+                  className="plain-btn text-[11px] font-bold px-3 py-1"
                 >
                   Save Settings
                 </button>
@@ -703,116 +655,116 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         ) : (
           <>
-            {/* Tab Navigation (Responsive 4x2 Grid with zero horizontal scrollbar) */}
+            {/* Tab Navigation: A single row of text tabs separated by thin lines */}
             <Tabs
               activeTab={activeTab}
               onTabChange={setActiveTab}
               booksCount={books.length}
             />
 
-            {/* Content Area - All tabs stay mounted so background tasks/scans continue uninterrupted */}
+            {/* Content Area */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
-          <div className={activeTab === 'overview' ? 'block' : 'hidden'}>
-            <ErrorBoundary name="Overview Tab">
-              <OverviewTab
-                query={query}
-                books={books}
-                score={currentScore}
-                settings={settings}
-                onGoToBooks={() => setActiveTab('books')}
-              />
-            </ErrorBoundary>
-          </div>
+              <div className={activeTab === 'overview' ? 'block' : 'hidden'}>
+                <ErrorBoundary name="Overview Tab">
+                  <OverviewTab
+                    query={query}
+                    books={books}
+                    score={currentScore}
+                    settings={settings}
+                    onGoToBooks={() => setActiveTab('books')}
+                  />
+                </ErrorBoundary>
+              </div>
 
-          <div className={activeTab === 'books' ? 'block h-full' : 'hidden'}>
-            <ErrorBoundary name="Books Tab">
-              <BooksTab
-                books={books}
-                settings={settings}
-                onAddToWatchlist={handleAddToWatchlist}
-              />
-            </ErrorBoundary>
-          </div>
+              <div className={activeTab === 'books' ? 'block h-full' : 'hidden'}>
+                <ErrorBoundary name="Books Tab">
+                  <BooksTab
+                    books={books}
+                    settings={settings}
+                    onAddToWatchlist={handleAddToWatchlist}
+                  />
+                </ErrorBoundary>
+              </div>
 
-          <div className={activeTab === 'keywords' ? 'block p-3' : 'hidden'}>
-            <ErrorBoundary name="Keywords Tab">
-              <KeywordsTab
-                snapshot={currentSnapshot}
-                settings={settings}
-                onUpdateSnapshotKeywords={handleUpdateSnapshotKeywords}
-                onCaptchaEncountered={() => onPauseQueue()}
-              />
-            </ErrorBoundary>
-          </div>
+              <div className={activeTab === 'keywords' ? 'block p-2' : 'hidden'}>
+                <ErrorBoundary name="Keywords Tab">
+                  <KeywordsTab
+                    snapshot={currentSnapshot}
+                    settings={settings}
+                    onUpdateSnapshotKeywords={handleUpdateSnapshotKeywords}
+                    onCaptchaEncountered={() => onPauseQueue()}
+                  />
+                </ErrorBoundary>
+              </div>
 
-          <div className={activeTab === 'categories' ? 'block p-3' : 'hidden'}>
-            <ErrorBoundary name="Categories Tab">
-              <CategoriesTab
-                snapshot={currentSnapshot}
-                settings={settings}
-                onUpdateSnapshotCategories={handleUpdateSnapshotCategories}
-                onCaptchaEncountered={() => onPauseQueue()}
-              />
-            </ErrorBoundary>
-          </div>
+              <div className={activeTab === 'categories' ? 'block p-2' : 'hidden'}>
+                <ErrorBoundary name="Categories Tab">
+                  <CategoriesTab
+                    snapshot={currentSnapshot}
+                    settings={settings}
+                    onUpdateSnapshotCategories={handleUpdateSnapshotCategories}
+                    onCaptchaEncountered={() => onPauseQueue()}
+                  />
+                </ErrorBoundary>
+              </div>
 
-          <div className={activeTab === 'specs' ? 'block p-3' : 'hidden'}>
-            <ErrorBoundary name="Specs Tab">
-              <SpecsTab
-                snapshot={currentSnapshot}
-                onUpdateSnapshotSpecs={handleUpdateSnapshotSpecs}
-              />
-            </ErrorBoundary>
-          </div>
+              <div className={activeTab === 'specs' ? 'block p-2' : 'hidden'}>
+                <ErrorBoundary name="Specs Tab">
+                  <SpecsTab
+                    snapshot={currentSnapshot}
+                    onUpdateSnapshotSpecs={handleUpdateSnapshotSpecs}
+                  />
+                </ErrorBoundary>
+              </div>
 
-          <div className={activeTab === 'reviews' ? 'block p-3' : 'hidden'}>
-            <ErrorBoundary name="Reviews Tab">
-              <ReviewsTab
-                snapshot={currentSnapshot}
-                onUpdateSnapshotReviewGap={handleUpdateSnapshotReviewGap}
-                onCaptchaEncountered={() => onPauseQueue()}
-              />
-            </ErrorBoundary>
-          </div>
+              <div className={activeTab === 'reviews' ? 'block p-2' : 'hidden'}>
+                <ErrorBoundary name="Reviews Tab">
+                  <ReviewsTab
+                    snapshot={currentSnapshot}
+                    onUpdateSnapshotReviewGap={handleUpdateSnapshotReviewGap}
+                    onCaptchaEncountered={() => onPauseQueue()}
+                  />
+                </ErrorBoundary>
+              </div>
 
-          <div className={activeTab === 'watchlist' ? 'block p-3' : 'hidden'}>
-            <ErrorBoundary name="Watchlist Tab">
-              <WatchlistTab
-                onCaptchaEncountered={() => onPauseQueue()}
-              />
-            </ErrorBoundary>
-          </div>
+              <div className={activeTab === 'watchlist' ? 'block p-2' : 'hidden'}>
+                <ErrorBoundary name="Watchlist Tab">
+                  <WatchlistTab
+                    onCaptchaEncountered={() => onPauseQueue()}
+                  />
+                </ErrorBoundary>
+              </div>
 
-          <div className={activeTab === 'ideas' ? 'block p-3' : 'hidden'}>
-            <ErrorBoundary name="AI Ideas Tab">
-              <IdeasTab
-                snapshot={currentSnapshot}
-                onUpdateSnapshotIdeas={handleUpdateSnapshotIdeas}
-              />
-            </ErrorBoundary>
+              <div className={activeTab === 'ideas' ? 'block p-2' : 'hidden'}>
+                <ErrorBoundary name="AI Ideas Tab">
+                  <IdeasTab
+                    snapshot={currentSnapshot}
+                    onUpdateSnapshotIdeas={handleUpdateSnapshotIdeas}
+                  />
+                </ErrorBoundary>
+              </div>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )}
 
         {/* Health Check diagnostic banner */}
         {healthReport && (
-          <div className="px-3 py-1.5 bg-slate-800 border-t border-slate-700 text-[10px] flex items-center justify-between text-slate-300">
+          <div className="px-2 py-1 bg-[var(--table-head-bg)] border-t border-[var(--line)] text-[11px] flex items-center justify-between text-[var(--text)]">
             <span>{healthReport}</span>
             <button
               onClick={() => setHealthReport(null)}
-              className="text-slate-400 hover:text-white ml-2 text-xs"
+              className="plain-btn text-[10px] px-1 py-0 ml-1"
             >
               ✕
             </button>
           </div>
         )}
 
-        {/* Footer */}
-        <footer className="px-3.5 py-2 border-t border-slate-200/80 dark:border-slate-800 bg-gradient-to-r from-slate-50 via-indigo-50/15 to-slate-50 dark:from-slate-900 dark:via-indigo-950/20 dark:to-slate-900 text-[10px] text-slate-400 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-600 dark:text-slate-300">KDP Niche Finder</span>
-            <span className="text-slate-300 dark:text-slate-700">·</span>
+        {/* Footer: One plain line: "KDP Niche Finder | [Health] | Score: 89/100" */}
+        <footer className="px-2 py-1 border-t border-[var(--line)] bg-[var(--bg)] text-[11px] text-[var(--muted)] flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-1.5">
+            <span className="font-bold text-[var(--text)]">KDP Niche Finder</span>
+            <span>|</span>
             <button
               onClick={() => {
                 const issues: string[] = [];
@@ -831,42 +783,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   if (!priceFound) issues.push('Price selector failed on card');
 
                   if (issues.length === 0) {
-                    setHealthReport(`✅ Health Check: Search parser OK (${searchCards} cards, title & price OK)`);
+                    setHealthReport(`Health Check: Search parser OK (${searchCards} cards, title & price OK)`);
                   } else {
-                    setHealthReport(`⚠️ Health Check: Search cards found (${searchCards}) but: ${issues.join(', ')}`);
+                    setHealthReport(`Health Check: Search cards found (${searchCards}) but: ${issues.join(', ')}`);
                   }
                 } else if (bsrEl || reviewsEl) {
                   const titleFound = Boolean(document.querySelector(PRODUCT_PAGE_SELECTORS.title.join(', ')));
                   if (!titleFound) issues.push('Product title selector failed');
                   if (issues.length === 0) {
-                    setHealthReport(`✅ Health Check: Product details parser OK (${bsrEl ? 'BSR table found' : 'Reviews found'})`);
+                    setHealthReport(`Health Check: Product details parser OK (${bsrEl ? 'BSR table found' : 'Reviews found'})`);
                   } else {
-                    setHealthReport(`⚠️ Health Check: Product page detected but: ${issues.join(', ')}`);
+                    setHealthReport(`Health Check: Product page detected but: ${issues.join(', ')}`);
                   }
                 } else if (bestSellerCards > 0) {
-                  setHealthReport(`✅ Health Check: Best Sellers parser OK (${bestSellerCards} items found)`);
+                  setHealthReport(`Health Check: Best Sellers parser OK (${bestSellerCards} items found)`);
                 } else {
-                  setHealthReport('ℹ️ Health Check: Selectors loaded & ready. Navigate to Amazon book search, product, or best sellers page to test live DOM matching.');
+                  setHealthReport('Health Check: Selectors loaded. Navigate to Amazon search or product page to test.');
                 }
               }}
               title="Test if Amazon selectors match current page"
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 transition font-medium"
+              className="plain-btn text-[10px] px-1.5 py-0.5"
             >
-              <Activity className="w-3 h-3 text-indigo-500" />
-              <span>Health</span>
+              Health
             </button>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-slate-500 font-medium">Score:</span>
+          <div>
+            <span>Score: </span>
             <span
-              className={`font-mono font-bold px-2 py-0.5 rounded-full text-[10px] border ${
+              className={`font-bold ${
                 currentScore.label === 'green'
-                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                  ? 'text-[var(--good)]'
                   : currentScore.label === 'yellow'
-                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400'
+                  ? 'text-[var(--warn)]'
                   : currentScore.label === 'red'
-                  ? 'bg-rose-500/15 border-rose-500/40 text-rose-600 dark:text-rose-400'
-                  : 'bg-slate-500/10 border-slate-500/30 text-slate-500'
+                  ? 'text-[var(--bad)]'
+                  : 'text-[var(--muted)]'
               }`}
             >
               {currentScore.label === 'insufficient' ? 'N/A' : `${currentScore.total}/100`}

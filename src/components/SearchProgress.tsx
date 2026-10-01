@@ -1,5 +1,7 @@
+// src/components/SearchProgress.tsx
+// Plain utilitarian fetch status: thin progress bar, plain status text, plain button
+import React from 'react';
 import type { QueueProgressState } from '../types';
-import { Pause, Play, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 interface SearchProgressProps {
   status: QueueProgressState;
@@ -22,83 +24,47 @@ export const SearchProgress: React.FC<SearchProgressProps> = ({
     return null;
   }
 
+  const statusText = isComplete
+    ? `Fetched ${total}/${total} details`
+    : isRunning
+    ? `Fetched ${current}/${total} details${currentAsin ? ` (${currentAsin})` : ''}`
+    : isPaused
+    ? `Paused (${current}/${total})`
+    : `Ready (${total} books)`;
+
   return (
-    <div className="px-3.5 py-2 border-b border-slate-200/80 dark:border-slate-800 bg-gradient-to-r from-slate-50/80 via-blue-50/20 to-slate-50/80 dark:from-slate-900/60 dark:via-blue-950/20 dark:to-slate-900/60 text-xs">
-      <div className="flex items-center justify-between mb-1.5">
-        <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
-          {isComplete ? (
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              All {total} details fetched
-            </span>
-          ) : isRunning ? (
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-600 dark:text-blue-400 font-bold">
-              <RefreshCw className="w-3 h-3 animate-spin text-blue-500" />
-              Fetching {current}/{total}
-            </span>
-          ) : isPaused ? (
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-bold">
-              Paused ({current}/{total})
-            </span>
-          ) : (
-            <span className="text-slate-600 dark:text-slate-300">Ready ({total} books)</span>
-          )}
-
-          {currentAsin && isRunning && (
-            <span className="text-[10px] text-slate-400 font-mono bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
-              {currentAsin}
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-1">
+    <div className="px-2.5 py-1.5 border-b border-[var(--line)] bg-[var(--bg)] text-xs space-y-1">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-medium text-[var(--text)]">
+          {statusText}
+        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
           {isRunning && !isPaused && (
-            <button
-              onClick={onPause}
-              title="Pause background fetch"
-              className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition"
-            >
-              <Pause className="w-3.5 h-3.5 text-amber-500" />
+            <button onClick={onPause} className="plain-btn" title="Pause fetch">
+              Pause
             </button>
           )}
-
           {isPaused && (
-            <button
-              onClick={onResume}
-              title="Resume background fetch"
-              className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-emerald-600 dark:text-emerald-400 transition"
-            >
-              <Play className="w-3.5 h-3.5" />
+            <button onClick={onResume} className="plain-btn" title="Resume fetch">
+              Resume
             </button>
           )}
-
-          <button
-            onClick={onRefresh}
-            title="Re-scan and fetch page"
-            className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition"
-          >
-            <RefreshCw className="w-3.5 h-3.5 text-indigo-500" />
+          <button onClick={onRefresh} className="plain-btn" title="Refresh/rescan search">
+            Refresh
           </button>
         </div>
       </div>
 
-      {/* Progress track */}
-      <div className="w-full bg-slate-200/80 dark:bg-slate-800 rounded-full h-2 overflow-hidden p-0.5 border border-slate-200/50 dark:border-slate-700/50">
+      {/* Thin native-looking progress bar: 6px high, gray track, dark fill */}
+      <div className="w-full bg-[#e0e0e0] dark:bg-[#333333] h-[6px] overflow-hidden">
         <div
-          className={`h-full transition-all duration-500 rounded-full ${
-            isComplete
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-xs shadow-emerald-500/30'
-              : isPaused
-              ? 'bg-gradient-to-r from-amber-500 to-orange-500 shadow-xs shadow-amber-500/30'
-              : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-400 shadow-xs shadow-blue-500/30'
-          }`}
+          className="h-full bg-[var(--text)] transition-all duration-200"
           style={{ width: `${percentage}%` }}
         />
       </div>
 
-      <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium mt-1">
-        <span>Safe rate-limit: 1 req / 2-3s</span>
-        <span className="font-bold text-slate-600 dark:text-slate-300">{percentage}%</span>
+      <div className="text-[11px] text-[var(--muted)]">
+        Rate limit: 1 req / 2-3s
       </div>
     </div>
   );
